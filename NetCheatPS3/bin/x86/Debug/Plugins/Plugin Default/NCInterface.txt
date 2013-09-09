@@ -1,0 +1,4 @@
+/// <summary> 
+/// NetCheat Interface Host
+/// </summary>
+public static IPluginHost NCInterface = null;
