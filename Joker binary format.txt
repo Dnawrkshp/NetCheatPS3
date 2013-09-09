@@ -1,0 +1,73 @@
+Format:
+The format below is pretty much the same for all games (COD is different?)
+If it isn't then the bytes might be re-ordered like so:
+X #1:	00000040
+X #2:	00004000
+Currently JokerThat doesn't support that format, so you have to just rearrange it yourself
+
+Finding a joker address:
+
+Hold down a button below and scan for it in NetCheat (keep holding until scan completes)
+Hold down a different button and next scan for it's value
+Do that until you get a few results
+At that point you can copy the address and test each one
+
+Types: (Refer to NetCheat PS3 Codetypes.txt)
+Equal To: When the button(s) (and no other button(s)) are pressed, the code(s) below of length cc will be executed
+Mask Unset: When the button(s) are pressed, regardless of other buttons, the code(s) below of length cc will be executed
+
+
+Key:
+ST = Start
+SL = Select
+< = Left (DPAD)
+> = Right (DPAD)
+^ = Up (DPAD)
+v = Down (DPAD)
+[] = Square
+X = Cross
+O = Circle
+/\ = Triangle
+
+00000040=X
+00000020=O
+00020000=L3
+00040000=R3
+00000004=L1
+00000001=L2
+00000008=R1
+00000002=R2
+00100000=up dpad
+00800000=left dpad
+00200000=right dpad
+00400000=down d pad
+00000010=triangle
+00000080=square
+00010000-select
+00080000-start
+
+The first character of a button represents the following bit it corresponds to
+
+0000
+
+0000
+
+< >
+0000
+ v ^
+
+STL3
+0000
+ R3SL
+
+0000
+
+0000
+
+[]O
+0000
+ X /\
+
+R1R2
+0000
+ L1L2

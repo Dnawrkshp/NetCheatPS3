@@ -1,0 +1,66 @@
+Codetypes for Badger and Dnawrkshp's PS3 Tool.
+
+Format:
+[COMMAND] [ADDRESS] [VALUE]
+
+a = address, o = offset, c = command (OR) count, v = value
+
+---------- 0 -- 8 Bit write
+Writes 8 bits (1 byte) to the specified address
+
+0 aaaaaaaa vv000000
+
+Example:
+0 00B1F4A6 7F000000
+0 00B1F4A7 FF000000
+
+---------- 1 -- 16 Bit write
+Writes 16 bits (2 byte) to the specified address
+
+1 aaaaaaaa vvvv0000
+
+Example:
+1 00B1F4A6 7FFF0000
+
+---------- 2 -- 32 Bit write
+Writes 32 bits (4 byte) to the specified address
+
+2 aaaaaaaa vvvvvvvv
+
+Example:
+2 00B1F4A4 00007FFF
+
+---------- 6 -- Pointer write
+Reads the value at a, adds o, then uses that as the address for the next line.
+
+6 aaaaaaaa oooooooo
+c 00000000 vvvvvvvv
+
+Example:
+6 00B611C4 010010FC
+2 00000000 42480000
+
+---------- D -- 24 Bit comparison (Equal To)
+Reads 24 bits from a and compares it with v. If they are equal it will execute the c of lines below it.
+When the button(s) (and no other button(s)) are pressed, the code(s) below of length cc will be executed
+
+D type codes must be constantly written!
+
+D aaaaaaaa ccvvvvvv
+
+Example:
+D 00B122F8 01010000
+2 009C356D 00006000
+
+---------- E -- 24 bit comparison mask unset
+Reads 24 bits from a and ands it with v. If that is equal to v it will execute the c of lines below it.
+When the button(s) are pressed, regardless of other buttons, the code(s) below of length cc will be executed
+if ((intB & intA) == intA) From misc.ArrayCompare
+
+E type codes must be constantly written!
+
+E aaaaaaaa ccvvvvvv
+
+Example:
+E 00B122F8 01000044
+2 010D4568 3E000000
