@@ -31,10 +31,12 @@ namespace NetCheatPS3
             bool sleepThread = false;
             while (true)
             {
-                if (Form1.connected && connected == 0)
-                    ConnectPS3();
+                if (!Form1.connected)
+                    connected = 0;
+                else if (Form1.connected && connected == 0)
+                    connected = ConnectPS3();
                 else if (Form1.processIDs != null && connected == 1)
-                    AttachPS3();
+                    connected = AttachPS3();
 
                 if (Form1.ConstantLoop == 1)
                 {
@@ -44,10 +46,17 @@ namespace NetCheatPS3
                         //Plugin codes
                         for (int y = 0; y < ConstCodes.Length; y++)
                         {
-                            //Make sure the code is valid
-                            if (ConstCodes[y].Codes.state)
-                                WriteToPS32(ConstCodes[y].Codes);
-                            sleepThread |= ConstCodes[y].Codes.state;
+                            try
+                            {
+                                //Make sure the code is valid
+                                if (ConstCodes[y].Codes.state)
+                                    WriteToPS32(ConstCodes[y].Codes);
+                                sleepThread |= ConstCodes[y].Codes.state;
+                            }
+                            catch
+                            {
+
+                            }
                         }
 
                         //User codes
@@ -62,7 +71,7 @@ namespace NetCheatPS3
             }
         }
 
-        private static void AttachPS3()
+        public static int AttachPS3()
         {
             try
             {
@@ -73,22 +82,19 @@ namespace NetCheatPS3
                 PS3TMAPI.ProcessAttach(0, PS3TMAPI.UnitType.PPU, ProcessID);
 
                 PS3TMAPI.ProcessContinue(0, ProcessID);
-                connected = 2;
+                return 2;
             }
-            catch { }
+            catch { return 1; }
         }
 
-        private static void ConnectPS3()
+        public static int ConnectPS3()
         {
             PS3TMAPI.SNRESULT snresult;
             try
             {
                 snresult = PS3TMAPI.InitTargetComms();
                 if (snresult == PS3TMAPI.SNRESULT.SN_E_TM_NOT_RUNNING)
-                {
-                    connected = 0;
-                    return;
-                }
+                    return 0;
                 //Debug.WriteLine("".PadRight(30) + snresult.ToString());
 
                 PS3TMAPI.TCPIPConnectProperties connectProperties = new PS3TMAPI.TCPIPConnectProperties();
@@ -106,11 +112,12 @@ namespace NetCheatPS3
                     //PS3TMAPI.TargetInfo targetInfo = new PS3TMAPI.TargetInfo();
                     //snresult = PS3TMAPI.GetTargetInfo(ref targetInfo);
                     //Debug.WriteLine("".PadRight(30) + snresult.ToString());
-                    connected = 1;
+                    return 1;
                 }
             }
-            catch { }
-            connected = 1;
+            catch { return 0; }
+
+            return 0;
         }
 
         /*
@@ -129,6 +136,7 @@ namespace NetCheatPS3
 
             //Set the values
             ConstCodes[ind].Codes.codes = code;
+            ConstCodes[ind].Codes.state = state;
             ParseCodeString(code, ref ConstCodes[ind].Codes);
             //ConstCodes[ind].Codes = code;
             ConstCodes[ind].ID = ID;
@@ -262,9 +270,9 @@ namespace NetCheatPS3
 
                     bool ret = false;
                     if (type == 'D')
-                        ret = misc.ArrayCompare(jval, retByte, null, 4, 0, 0, Form1.compEq);
+                        ret = misc.ArrayCompare(jval, retByte, new byte[1], 4, 0, 0, Form1.compEq);
                     else if (type == 'E')
-                        ret = misc.ArrayCompare(jval, retByte, null, 4, 0, 0, Form1.compANEq);
+                        ret = misc.ArrayCompare(jval, retByte, new byte[1], 4, 0, 0, Form1.compANEq);
 
                     if (ret == false)
                         break;
@@ -292,25 +300,14 @@ namespace NetCheatPS3
             splitList[cnt] = misc.sLeft(text, 19);
 
             //There has to be a space there
-            if (text[10] != ' ' && text[1] != ' ')
+            if (text[10] != ' ' || text[1] != ' ')
                 return 1;
 
-            //A '//' represents a single line comment
-            if (text.IndexOf("//") >= 0)
-                return 1;
-
-            //A '*/' represents the end of a comment block
-            if (text.IndexOf("*/") >= 0)
+            //Check each character
+            foreach (char c in splitList[cnt].ToUpper())
             {
-                Form1.bComment = false;
-                return 1;
-            }
-
-            //A '/*' represents the beggining of a comment block
-            if (text.IndexOf("/*") >= 0)
-            {
-                Form1.bComment = true;
-                return 2;
+                if ((c < 0x30 || c > 0x46) && c != ' ')
+                    return 1;
             }
 
             return 0;
@@ -322,6 +319,9 @@ namespace NetCheatPS3
          */
         public static void UpdateCData(string data, int ind)
         {
+            //Remove comments
+            var re = @"(@(?:""[^""]*"")+|""(?:[^""\n\\]+|\\.)*""|'(?:[^'\n\\]+|\\.)*')|//.*|/\*(?s:.*?)\*/";
+            data = System.Text.RegularExpressions.Regex.Replace(data, re, "$1");
             ParseCodeString(data, ref Form1.Codes[ind]);
         }
 
@@ -332,12 +332,12 @@ namespace NetCheatPS3
         {
             int strcnt = 0, skip = 0, cnt = 0;
             splitList = data.Split('\n');
-            ret.CData = new Form1.CodeData[150];
+            ret.CData = new Form1.CodeData[0];
 
             foreach (string s in splitList)
             {
 
-                int check = 0; //CheckForComment(splitList[strcnt]);
+                int check = CheckForComment(splitList[strcnt]);
                 if (check == 1 || Form1.bComment == true || splitList[strcnt] == "")
                     goto SkipUpdateCD;
 
@@ -352,6 +352,8 @@ namespace NetCheatPS3
 
                 if (val.Length != 8 || code.Length != 19)
                     goto SkipUpdateCD;
+
+                Array.Resize(ref ret.CData, ret.CData.Length + 1);
 
                 if (cnt != 0 && ret.CData[cnt - 1].type != '6')
                     ret.CData[cnt].addr = ulong.Parse(misc.sMid(code, 2, 8), NumberStyles.HexNumber);
@@ -434,6 +436,7 @@ namespace NetCheatPS3
             if (val.IndexOf(' ') >= 0)
                 return 0;
             Code.CData[ind2].jsize = int.Parse(misc.sLeft(val, 2), NumberStyles.HexNumber);
+            Array.Resize(ref Code.CData, Code.CData.Length + Code.CData[ind2].jsize);
             int x = 0, y = 0, ret = Code.CData[ind2].jsize;
 
             Code.CData[ind2].jbool = BitConverter.GetBytes(int.Parse(misc.ReverseE("00" + misc.sRight(val, 6), 8), NumberStyles.HexNumber));
@@ -441,13 +444,13 @@ namespace NetCheatPS3
             ind2++;
             for (x = 0; x < ret; x++)
             {
-                if ((cnt + y) >= splitList.Length)
-                    return ind2;
                 do
                 {
                     y++;
+                    if ((cnt + y) >= splitList.Length)
+                        return ind2;
                     code = misc.sLeft(splitList[cnt + y], 19);
-                } while (code == null || code == "");
+                } while (code == null || code == "" || CheckForComment(code) == 1);
 
                 int len = 0;
                 Code.CData[ind2].type = code[0];

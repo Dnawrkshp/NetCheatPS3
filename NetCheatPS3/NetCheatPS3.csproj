@@ -77,9 +77,8 @@
       <SpecificVersion>False</SpecificVersion>
       <HintPath>bin\x86\Debug\PluginInterface.dll</HintPath>
     </Reference>
-    <Reference Include="ps3tmapi_net, Version=420.1.14.7, Culture=neutral, processorArchitecture=MSIL">
-      <SpecificVersion>False</SpecificVersion>
-      <HintPath>bin\Debug\ps3tmapi_net.dll</HintPath>
+    <Reference Include="ps3tmapi_net">
+      <HintPath>bin\x86\Debug\ps3tmapi_net.dll</HintPath>
     </Reference>
     <Reference Include="System" />
     <Reference Include="System.Core">

@@ -24,6 +24,7 @@ namespace PluginNAMESPACE
 		static IPluginHost myHost = null;
 		//User Control to print
 		System.Windows.Forms.UserControl myMainInterface = new ctlMain();
+		System.Windows.Forms.UserControl myMainIcon = new ctlIcon();
 		
 		/// <summary>
 		/// Description of the Plugin's purpose
@@ -71,6 +72,11 @@ namespace PluginNAMESPACE
 		public System.Windows.Forms.UserControl MainInterface
 		{
 			get {return myMainInterface;}
+		}
+		
+		public System.Windows.Forms.UserControl MainIcon
+		{
+			get {return myMainIcon; }
 		}
 
 		public string Version

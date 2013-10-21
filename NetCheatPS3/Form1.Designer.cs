@@ -46,6 +46,8 @@
             this.cbList = new System.Windows.Forms.ListView();
             this.columnHeader1 = ((System.Windows.Forms.ColumnHeader)(new System.Windows.Forms.ColumnHeader()));
             this.SearchTab = new System.Windows.Forms.TabPage();
+            this.saveSRes = new System.Windows.Forms.Button();
+            this.loadSRes = new System.Windows.Forms.Button();
             this.schVal2 = new System.Windows.Forms.TextBox();
             this.DumpMem = new System.Windows.Forms.Button();
             this.compBox = new System.Windows.Forms.ComboBox();
@@ -69,6 +71,9 @@
             this.schRange1 = new System.Windows.Forms.TextBox();
             this.schSearch = new System.Windows.Forms.Button();
             this.RangeTab = new System.Windows.Forms.TabPage();
+            this.recRangeBox = new System.Windows.Forms.ListView();
+            this.colFileName = ((System.Windows.Forms.ColumnHeader)(new System.Windows.Forms.ColumnHeader()));
+            this.label3 = new System.Windows.Forms.Label();
             this.RangeDown = new System.Windows.Forms.Button();
             this.RangeUp = new System.Windows.Forms.Button();
             this.RemoveRange = new System.Windows.Forms.Button();
@@ -81,8 +86,7 @@
             this.StartAddr = ((System.Windows.Forms.ColumnHeader)(new System.Windows.Forms.ColumnHeader()));
             this.EndAddr = ((System.Windows.Forms.ColumnHeader)(new System.Windows.Forms.ColumnHeader()));
             this.pluginTab = new System.Windows.Forms.TabPage();
-            this.panel1 = new System.Windows.Forms.Panel();
-            this.plugPreview = new System.Windows.Forms.PictureBox();
+            this.plugIcon = new System.Windows.Forms.PictureBox();
             this.descPlugDesc = new System.Windows.Forms.Label();
             this.descPlugVer = new System.Windows.Forms.Label();
             this.descPlugAuth = new System.Windows.Forms.Label();
@@ -93,6 +97,13 @@
             this.connectButton = new System.Windows.Forms.Button();
             this.statusStrip1 = new System.Windows.Forms.StatusStrip();
             this.statusLabel1 = new System.Windows.Forms.ToolStripStatusLabel();
+            this.toolStripDropDownButton1 = new System.Windows.Forms.ToolStripDropDownButton();
+            this.optionsToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
+            this.loadPluginsToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
+            this.shutdownPS3ToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
+            this.disconnectToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
+            this.attachToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
+            this.connectToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.refPlugin = new System.Windows.Forms.Button();
             this.optButton = new System.Windows.Forms.Button();
             this.contextMenuStrip1 = new System.Windows.Forms.ContextMenuStrip(this.components);
@@ -105,8 +116,7 @@
             this.SearchTab.SuspendLayout();
             this.RangeTab.SuspendLayout();
             this.pluginTab.SuspendLayout();
-            this.panel1.SuspendLayout();
-            ((System.ComponentModel.ISupportInitialize)(this.plugPreview)).BeginInit();
+            ((System.ComponentModel.ISupportInitialize)(this.plugIcon)).BeginInit();
             this.statusStrip1.SuspendLayout();
             this.contextMenuStrip1.SuspendLayout();
             this.SuspendLayout();
@@ -301,6 +311,8 @@
             // 
             this.SearchTab.AutoScroll = true;
             this.SearchTab.BackColor = System.Drawing.Color.Black;
+            this.SearchTab.Controls.Add(this.saveSRes);
+            this.SearchTab.Controls.Add(this.loadSRes);
             this.SearchTab.Controls.Add(this.schVal2);
             this.SearchTab.Controls.Add(this.DumpMem);
             this.SearchTab.Controls.Add(this.compBox);
@@ -327,6 +339,28 @@
             this.SearchTab.TabIndex = 1;
             this.SearchTab.Text = "Search";
             // 
+            // saveSRes
+            // 
+            this.saveSRes.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
+            this.saveSRes.Location = new System.Drawing.Point(230, 138);
+            this.saveSRes.Name = "saveSRes";
+            this.saveSRes.Size = new System.Drawing.Size(110, 28);
+            this.saveSRes.TabIndex = 46;
+            this.saveSRes.Text = "Save Scan Results";
+            this.saveSRes.UseVisualStyleBackColor = true;
+            this.saveSRes.Click += new System.EventHandler(this.saveSRes_Click);
+            // 
+            // loadSRes
+            // 
+            this.loadSRes.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
+            this.loadSRes.Location = new System.Drawing.Point(114, 138);
+            this.loadSRes.Name = "loadSRes";
+            this.loadSRes.Size = new System.Drawing.Size(110, 28);
+            this.loadSRes.TabIndex = 45;
+            this.loadSRes.Text = "Load Scan Results";
+            this.loadSRes.UseVisualStyleBackColor = true;
+            this.loadSRes.Click += new System.EventHandler(this.loadSRes_Click);
+            // 
             // schVal2
             // 
             this.schVal2.BackColor = System.Drawing.Color.Black;
@@ -341,9 +375,9 @@
             // DumpMem
             // 
             this.DumpMem.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
-            this.DumpMem.Location = new System.Drawing.Point(9, 143);
+            this.DumpMem.Location = new System.Drawing.Point(9, 138);
             this.DumpMem.Name = "DumpMem";
-            this.DumpMem.Size = new System.Drawing.Size(110, 23);
+            this.DumpMem.Size = new System.Drawing.Size(99, 28);
             this.DumpMem.TabIndex = 42;
             this.DumpMem.Text = "Dump Memory";
             this.DumpMem.UseVisualStyleBackColor = true;
@@ -448,6 +482,7 @@
             "2 bytes",
             "4 bytes",
             "8 bytes",
+            "X bytes",
             "Text"});
             this.cbSchAlign.Location = new System.Drawing.Point(55, 56);
             this.cbSchAlign.Name = "cbSchAlign";
@@ -568,6 +603,8 @@
             // 
             this.RangeTab.AutoScroll = true;
             this.RangeTab.BackColor = System.Drawing.Color.Black;
+            this.RangeTab.Controls.Add(this.recRangeBox);
+            this.RangeTab.Controls.Add(this.label3);
             this.RangeTab.Controls.Add(this.RangeDown);
             this.RangeTab.Controls.Add(this.RangeUp);
             this.RangeTab.Controls.Add(this.RemoveRange);
@@ -585,10 +622,43 @@
             this.RangeTab.TabIndex = 2;
             this.RangeTab.Text = "Range";
             // 
+            // recRangeBox
+            // 
+            this.recRangeBox.BackColor = System.Drawing.Color.Black;
+            this.recRangeBox.BorderStyle = System.Windows.Forms.BorderStyle.FixedSingle;
+            this.recRangeBox.Columns.AddRange(new System.Windows.Forms.ColumnHeader[] {
+            this.colFileName});
+            this.recRangeBox.ForeColor = System.Drawing.Color.FromArgb(((int)(((byte)(0)))), ((int)(((byte)(130)))), ((int)(((byte)(210)))));
+            this.recRangeBox.HeaderStyle = System.Windows.Forms.ColumnHeaderStyle.None;
+            this.recRangeBox.LabelWrap = false;
+            this.recRangeBox.Location = new System.Drawing.Point(235, 60);
+            this.recRangeBox.MultiSelect = false;
+            this.recRangeBox.Name = "recRangeBox";
+            this.recRangeBox.Size = new System.Drawing.Size(212, 192);
+            this.recRangeBox.TabIndex = 11;
+            this.recRangeBox.TabStop = false;
+            this.recRangeBox.UseCompatibleStateImageBehavior = false;
+            this.recRangeBox.View = System.Windows.Forms.View.Details;
+            this.recRangeBox.DoubleClick += new System.EventHandler(this.recRangeBox_DoubleClick);
+            // 
+            // colFileName
+            // 
+            this.colFileName.Text = "File";
+            this.colFileName.Width = 204;
+            // 
+            // label3
+            // 
+            this.label3.Location = new System.Drawing.Point(235, 42);
+            this.label3.Name = "label3";
+            this.label3.Size = new System.Drawing.Size(212, 15);
+            this.label3.TabIndex = 10;
+            this.label3.Text = "Recent Ranges";
+            this.label3.TextAlign = System.Drawing.ContentAlignment.TopCenter;
+            // 
             // RangeDown
             // 
             this.RangeDown.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
-            this.RangeDown.Location = new System.Drawing.Point(356, 211);
+            this.RangeDown.Location = new System.Drawing.Point(356, 258);
             this.RangeDown.Name = "RangeDown";
             this.RangeDown.Size = new System.Drawing.Size(91, 30);
             this.RangeDown.TabIndex = 8;
@@ -599,7 +669,7 @@
             // RangeUp
             // 
             this.RangeUp.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
-            this.RangeUp.Location = new System.Drawing.Point(235, 211);
+            this.RangeUp.Location = new System.Drawing.Point(235, 258);
             this.RangeUp.Name = "RangeUp";
             this.RangeUp.Size = new System.Drawing.Size(91, 30);
             this.RangeUp.TabIndex = 7;
@@ -632,7 +702,7 @@
             // SaveRange
             // 
             this.SaveRange.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
-            this.SaveRange.Location = new System.Drawing.Point(356, 271);
+            this.SaveRange.Location = new System.Drawing.Point(356, 294);
             this.SaveRange.Name = "SaveRange";
             this.SaveRange.Size = new System.Drawing.Size(91, 30);
             this.SaveRange.TabIndex = 4;
@@ -643,7 +713,7 @@
             // ImportRange
             // 
             this.ImportRange.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
-            this.ImportRange.Location = new System.Drawing.Point(235, 271);
+            this.ImportRange.Location = new System.Drawing.Point(235, 294);
             this.ImportRange.Name = "ImportRange";
             this.ImportRange.Size = new System.Drawing.Size(91, 30);
             this.ImportRange.TabIndex = 3;
@@ -703,7 +773,7 @@
             // pluginTab
             // 
             this.pluginTab.BackColor = System.Drawing.Color.Black;
-            this.pluginTab.Controls.Add(this.panel1);
+            this.pluginTab.Controls.Add(this.plugIcon);
             this.pluginTab.Controls.Add(this.descPlugDesc);
             this.pluginTab.Controls.Add(this.descPlugVer);
             this.pluginTab.Controls.Add(this.descPlugAuth);
@@ -715,21 +785,14 @@
             this.pluginTab.TabIndex = 3;
             this.pluginTab.Text = "Plugins";
             // 
-            // panel1
+            // plugIcon
             // 
-            this.panel1.Controls.Add(this.plugPreview);
-            this.panel1.Location = new System.Drawing.Point(184, 147);
-            this.panel1.Name = "panel1";
-            this.panel1.Size = new System.Drawing.Size(266, 210);
-            this.panel1.TabIndex = 10;
-            // 
-            // plugPreview
-            // 
-            this.plugPreview.Location = new System.Drawing.Point(0, 0);
-            this.plugPreview.Name = "plugPreview";
-            this.plugPreview.Size = new System.Drawing.Size(266, 210);
-            this.plugPreview.TabIndex = 9;
-            this.plugPreview.TabStop = false;
+            this.plugIcon.InitialImage = ((System.Drawing.Image)(resources.GetObject("plugIcon.InitialImage")));
+            this.plugIcon.Location = new System.Drawing.Point(184, 147);
+            this.plugIcon.Name = "plugIcon";
+            this.plugIcon.Size = new System.Drawing.Size(266, 210);
+            this.plugIcon.TabIndex = 11;
+            this.plugIcon.TabStop = false;
             // 
             // descPlugDesc
             // 
@@ -826,7 +889,8 @@
             // 
             this.statusStrip1.BackColor = System.Drawing.Color.Black;
             this.statusStrip1.Items.AddRange(new System.Windows.Forms.ToolStripItem[] {
-            this.statusLabel1});
+            this.statusLabel1,
+            this.toolStripDropDownButton1});
             this.statusStrip1.Location = new System.Drawing.Point(0, 441);
             this.statusStrip1.Name = "statusStrip1";
             this.statusStrip1.Size = new System.Drawing.Size(485, 22);
@@ -837,6 +901,63 @@
             // 
             this.statusLabel1.Name = "statusLabel1";
             this.statusLabel1.Size = new System.Drawing.Size(0, 17);
+            // 
+            // toolStripDropDownButton1
+            // 
+            this.toolStripDropDownButton1.DisplayStyle = System.Windows.Forms.ToolStripItemDisplayStyle.Image;
+            this.toolStripDropDownButton1.DropDownItems.AddRange(new System.Windows.Forms.ToolStripItem[] {
+            this.optionsToolStripMenuItem,
+            this.loadPluginsToolStripMenuItem,
+            this.shutdownPS3ToolStripMenuItem,
+            this.disconnectToolStripMenuItem,
+            this.attachToolStripMenuItem,
+            this.connectToolStripMenuItem});
+            this.toolStripDropDownButton1.Image = ((System.Drawing.Image)(resources.GetObject("toolStripDropDownButton1.Image")));
+            this.toolStripDropDownButton1.ImageTransparentColor = System.Drawing.Color.BlueViolet;
+            this.toolStripDropDownButton1.Name = "toolStripDropDownButton1";
+            this.toolStripDropDownButton1.Size = new System.Drawing.Size(29, 20);
+            // 
+            // optionsToolStripMenuItem
+            // 
+            this.optionsToolStripMenuItem.Name = "optionsToolStripMenuItem";
+            this.optionsToolStripMenuItem.Size = new System.Drawing.Size(150, 22);
+            this.optionsToolStripMenuItem.Text = "Options";
+            this.optionsToolStripMenuItem.Click += new System.EventHandler(this.optionsToolStripMenuItem_Click);
+            // 
+            // loadPluginsToolStripMenuItem
+            // 
+            this.loadPluginsToolStripMenuItem.Name = "loadPluginsToolStripMenuItem";
+            this.loadPluginsToolStripMenuItem.Size = new System.Drawing.Size(150, 22);
+            this.loadPluginsToolStripMenuItem.Text = "Load Plugins";
+            this.loadPluginsToolStripMenuItem.Click += new System.EventHandler(this.loadPluginsToolStripMenuItem_Click);
+            // 
+            // shutdownPS3ToolStripMenuItem
+            // 
+            this.shutdownPS3ToolStripMenuItem.Name = "shutdownPS3ToolStripMenuItem";
+            this.shutdownPS3ToolStripMenuItem.Size = new System.Drawing.Size(150, 22);
+            this.shutdownPS3ToolStripMenuItem.Text = "Shutdown PS3";
+            this.shutdownPS3ToolStripMenuItem.Click += new System.EventHandler(this.shutdownPS3ToolStripMenuItem_Click);
+            // 
+            // disconnectToolStripMenuItem
+            // 
+            this.disconnectToolStripMenuItem.Name = "disconnectToolStripMenuItem";
+            this.disconnectToolStripMenuItem.Size = new System.Drawing.Size(150, 22);
+            this.disconnectToolStripMenuItem.Text = "Disconnect";
+            this.disconnectToolStripMenuItem.Click += new System.EventHandler(this.disconnectToolStripMenuItem_Click);
+            // 
+            // attachToolStripMenuItem
+            // 
+            this.attachToolStripMenuItem.Name = "attachToolStripMenuItem";
+            this.attachToolStripMenuItem.Size = new System.Drawing.Size(150, 22);
+            this.attachToolStripMenuItem.Text = "Attach";
+            this.attachToolStripMenuItem.Click += new System.EventHandler(this.attachToolStripMenuItem_Click);
+            // 
+            // connectToolStripMenuItem
+            // 
+            this.connectToolStripMenuItem.Name = "connectToolStripMenuItem";
+            this.connectToolStripMenuItem.Size = new System.Drawing.Size(150, 22);
+            this.connectToolStripMenuItem.Text = "Connect";
+            this.connectToolStripMenuItem.Click += new System.EventHandler(this.connectToolStripMenuItem_Click);
             // 
             // refPlugin
             // 
@@ -932,8 +1053,7 @@
             this.RangeTab.ResumeLayout(false);
             this.pluginTab.ResumeLayout(false);
             this.pluginTab.PerformLayout();
-            this.panel1.ResumeLayout(false);
-            ((System.ComponentModel.ISupportInitialize)(this.plugPreview)).EndInit();
+            ((System.ComponentModel.ISupportInitialize)(this.plugIcon)).EndInit();
             this.statusStrip1.ResumeLayout(false);
             this.statusStrip1.PerformLayout();
             this.contextMenuStrip1.ResumeLayout(false);
@@ -1007,13 +1127,24 @@
         private System.Windows.Forms.Label descPlugVer;
         private System.Windows.Forms.Label descPlugAuth;
         private System.Windows.Forms.Label descPlugName;
-        private System.Windows.Forms.PictureBox plugPreview;
-        private System.Windows.Forms.Panel panel1;
         private System.Windows.Forms.ContextMenuStrip contextMenuStrip1;
         private System.Windows.Forms.ToolStripMenuItem copyToolStripMenuItem;
         private System.Windows.Forms.ToolStripMenuItem deleteToolStripMenuItem;
         private System.Windows.Forms.ToolStripMenuItem refreshFromPS3ToolStripMenuItem;
         private System.Windows.Forms.ToolStripMenuItem refreshFromDumptxtToolStripMenuItem;
+        private System.Windows.Forms.Label label3;
+        private System.Windows.Forms.ListView recRangeBox;
+        private System.Windows.Forms.ColumnHeader colFileName;
+        private System.Windows.Forms.Button loadSRes;
+        private System.Windows.Forms.Button saveSRes;
+        private System.Windows.Forms.ToolStripDropDownButton toolStripDropDownButton1;
+        private System.Windows.Forms.ToolStripMenuItem optionsToolStripMenuItem;
+        private System.Windows.Forms.ToolStripMenuItem loadPluginsToolStripMenuItem;
+        private System.Windows.Forms.ToolStripMenuItem shutdownPS3ToolStripMenuItem;
+        private System.Windows.Forms.ToolStripMenuItem disconnectToolStripMenuItem;
+        private System.Windows.Forms.ToolStripMenuItem attachToolStripMenuItem;
+        private System.Windows.Forms.ToolStripMenuItem connectToolStripMenuItem;
+        private System.Windows.Forms.PictureBox plugIcon;
     }
 }
 

@@ -22,6 +22,10 @@ namespace NetCheatPS3
         public int fmLeft = 0;
         public int fmTop = 0;
 
+        //Form1's Colors
+        public Color fmBackColor = Color.Black;
+        public Color fmForeColor = Color.FromArgb(127, 0, 130, 210);
+
         //Text box array
         TextBox[] textBoxArg;
 
@@ -38,6 +42,12 @@ namespace NetCheatPS3
                 this.Dispose();
                 this.Close();
                 return;
+            }
+
+            foreach (Control ctrl in Controls)
+            {
+                ctrl.BackColor = fmBackColor;
+                ctrl.ForeColor = fmForeColor;
             }
 
             textBoxArg = new TextBox[Arg.Length];
@@ -76,6 +86,8 @@ namespace NetCheatPS3
                 lbl.Width = this.Width - 20;
                 lbl.Location = new Point(10, (i * 40));
                 lbl.Visible = true;
+                lbl.BackColor = fmBackColor;
+                lbl.ForeColor = fmForeColor;
                 this.Controls.Add(lbl);
             }
 

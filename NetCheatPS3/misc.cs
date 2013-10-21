@@ -32,6 +32,9 @@ namespace NetCheatPS3
                 case 8: //8 bytes
                     ret = BitConverter.GetBytes(ulong.Parse(val, System.Globalization.NumberStyles.HexNumber));
                     break;
+                case -2:
+
+                    break;
                 default:
                     ret = StringToByteArray(val);
                     break;
@@ -83,7 +86,7 @@ namespace NetCheatPS3
          * Parses the difference of a and b based on the Memory Range
          * This returns the result divided by 0x500 and as an integer
          */
-        public static int ParseRealDif(ulong a, ulong b)
+        public static int ParseRealDif(ulong a, ulong b, ulong div)
         {
             ulong ret = b - a;
             if (MemArray != null)
@@ -95,7 +98,7 @@ namespace NetCheatPS3
                         ret -= (MemArray[x] - MemArray[x - 1]);
                 }
             }
-            return (int)((ret / 0x500) + 1);
+            return (int)((ret / div) + 1);
         }
 
         /*
@@ -121,17 +124,45 @@ namespace NetCheatPS3
          * Compares a and b (and c in the case of certain modes)
          * Used by the searching stuff
          */
-        public static bool ArrayCompare(byte[] a, byte[] b, byte[] c, int size, int aOff, int bOff, int mode)
+        public static bool ArrayCompare(byte[] a, byte[] b, int size, int aOff, int bOff, int mode)
         {
             if (a == null || b == null || size <= 0)
                 return false;
             if ((bOff + size) > b.Length || (aOff + size) > a.Length)
                 return false;
-            ulong intA = ByteArrayToLong(a, aOff, size);
-            ulong intB = ByteArrayToLong(b, bOff, size);
-            ulong intC = 0;
+            UInt64 intA = (UInt64)ByteArrayToLong(a, aOff, size);
+            UInt64 intB = (UInt64)ByteArrayToLong(b, bOff, size);
 
-            switch (mode) {
+            return ArrayCompare(intA, intB, 0, mode);
+        }
+
+        public static bool ArrayCompare(byte[] a, byte[] b, byte[] c, int size, int aOff, int bOff, int mode)
+        {
+            if (a == null || b == null || c == null || size <= 0)
+                return false;
+            if ((bOff + size) > b.Length || (aOff + size) > a.Length)
+                return false;
+            UInt64 intA = (UInt64)ByteArrayToLong(a, aOff, size);
+            UInt64 intB = (UInt64)ByteArrayToLong(b, bOff, size);
+            UInt64 intC = (UInt64)ByteArrayToLong(c, aOff, size);
+
+            return ArrayCompare(intA, intB, intC, mode);
+        }
+
+        public static bool ArrayCompare(ulong a, byte[] b, ulong c, int size, int bOff, int mode)
+        {
+            if (b == null || (bOff + size) > b.Length)
+                return false;
+
+            ulong intB = ByteArrayToLong(b, bOff, size);
+
+            return ArrayCompare(a, intB, c, mode);
+        }
+
+        public static bool ArrayCompare(ulong intA, ulong intB, ulong intC, int mode)
+        {
+            switch (mode)
+            {
                 case Form1.compEq:
                     if (intB == intA)
                         return true;
@@ -157,27 +188,25 @@ namespace NetCheatPS3
                         return true;
                     break;
                 case Form1.compVBet:
-                    if (c == null)
-                        return false;
-                    intC = ByteArrayToLong(c, aOff, size);
                     if ((intB >= intA) && (intB <= intC))
                         return true;
                     break;
                 case Form1.compINC:
-                    if (c == null)
-                        return false;
-                    intC = ByteArrayToLong(c, aOff, size);
                     if ((intA + intC) == intB)
                         return true;
                     break;
                 case Form1.compDEC:
-                    if (c == null)
-                        return false;
-                    intC = ByteArrayToLong(c, aOff, size);
                     if ((intA - intC) == intB)
                         return true;
                     break;
-
+                case Form1.compChg:
+                    if (intC != intB)
+                        return true;
+                    break;
+                case Form1.compUChg:
+                    if (intC == intB)
+                        return true;
+                    break;
                 case Form1.compANEq:
                     if ((intB & intA) == intA)
                         return true;
@@ -234,6 +263,8 @@ namespace NetCheatPS3
          */
         public static byte[] StringToByteArray(string str)
         {
+            if (str == null)
+                return new byte[1];
             UTF8Encoding encoding = new UTF8Encoding();
             return encoding.GetBytes(str);
         }
@@ -368,7 +399,27 @@ namespace NetCheatPS3
                     a.DecVal = "null";
                     a.AlignStr = "Text";
                     break;
+                case -2:
+                    temp = new byte[0];
+                    for (int b = 0; b < (ret.Length - off); b++)
+                    {
+                        if (b > 8)
+                            break;
+                        Array.Resize(ref temp, b + 1);
+                        temp[b] = ret[off + b];
+                    }
+                    tempInt = misc.ByteArrayToLong(temp, 0, temp.Length);
+                    string val = tempInt.ToString("X");
+                    if ((val.Length % 2) != 0)
+                        val = "0" + val;
+                    a.HexVal = misc.ReverseE(misc.sRight(val, val.Length), val.Length);
+                    a.DecVal = Int64.Parse(a.HexVal, System.Globalization.NumberStyles.HexNumber).ToString();
+                    if (temp.Length > 8)
+                        a.HexVal += "...";
+                    a.AlignStr = ret.Length.ToString() + " byte(s)";
+                    break;
             }
+
             return a;
         }
 

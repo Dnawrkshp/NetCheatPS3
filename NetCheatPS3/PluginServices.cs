@@ -28,6 +28,10 @@ namespace NetCheatPS3
             Form1.apiGetMem(addr, ref ret);
             return ret;
         }
+        public void GetMemory(ulong addr, ref byte[] ret)
+        {
+            Form1.apiGetMem(addr, ref ret);
+        }
 
         /* Byte Array to ulong */
         public ulong ByteAToULong(byte[] val, int index, int size)
@@ -87,6 +91,28 @@ namespace NetCheatPS3
         public bool ConstCodeGetState(uint ID)
         {
             return codes.ConstCodeGetState(ID);
+        }
+
+        /* Connects and Attaches to PS3 */
+        public bool ConnectAndAttach()
+        {
+            int connect = codes.ConnectPS3();
+            if (connect == 1)
+                connect = codes.AttachPS3();
+
+            if (connect != 2)
+                return false;
+            else
+                return true;
+        }
+
+        /* Returns the state of the main forms connection */
+        public int ConnectionState()
+        {
+            if (!Form1.connected)
+                return 0;
+
+            return (Form1.connected && Form1.processIDs != null) ? 2 : 1;
         }
 
 		/// <summary>
@@ -219,7 +245,7 @@ namespace NetCheatPS3
         /// </summary>
         /// <param name="BackColor">Background Color of Tab</param>
         /// <param name="ForeColor">Foreground Color of Tab</param>
-        public PluginForm[] GetPlugin(System.Drawing.Color BackColor, System.Drawing.Color ForeColor, System.Drawing.SizeF scale)
+        public PluginForm[] GetPlugin(System.Drawing.Color BackColor, System.Drawing.Color ForeColor)
         {
             PluginForm[] ret = new PluginForm[colAvailablePlugins.Count];
             int x = 0;
@@ -236,8 +262,6 @@ namespace NetCheatPS3
                 tempTPage.plugName = pluginOn.Instance.Name;
                 tempTPage.plugVers = pluginOn.Instance.Version;
                 tempTPage.plugText = pluginOn.Instance.TabText;
-                tempTPage.plugScale = new System.Drawing.SizeF(scale.Width / pluginOn.Instance.MainInterface.Width,
-                                                                scale.Height / pluginOn.Instance.MainInterface.Height);
                 tempTPage.Tag = x;
                 ret[x] = tempTPage;
                 tempTPage = null;

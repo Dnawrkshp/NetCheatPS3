@@ -62,7 +62,7 @@ namespace NetCheatPS3
                 resizeForm = 2;
                 Size newSize = new Size(maxLeft + 20, maxTop + 40);
                 MinimumSize = newSize;
-                MaximumSize = newSize;
+                MaximumSize = Controls[0].MaximumSize;
             }
         }
     }

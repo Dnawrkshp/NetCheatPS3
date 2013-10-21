@@ -21,6 +21,7 @@ namespace PluginInterface
         string TabText {get;}
 
 		System.Windows.Forms.UserControl MainInterface {get;}
+        System.Windows.Forms.UserControl MainIcon { get; }
 		
 		void Initialize();
 		void Dispose();
@@ -34,6 +35,12 @@ namespace PluginInterface
         /// <param name="addr">Address to read from</param>
         /// <param name="size">Number of bytes to read</param>
         byte[] GetMemory(ulong addr, int size);
+        /// <summary>
+        /// Gets the memory at addr of length ret.Length from the PS3 and returns the result in ret
+        /// </summary>
+        /// <param name="addr">Address to read from</param>
+        /// <param name="ret">Read byte array</param>
+        void GetMemory(ulong addr, ref byte[] ret);
 
         /// <summary>
         /// Sets the memory at addr to the contents of val
@@ -110,5 +117,17 @@ namespace PluginInterface
         /// </summary>
         /// <param name="ID">Code identifier</param>
         bool ConstCodeGetState(uint ID);
+
+        /// <summary>
+        /// Attempts to connect and attack to the PS3.
+        /// If it fails it will return false, otherwise it will return true.
+        /// Only to be used if another thread is created.
+        /// </summary>
+        bool ConnectAndAttach();
+
+        /// <summary>
+        /// Returns the current connection state of NetCheat's main thread.
+        /// </summary>
+        int ConnectionState();
 	}
 }
