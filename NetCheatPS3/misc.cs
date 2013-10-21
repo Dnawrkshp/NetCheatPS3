@@ -408,6 +408,7 @@ namespace NetCheatPS3
                         Array.Resize(ref temp, b + 1);
                         temp[b] = ret[off + b];
                     }
+                    Array.Reverse(temp);
                     tempInt = misc.ByteArrayToLong(temp, 0, temp.Length);
                     string val = tempInt.ToString("X");
                     if ((val.Length % 2) != 0)
