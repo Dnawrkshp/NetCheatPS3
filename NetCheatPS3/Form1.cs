@@ -7,6 +7,7 @@ using System.Linq;
 using System.Text;
 using System.Windows.Forms;
 using System.Runtime.InteropServices;
+using System.Diagnostics;
 
 namespace NetCheatPS3
 {
@@ -899,12 +900,12 @@ namespace NetCheatPS3
                 else
                 {
                     if (align == 8)
-                        ValStr = int.Parse(schVal.Text).ToString("X16");
+                        ValStr = ulong.Parse(schVal.Text).ToString("X16");
                     else
-                        ValStr = int.Parse(schVal.Text).ToString("X8");
+                        ValStr = ulong.Parse(schVal.Text).ToString("X8");
 
                     if (schVal2.Visible)
-                        ValStr2 = int.Parse(schVal2.Text).ToString("X");
+                        ValStr2 = ulong.Parse(schVal2.Text).ToString("X");
                 }
             }
 
@@ -925,17 +926,17 @@ namespace NetCheatPS3
             else if (align == -1)
                 sVal = misc.StringToByteArray(schVal.Text);
             else if (align == -2)
-                sVal = BitConverter.GetBytes(ulong.Parse(misc.ReverseE(schVal.Text, schVal.Text.Length), System.Globalization.NumberStyles.HexNumber));
+                sVal = misc.StringBAToBA(schVal.Text);
             else if (align > 0)
-                sVal = BitConverter.GetBytes(int.Parse(misc.ReverseE(ValStr, (align * 2)), System.Globalization.NumberStyles.HexNumber));
+                sVal = misc.StringBAToBA(ValStr); //BitConverter.GetBytes(int.Parse(misc.ReverseE(ValStr, (align * 2)), System.Globalization.NumberStyles.HexNumber));
             rDif = rStop - rStart;
 
             if (schVal2.Visible)
             {
                 if (align == -2)
-                    c = BitConverter.GetBytes(ulong.Parse(misc.ReverseE(ValStr2, ValStr2.Length), System.Globalization.NumberStyles.HexNumber));
+                    c = misc.StringBAToBA(ValStr2);
                 else
-                    c = BitConverter.GetBytes(ulong.Parse(misc.ReverseE(ValStr2, (align * 2)), System.Globalization.NumberStyles.HexNumber));
+                    c = misc.StringBAToBA(ValStr2);
             }
 
             if ((Int64)rDif <= 0)
@@ -990,6 +991,8 @@ namespace NetCheatPS3
             schProg.Maximum = (int)rDif;
             SchResCnt = 0;
             int len = schVal.Text.Length;
+            if (!SchHexCheck.Checked)
+                len = sVal.Length;
             NextSAlign = align;
 
             //Calculate the size of the ret byte
@@ -1142,11 +1145,11 @@ namespace NetCheatPS3
                     return;
                 }
 
-                sVal = BitConverter.GetBytes(ulong.Parse(misc.ReverseE(ValStr, align * 2), System.Globalization.NumberStyles.HexNumber));
+                sVal = misc.StringBAToBA(ValStr);
                 if ((int)NextSAlign == -2)
                     align = ValStr2.Length;
                 if (schVal2.Visible)
-                    c = BitConverter.GetBytes(ulong.Parse(misc.ReverseE(ValStr2, align * 2), System.Globalization.NumberStyles.HexNumber));
+                    c = misc.StringBAToBA(ValStr2);
                 align = oldA;
             }
 
@@ -1157,13 +1160,13 @@ namespace NetCheatPS3
             if (NextSAlign == -1)
             {                                                           
                 sVal = misc.StringToByteArray(schVal.Text);                                                                            
-                a = NextSearchText(sVal, NextSAlign);
+                a = NextSearchText(sVal, c, NextSAlign);
             }
             else if (NextSAlign == -2)
             {
                 byte[] newB = new byte[schVal.Text.Length / 2];
                 Array.Copy(sVal, 0, newB, 0, schVal.Text.Length / 2);
-                a = NextSearchText(newB, NextSAlign);
+                a = NextSearchText(newB, c, NextSAlign);
             }
             else if (NextSAlign > 0)
                 a = NextSearch(sVal, c, NextSAlign);
@@ -1236,10 +1239,6 @@ namespace NetCheatPS3
         {
             ulong ResCnt = 0, sCount = 0;
             byte[] ret = new byte[sSize];
-            ulong sValLong = misc.ByteArrayToLong(sVal, 0, sVal.Length);
-            ulong cLong = 0;
-            if (c != null)
-                misc.ByteArrayToLong(c, 0, c.Length);
 
             PS3TMAPI.ProcessGetMemory(0, PS3TMAPI.UnitType.PPU, Form1.ProcessID, 0, sStart, ref ret);
 
@@ -1248,15 +1247,10 @@ namespace NetCheatPS3
                 //if (Form1.CancelSearch)
                 //    return 0;
 
-                if (misc.ArrayCompare(sValLong, ret, cLong, (int)align, (int)sCount, compMode))
+                byte[] argB = new byte[(int)align];
+                Array.Copy(ret, (int)sCount, argB, 0, argB.Length);
+                if (misc.ArrayCompare(sVal, argB, c, compMode))
                 {
-                    //MessageBox.Show("Found result at address: " + (recvCnt + sCount).ToString("X8"));
-                    //return;
-                    //Form1.SchRes[Form1.SchResCnt + ResCnt].addr = sStart + sCount;
-                    //Form1.SchRes[Form1.SchResCnt + ResCnt].val = sVal;
-                    //Form1.SchRes[Form1.SchResCnt + ResCnt].state = false;
-                    //Form1.SchRes[Form1.SchResCnt + ResCnt].align = align;
-
                     ListRes a = misc.GetlvVals(align, ret, (int)sCount);
 
                     string[] row = { (sStart + sCount).ToString("X8"), a.HexVal, a.DecVal, a.AlignStr };
@@ -1267,13 +1261,6 @@ namespace NetCheatPS3
                     fStream.WriteLine((sStart + sCount) + " " + misc.ByteAToStringInt(sVal, " ") + " " + align);
 
                     ResCnt++;
-                    /*
-                    if ((Form1.SchResCnt + ResCnt) >= Form1.MaxRes)
-                    {
-                        MessageBox.Show("Max number of results reached! (" + Form1.MaxRes.ToString() + ")");
-                        return ResCnt;
-                    }
-                    */
                 }
                 sCount += (ulong)align;
             }
@@ -1284,10 +1271,6 @@ namespace NetCheatPS3
         {
             ulong ResCnt = 0, sCount = 0;
             byte[] ret = new byte[sSize];
-            ulong sTextLong = misc.ByteArrayToLong(sText, 0, len / 2);
-            ulong cLong = 0;
-            if (c != null)
-                cLong = misc.ByteArrayToLong(c, 0, len / 2);
 
             PS3TMAPI.ProcessGetMemory(0, PS3TMAPI.UnitType.PPU, Form1.ProcessID, 0, sStart, ref ret);
 
@@ -1297,7 +1280,10 @@ namespace NetCheatPS3
                 if (Form1.CancelSearch == 1)
                     return 0;
                 
-                if (misc.ArrayCompare(sTextLong, ret, cLong, len / 2, (int)sCount, compMode))
+                //if (misc.ArrayCompare(sTextLong, ret, cLong, len / 2, (int)sCount, compMode))
+                byte[] argB = new byte[len / 2];
+                Array.Copy(ret, (int)sCount, argB, 0, argB.Length);
+                if (misc.ArrayCompare(sText, argB, c, compMode))
                 {
                     byte[] newB = new byte[len / 2];
                     Array.Copy(ret, (int)sCount, newB, 0, newB.Length);
@@ -1313,7 +1299,6 @@ namespace NetCheatPS3
                     else if ((int)NextSAlign == -2)
                         fStream.WriteLine((sStart + sCount) + " " + misc.ByteAToStringInt(sText, " ") + " " + (len / 2) + " -2");
 
-
                     ResCnt++;
                 }
                 sCount++;
@@ -1327,10 +1312,6 @@ namespace NetCheatPS3
             byte[] ret = new byte[align];
             schProg.Maximum = (int)SchResCnt + 1;
             schProg.Value = 0;
-            ulong sValLong = misc.ByteArrayToLong(sVal, 0, sVal.Length);
-            ulong cLong = 0;
-            if (c != null)
-                cLong = misc.ByteArrayToLong(c, 0, c.Length);
             ulong maxRes2 = SchResCnt;
             ulong x = 0;
             if (SchResCnt >= MaxRes)
@@ -1343,7 +1324,6 @@ namespace NetCheatPS3
 
                 for (cnt = 0; cnt < SchResCnt; cnt++)
                 {
-
                     tempSchRes = fileio.ReadDumpArray(dFileName, (int)cnt, (int)maxRes2 + (int)cnt, align);
 
                     for (x = 0; x < maxRes2; x++)
@@ -1374,9 +1354,9 @@ namespace NetCheatPS3
                         Application.DoEvents();
 
                         if (compMode == compINC || compMode == compDEC || compMode == compChg || compMode == compUChg)
-                            cLong = misc.ByteArrayToLong(tempSchRes[x].val, 0, tempSchRes[x].val.Length);
+                            c = tempSchRes[x].val;
 
-                        if (misc.ArrayCompare(sValLong, ret, cLong, align, 0, compMode))
+                        if (misc.ArrayCompare(sVal, ret, c, compMode))
                         {
                             file.WriteLine(tempSchRes[x].addr + " " + misc.ByteAToStringInt(ret, " ") + " " + align);
                             ResCnt++;
@@ -1392,12 +1372,11 @@ namespace NetCheatPS3
             return ResCnt;
         }
 
-        public ulong NextSearchText(byte[] sVal, int align)
+        public ulong NextSearchText(byte[] sVal, byte[] cVal, int align)
         {
             ulong cnt = 0, ResCnt = 0;
             schProg.Maximum = (int)SchResCnt;
             schProg.Value = 0;
-            ulong sValLong = misc.ByteArrayToLong(sVal, 0, sVal.Length);
             ulong maxRes2 = SchResCnt;
             ulong x = 0;
             if (SchResCnt >= MaxRes)
@@ -1431,66 +1410,12 @@ namespace NetCheatPS3
                         schProg.Value++;
                         Application.DoEvents();
 
-                        if (misc.ArrayCompare(sValLong, ret, 0, sVal.Length, 0, compMode))
+                        if (misc.ArrayCompare(sVal, ret, cVal, compMode))
                         {
                             string end = " -1";
                             if (NextSAlign == -2)
                                 end = " -2";
                             file.WriteLine(tempSchRes[x].addr + " " + misc.ByteAToStringInt(ret, " ") + " " + sVal.Length + end);
-                            ResCnt++;
-                        }
-                    }
-                }
-
-                System.IO.File.Delete(dFileName);
-                System.IO.File.Copy(dFileName + "2", dFileName);
-                System.IO.File.Delete(dFileName + "2");
-            }
-
-            return ResCnt;
-        }
-
-        public ulong NextSearchX(byte[] sVal, int align)
-        {
-            ulong cnt = 0, ResCnt = 0;
-            schProg.Maximum = (int)SchResCnt;
-            schProg.Value = 0;
-            ulong maxRes2 = SchResCnt;
-            ulong x = 0;
-            if (SchResCnt >= MaxRes)
-                maxRes2 = MaxCodes;
-
-            Form1.CodeRes[] tempSchRes = new Form1.CodeRes[maxRes2];
-            for (cnt = 0; cnt < SchResCnt; cnt++)
-            {
-
-                tempSchRes = fileio.ReadDumpArray(dFileName, (int)cnt, (int)maxRes2 + (int)cnt, align);
-
-                using (System.IO.StreamWriter file = new System.IO.StreamWriter(dFileName + "2", true))
-                {
-
-                    for (x = 0; x < maxRes2; x++)
-                    {
-                        cnt++;
-                        byte[] ret = new byte[sVal.Length];
-
-                        if (CancelSearch == 1)
-                        {
-                            schNSearch.Text = "Next Scan";
-                            schProg.Maximum = 0;
-                            schProg.Value = 0;
-
-                            return 0;
-                        }
-
-                        PS3TMAPI.ProcessGetMemory(0, PS3TMAPI.UnitType.PPU, Form1.ProcessID, 0, tempSchRes[x].addr, ref ret);
-
-                        schProg.Value++;
-                        Application.DoEvents();
-
-                        if (misc.ArrayCompare(sVal, ret, null, sVal.Length, 0, 0, compMode))
-                        {
-                            file.WriteLine(tempSchRes[x].addr + " " + misc.ByteAToStringInt(ret, " ") + " " + sVal.Length + " -1");
                             ResCnt++;
                         }
                     }
@@ -1849,7 +1774,7 @@ namespace NetCheatPS3
                 //Update range array
                 UpdateMemArray();
 
-                Text = "NetCheat PS3 by Dnawrkshp (" + new System.IO.FileInfo(fd.FileName).Name + ")";
+                Text = "NetCheat PS3 4.1 by Dnawrkshp (" + new System.IO.FileInfo(fd.FileName).Name + ")";
             }
         }
 
@@ -2005,7 +1930,7 @@ namespace NetCheatPS3
                 refPlugin.Text = "Close Plugins";
             }
 
-            loadPluginsToolStripMenuItem.Text = refPlugin.Text;
+            toolStripDropDownButton1.DropDownItems[1].Text = refPlugin.Text;
         }
 
         private void optButton_Click(object sender, EventArgs e)
@@ -2398,7 +2323,7 @@ namespace NetCheatPS3
                     //Update range array
                     UpdateMemArray();
 
-                    Text = "NetCheat PS3 by Dnawrkshp (" + recRangeBox.Items[ind].Text + ")";
+                    Text = "NetCheat PS3 4.1 by Dnawrkshp (" + recRangeBox.Items[ind].Text + ")";
 
                     int roInd = int.Parse(recRangeBox.Items[ind].Tag.ToString());
                     if (ind != 0)

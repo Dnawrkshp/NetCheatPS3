@@ -56,7 +56,7 @@ namespace NetCheatPS3
                 if ((x - 1 + offset) >= array.Length)
                     result += 0;
                 else
-                    result += (ulong)(array[x - 1 + offset] << pos);
+                    result += (ulong)((ulong)array[x - 1 + offset] << pos);
                 pos += 8;
             }
             return result;
@@ -158,7 +158,7 @@ namespace NetCheatPS3
 
             return ArrayCompare(a, intB, c, mode);
         }
-
+        
         public static bool ArrayCompare(ulong intA, ulong intB, ulong intC, int mode)
         {
             switch (mode)
@@ -217,6 +217,120 @@ namespace NetCheatPS3
         }
 
         /*
+         * Byte array version of searching
+         * Gets rid of the need for converting to ulong
+         * Supposedly speeds the process up but there maybe be a line of intersection
+         */
+        public static bool ArrayCompare(byte[] a, byte[] b, byte[] c, int mode)
+        {
+            int cnt = 0;
+
+            if (b.Length < a.Length)
+                return false;
+
+            switch (mode)
+            {
+                case Form1.compEq:
+                    if (isBAEqual(a, b))
+                        return true;
+                    break;
+                case Form1.compNEq:
+                    if (!isBAEqual(a, b))
+                        return true;
+                    break;
+                case Form1.compLT:
+                    for (cnt = 0; cnt < a.Length; cnt++)
+                        if (b[cnt] < a[cnt])
+                            return true;
+                    break;
+                case Form1.compLTE:
+                    for (cnt = 0; cnt < a.Length; cnt++)
+                        if ((b[cnt] < a[cnt]) || (isBAEqual(a, b)))
+                            return true;
+                    break;
+                case Form1.compGT:
+                    for (cnt = 0; cnt < a.Length; cnt++)
+                        if (b[cnt] > a[cnt])
+                            return true;
+                    break;
+                case Form1.compGTE:
+                    for (cnt = 0; cnt < a.Length; cnt++)
+                        if ((b[cnt] > a[cnt]) || (isBAEqual(a, b)))
+                            return true;
+                    break;
+                case Form1.compVBet:
+                    if (c == null || c.Length < a.Length)
+                        return false;
+
+                    //if ((intB >= intA) && (intB <= intC))
+                    for (cnt = 0; cnt < a.Length; cnt++)
+                        if ((b[cnt] < a[cnt]) || (b[cnt] > c[cnt]))
+                            return false;
+
+                    return true;
+                case Form1.compINC:
+                    if (c == null || c.Length < a.Length)
+                        return false;
+
+                    for (cnt = 0; cnt < a.Length; cnt++)
+                        a[cnt] += c[cnt];
+
+                    if (isBAEqual(a, b))
+                        return true;
+                    break;
+                case Form1.compDEC:
+                    if (c == null || c.Length < a.Length)
+                        return false;
+
+                    for (cnt = 0; cnt < a.Length; cnt++)
+                        a[cnt] -= c[cnt];
+
+                    if (isBAEqual(a, b))
+                        return true;
+                    break;
+                case Form1.compChg:
+                    if (c == null || b.Length < c.Length)
+                        return false;
+
+                    if (!isBAEqual(b, c))
+                        return true;
+                    break;
+                case Form1.compUChg:
+                    if (c == null || b.Length < c.Length)
+                        return false;
+
+                    if (isBAEqual(b, c))
+                        return true;
+                    break;
+                case Form1.compANEq:
+                    for (cnt = 0; cnt < a.Length; cnt++)
+                        b[cnt] &= a[cnt];
+
+                    if (isBAEqual(a, b))
+                        return true;
+                    break;
+            }
+
+            return false;
+        }
+
+        /*
+         * Determines whether the byte array a is equal to the byte array b
+         */
+        private static bool isBAEqual(byte[] a, byte[] b)
+        {
+            bool ret = true;
+
+            for (int cnt = 0; cnt < a.Length; cnt++)
+                if (a[cnt] == b[cnt])
+                    ret &= true;
+                else
+                    ret &= false;
+
+            return ret;
+        }
+
+        /*
          * Removes the filename in a path
          * The returned path doesn't end with a '\\' or a '/'
          */
@@ -256,6 +370,22 @@ namespace NetCheatPS3
                 text = "0" + text;
 
             return text;
+        }
+
+        /*
+         * Converts a string byte array to byte array representing its hexadecimal form
+         * "01020304" = { 0x01, 0x02, 0x03, 0x04 }
+         */
+        public static byte[] StringBAToBA(string str)
+        {
+            if (str == null)
+                return new byte[1];
+
+            byte[] ret = new byte[str.Length / 2];
+            for (int x = 0; x < str.Length; x += 2)
+                ret[x / 2] = byte.Parse(sMid(str, x, 2), System.Globalization.NumberStyles.HexNumber);
+
+            return ret;
         }
 
         /*
@@ -409,7 +539,7 @@ namespace NetCheatPS3
                         temp[b] = ret[off + b];
                     }
                     Array.Reverse(temp);
-                    tempInt = misc.ByteArrayToLong(temp, 0, temp.Length);
+                    tempInt = misc.ByteArrayToLong(temp, 0, temp.Length - 1);
                     string val = tempInt.ToString("X");
                     if ((val.Length % 2) != 0)
                         val = "0" + val;

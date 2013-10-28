@@ -304,10 +304,13 @@ namespace NetCheatPS3
                 return 1;
 
             //Check each character
+            int spCnt = 0;
             foreach (char c in splitList[cnt].ToUpper())
             {
-                if ((c < 0x30 || c > 0x46) && c != ' ')
+                if (((c < 0x30 || c > 0x46) && c != ' ') || spCnt > 2)
                     return 1;
+                if (c == ' ')
+                    spCnt++;
             }
 
             return 0;

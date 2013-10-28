@@ -98,14 +98,14 @@
             this.refPlugin = new System.Windows.Forms.Button();
             this.optButton = new System.Windows.Forms.Button();
             this.statusStrip1 = new System.Windows.Forms.StatusStrip();
-            this.toolStripDropDownButton1 = new System.Windows.Forms.ToolStripDropDownButton();
+            this.statusLabel1 = new System.Windows.Forms.ToolStripStatusLabel();
             this.optionsToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.loadPluginsToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.shutdownPS3ToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.disconnectToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.attachToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.connectToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
-            this.statusLabel1 = new System.Windows.Forms.ToolStripStatusLabel();
+            this.toolStripDropDownButton1 = new System.Windows.Forms.ToolStripDropDownButton();
             this.copyToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.deleteToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.refreshFromPS3ToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
@@ -915,13 +915,60 @@
             // 
             this.statusStrip1.BackColor = System.Drawing.Color.Black;
             this.statusStrip1.Items.AddRange(new System.Windows.Forms.ToolStripItem[] {
-            this.toolStripDropDownButton1,
-            this.statusLabel1});
+            this.statusLabel1,
+            this.toolStripDropDownButton1});
             this.statusStrip1.Location = new System.Drawing.Point(0, 441);
             this.statusStrip1.Name = "statusStrip1";
             this.statusStrip1.Size = new System.Drawing.Size(485, 22);
             this.statusStrip1.TabIndex = 9;
             this.statusStrip1.Text = "statusStrip1";
+            // 
+            // statusLabel1
+            // 
+            this.statusLabel1.Name = "statusLabel1";
+            this.statusLabel1.Size = new System.Drawing.Size(0, 17);
+            // 
+            // optionsToolStripMenuItem
+            // 
+            this.optionsToolStripMenuItem.Name = "optionsToolStripMenuItem";
+            this.optionsToolStripMenuItem.Size = new System.Drawing.Size(152, 22);
+            this.optionsToolStripMenuItem.Text = "Options";
+            this.optionsToolStripMenuItem.Click += new System.EventHandler(this.optionsToolStripMenuItem_Click);
+            // 
+            // loadPluginsToolStripMenuItem
+            // 
+            this.loadPluginsToolStripMenuItem.Name = "loadPluginsToolStripMenuItem";
+            this.loadPluginsToolStripMenuItem.Size = new System.Drawing.Size(152, 22);
+            this.loadPluginsToolStripMenuItem.Text = "Load Plugins";
+            this.loadPluginsToolStripMenuItem.Click += new System.EventHandler(this.loadPluginsToolStripMenuItem_Click);
+            // 
+            // shutdownPS3ToolStripMenuItem
+            // 
+            this.shutdownPS3ToolStripMenuItem.Name = "shutdownPS3ToolStripMenuItem";
+            this.shutdownPS3ToolStripMenuItem.Size = new System.Drawing.Size(152, 22);
+            this.shutdownPS3ToolStripMenuItem.Text = "Shutdown PS3";
+            this.shutdownPS3ToolStripMenuItem.Click += new System.EventHandler(this.shutdownPS3ToolStripMenuItem_Click);
+            // 
+            // disconnectToolStripMenuItem
+            // 
+            this.disconnectToolStripMenuItem.Name = "disconnectToolStripMenuItem";
+            this.disconnectToolStripMenuItem.Size = new System.Drawing.Size(152, 22);
+            this.disconnectToolStripMenuItem.Text = "Disconnect";
+            this.disconnectToolStripMenuItem.Click += new System.EventHandler(this.disconnectToolStripMenuItem_Click);
+            // 
+            // attachToolStripMenuItem
+            // 
+            this.attachToolStripMenuItem.Name = "attachToolStripMenuItem";
+            this.attachToolStripMenuItem.Size = new System.Drawing.Size(152, 22);
+            this.attachToolStripMenuItem.Text = "Attach";
+            this.attachToolStripMenuItem.Click += new System.EventHandler(this.attachToolStripMenuItem_Click);
+            // 
+            // connectToolStripMenuItem
+            // 
+            this.connectToolStripMenuItem.Name = "connectToolStripMenuItem";
+            this.connectToolStripMenuItem.Size = new System.Drawing.Size(152, 22);
+            this.connectToolStripMenuItem.Text = "Connect";
+            this.connectToolStripMenuItem.Click += new System.EventHandler(this.connectToolStripMenuItem_Click);
             // 
             // toolStripDropDownButton1
             // 
@@ -937,54 +984,6 @@
             this.toolStripDropDownButton1.ImageTransparentColor = System.Drawing.Color.BlueViolet;
             this.toolStripDropDownButton1.Name = "toolStripDropDownButton1";
             this.toolStripDropDownButton1.Size = new System.Drawing.Size(29, 20);
-            // 
-            // optionsToolStripMenuItem
-            // 
-            this.optionsToolStripMenuItem.Name = "optionsToolStripMenuItem";
-            this.optionsToolStripMenuItem.Size = new System.Drawing.Size(150, 22);
-            this.optionsToolStripMenuItem.Text = "Options";
-            this.optionsToolStripMenuItem.Click += new System.EventHandler(this.optionsToolStripMenuItem_Click);
-            // 
-            // loadPluginsToolStripMenuItem
-            // 
-            this.loadPluginsToolStripMenuItem.Name = "loadPluginsToolStripMenuItem";
-            this.loadPluginsToolStripMenuItem.Size = new System.Drawing.Size(150, 22);
-            this.loadPluginsToolStripMenuItem.Text = "Load Plugins";
-            this.loadPluginsToolStripMenuItem.Click += new System.EventHandler(this.loadPluginsToolStripMenuItem_Click);
-            // 
-            // shutdownPS3ToolStripMenuItem
-            // 
-            this.shutdownPS3ToolStripMenuItem.Name = "shutdownPS3ToolStripMenuItem";
-            this.shutdownPS3ToolStripMenuItem.Size = new System.Drawing.Size(150, 22);
-            this.shutdownPS3ToolStripMenuItem.Text = "Shutdown PS3";
-            this.shutdownPS3ToolStripMenuItem.Click += new System.EventHandler(this.shutdownPS3ToolStripMenuItem_Click);
-            // 
-            // disconnectToolStripMenuItem
-            // 
-            this.disconnectToolStripMenuItem.Name = "disconnectToolStripMenuItem";
-            this.disconnectToolStripMenuItem.Size = new System.Drawing.Size(150, 22);
-            this.disconnectToolStripMenuItem.Text = "Disconnect";
-            this.disconnectToolStripMenuItem.Click += new System.EventHandler(this.disconnectToolStripMenuItem_Click);
-            // 
-            // attachToolStripMenuItem
-            // 
-            this.attachToolStripMenuItem.Name = "attachToolStripMenuItem";
-            this.attachToolStripMenuItem.Size = new System.Drawing.Size(150, 22);
-            this.attachToolStripMenuItem.Text = "Attach";
-            this.attachToolStripMenuItem.Click += new System.EventHandler(this.attachToolStripMenuItem_Click);
-            // 
-            // connectToolStripMenuItem
-            // 
-            this.connectToolStripMenuItem.Name = "connectToolStripMenuItem";
-            this.connectToolStripMenuItem.Size = new System.Drawing.Size(150, 22);
-            this.connectToolStripMenuItem.Text = "Connect";
-            this.connectToolStripMenuItem.Click += new System.EventHandler(this.connectToolStripMenuItem_Click);
-            // 
-            // statusLabel1
-            // 
-            this.statusLabel1.Name = "statusLabel1";
-            this.statusLabel1.Size = new System.Drawing.Size(88, 17);
-            this.statusLabel1.Text = "Not Connected";
             // 
             // copyToolStripMenuItem
             // 
@@ -1043,7 +1042,7 @@
             this.MaximumSize = new System.Drawing.Size(501, 501);
             this.MinimumSize = new System.Drawing.Size(501, 501);
             this.Name = "Form1";
-            this.Text = "NetCheat PS3 4.1 by Dnawrkshp";
+            this.Text = "NetCheat PS3 by Dnawrkshp";
             this.Load += new System.EventHandler(this.Main_Load);
             this.KeyUp += new System.Windows.Forms.KeyEventHandler(this.Form1_KeyUp);
             this.TabCon.ResumeLayout(false);
@@ -1133,6 +1132,7 @@
         private System.Windows.Forms.Button saveSRes;
         private System.Windows.Forms.PictureBox plugIcon;
         private System.Windows.Forms.StatusStrip statusStrip1;
+        private System.Windows.Forms.ToolStripStatusLabel statusLabel1;
         private System.Windows.Forms.ToolStripDropDownButton toolStripDropDownButton1;
         private System.Windows.Forms.ToolStripMenuItem optionsToolStripMenuItem;
         private System.Windows.Forms.ToolStripMenuItem loadPluginsToolStripMenuItem;
@@ -1145,7 +1145,6 @@
         private System.Windows.Forms.ToolStripMenuItem refreshFromPS3ToolStripMenuItem;
         private System.Windows.Forms.ToolStripMenuItem refreshFromDumptxtToolStripMenuItem;
         private System.Windows.Forms.ContextMenuStrip contextMenuStrip1;
-        private System.Windows.Forms.ToolStripStatusLabel statusLabel1;
     }
 }
 
