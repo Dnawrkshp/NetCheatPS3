@@ -3,7 +3,6 @@ Written by Dnawrkshp
 
 Compile:
 	Written in Visual Studio 2012 (C#)
-	Make sure to add the ps3tmapi_net.dll to the /bin/x86/Debug folder
 
 Run:
 	If you want to use the ps3tmapi_net.dll, just install the ProDG TM v420.1.14.7
