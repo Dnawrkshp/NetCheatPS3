@@ -71,6 +71,8 @@
             this.schRange1 = new System.Windows.Forms.TextBox();
             this.schSearch = new System.Windows.Forms.Button();
             this.RangeTab = new System.Windows.Forms.TabPage();
+            this.findRangeProgBar = new System.Windows.Forms.ProgressBar();
+            this.findRanges = new System.Windows.Forms.Button();
             this.recRangeBox = new System.Windows.Forms.ListView();
             this.colFileName = ((System.Windows.Forms.ColumnHeader)(new System.Windows.Forms.ColumnHeader()));
             this.label3 = new System.Windows.Forms.Label();
@@ -105,12 +107,15 @@
             this.disconnectToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.attachToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.connectToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
+            this.updateStripMenuItem1 = new System.Windows.Forms.ToolStripMenuItem();
             this.statusLabel1 = new System.Windows.Forms.ToolStripStatusLabel();
             this.copyToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.deleteToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.refreshFromPS3ToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.refreshFromDumptxtToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.contextMenuStrip1 = new System.Windows.Forms.ContextMenuStrip(this.components);
+            this.pauseGameButt = new System.Windows.Forms.Button();
+            this.startGameButt = new System.Windows.Forms.Button();
             this.TabCon.SuspendLayout();
             this.CodesTab.SuspendLayout();
             this.SearchTab.SuspendLayout();
@@ -132,6 +137,7 @@
             this.TabCon.SelectedIndex = 0;
             this.TabCon.Size = new System.Drawing.Size(461, 393);
             this.TabCon.TabIndex = 0;
+            this.TabCon.SelectedIndexChanged += new System.EventHandler(this.TabCon_SelectedIndexChanged);
             this.TabCon.KeyUp += new System.Windows.Forms.KeyEventHandler(this.TabCon_KeyUp);
             // 
             // CodesTab
@@ -454,7 +460,8 @@
             this.SchHexCheck.AutoSize = true;
             this.SchHexCheck.Checked = true;
             this.SchHexCheck.CheckState = System.Windows.Forms.CheckState.Checked;
-            this.SchHexCheck.Location = new System.Drawing.Point(4, 6);
+            this.SchHexCheck.Font = new System.Drawing.Font("Microsoft Sans Serif", 8.25F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.SchHexCheck.Location = new System.Drawing.Point(0, 6);
             this.SchHexCheck.Name = "SchHexCheck";
             this.SchHexCheck.Size = new System.Drawing.Size(45, 17);
             this.SchHexCheck.TabIndex = 35;
@@ -603,6 +610,8 @@
             // 
             this.RangeTab.AutoScroll = true;
             this.RangeTab.BackColor = System.Drawing.Color.Black;
+            this.RangeTab.Controls.Add(this.findRangeProgBar);
+            this.RangeTab.Controls.Add(this.findRanges);
             this.RangeTab.Controls.Add(this.recRangeBox);
             this.RangeTab.Controls.Add(this.label3);
             this.RangeTab.Controls.Add(this.RangeDown);
@@ -622,6 +631,24 @@
             this.RangeTab.TabIndex = 2;
             this.RangeTab.Text = "Range";
             // 
+            // findRangeProgBar
+            // 
+            this.findRangeProgBar.Location = new System.Drawing.Point(235, 34);
+            this.findRangeProgBar.Name = "findRangeProgBar";
+            this.findRangeProgBar.Size = new System.Drawing.Size(115, 30);
+            this.findRangeProgBar.TabIndex = 13;
+            // 
+            // findRanges
+            // 
+            this.findRanges.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
+            this.findRanges.Location = new System.Drawing.Point(356, 34);
+            this.findRanges.Name = "findRanges";
+            this.findRanges.Size = new System.Drawing.Size(91, 30);
+            this.findRanges.TabIndex = 12;
+            this.findRanges.Text = "Find Ranges";
+            this.findRanges.UseVisualStyleBackColor = true;
+            this.findRanges.Click += new System.EventHandler(this.findRanges_Click);
+            // 
             // recRangeBox
             // 
             this.recRangeBox.BackColor = System.Drawing.Color.Black;
@@ -631,10 +658,10 @@
             this.recRangeBox.ForeColor = System.Drawing.Color.FromArgb(((int)(((byte)(0)))), ((int)(((byte)(130)))), ((int)(((byte)(210)))));
             this.recRangeBox.HeaderStyle = System.Windows.Forms.ColumnHeaderStyle.None;
             this.recRangeBox.LabelWrap = false;
-            this.recRangeBox.Location = new System.Drawing.Point(235, 60);
+            this.recRangeBox.Location = new System.Drawing.Point(235, 85);
             this.recRangeBox.MultiSelect = false;
             this.recRangeBox.Name = "recRangeBox";
-            this.recRangeBox.Size = new System.Drawing.Size(212, 192);
+            this.recRangeBox.Size = new System.Drawing.Size(212, 167);
             this.recRangeBox.TabIndex = 11;
             this.recRangeBox.TabStop = false;
             this.recRangeBox.UseCompatibleStateImageBehavior = false;
@@ -648,7 +675,7 @@
             // 
             // label3
             // 
-            this.label3.Location = new System.Drawing.Point(235, 42);
+            this.label3.Location = new System.Drawing.Point(235, 67);
             this.label3.Name = "label3";
             this.label3.Size = new System.Drawing.Size(212, 15);
             this.label3.TabIndex = 10;
@@ -932,7 +959,8 @@
             this.shutdownPS3ToolStripMenuItem,
             this.disconnectToolStripMenuItem,
             this.attachToolStripMenuItem,
-            this.connectToolStripMenuItem});
+            this.connectToolStripMenuItem,
+            this.updateStripMenuItem1});
             this.toolStripDropDownButton1.Image = ((System.Drawing.Image)(resources.GetObject("toolStripDropDownButton1.Image")));
             this.toolStripDropDownButton1.ImageTransparentColor = System.Drawing.Color.BlueViolet;
             this.toolStripDropDownButton1.Name = "toolStripDropDownButton1";
@@ -941,44 +969,51 @@
             // optionsToolStripMenuItem
             // 
             this.optionsToolStripMenuItem.Name = "optionsToolStripMenuItem";
-            this.optionsToolStripMenuItem.Size = new System.Drawing.Size(150, 22);
+            this.optionsToolStripMenuItem.Size = new System.Drawing.Size(165, 22);
             this.optionsToolStripMenuItem.Text = "Options";
             this.optionsToolStripMenuItem.Click += new System.EventHandler(this.optionsToolStripMenuItem_Click);
             // 
             // loadPluginsToolStripMenuItem
             // 
             this.loadPluginsToolStripMenuItem.Name = "loadPluginsToolStripMenuItem";
-            this.loadPluginsToolStripMenuItem.Size = new System.Drawing.Size(150, 22);
+            this.loadPluginsToolStripMenuItem.Size = new System.Drawing.Size(165, 22);
             this.loadPluginsToolStripMenuItem.Text = "Load Plugins";
             this.loadPluginsToolStripMenuItem.Click += new System.EventHandler(this.loadPluginsToolStripMenuItem_Click);
             // 
             // shutdownPS3ToolStripMenuItem
             // 
             this.shutdownPS3ToolStripMenuItem.Name = "shutdownPS3ToolStripMenuItem";
-            this.shutdownPS3ToolStripMenuItem.Size = new System.Drawing.Size(150, 22);
+            this.shutdownPS3ToolStripMenuItem.Size = new System.Drawing.Size(165, 22);
             this.shutdownPS3ToolStripMenuItem.Text = "Shutdown PS3";
             this.shutdownPS3ToolStripMenuItem.Click += new System.EventHandler(this.shutdownPS3ToolStripMenuItem_Click);
             // 
             // disconnectToolStripMenuItem
             // 
             this.disconnectToolStripMenuItem.Name = "disconnectToolStripMenuItem";
-            this.disconnectToolStripMenuItem.Size = new System.Drawing.Size(150, 22);
+            this.disconnectToolStripMenuItem.Size = new System.Drawing.Size(165, 22);
             this.disconnectToolStripMenuItem.Text = "Disconnect";
             this.disconnectToolStripMenuItem.Click += new System.EventHandler(this.disconnectToolStripMenuItem_Click);
             // 
             // attachToolStripMenuItem
             // 
             this.attachToolStripMenuItem.Name = "attachToolStripMenuItem";
-            this.attachToolStripMenuItem.Size = new System.Drawing.Size(150, 22);
+            this.attachToolStripMenuItem.Size = new System.Drawing.Size(165, 22);
             this.attachToolStripMenuItem.Text = "Attach";
             this.attachToolStripMenuItem.Click += new System.EventHandler(this.attachToolStripMenuItem_Click);
             // 
             // connectToolStripMenuItem
             // 
             this.connectToolStripMenuItem.Name = "connectToolStripMenuItem";
-            this.connectToolStripMenuItem.Size = new System.Drawing.Size(150, 22);
+            this.connectToolStripMenuItem.Size = new System.Drawing.Size(165, 22);
             this.connectToolStripMenuItem.Text = "Connect";
             this.connectToolStripMenuItem.Click += new System.EventHandler(this.connectToolStripMenuItem_Click);
+            // 
+            // updateStripMenuItem1
+            // 
+            this.updateStripMenuItem1.Name = "updateStripMenuItem1";
+            this.updateStripMenuItem1.Size = new System.Drawing.Size(165, 22);
+            this.updateStripMenuItem1.Text = "Update NetCheat";
+            this.updateStripMenuItem1.Click += new System.EventHandler(this.updateStripMenuItem1_Click);
             // 
             // statusLabel1
             // 
@@ -1024,6 +1059,32 @@
             this.contextMenuStrip1.Name = "contextMenuStrip1";
             this.contextMenuStrip1.Size = new System.Drawing.Size(196, 92);
             // 
+            // pauseGameButt
+            // 
+            this.pauseGameButt.BackgroundImage = ((System.Drawing.Image)(resources.GetObject("pauseGameButt.BackgroundImage")));
+            this.pauseGameButt.BackgroundImageLayout = System.Windows.Forms.ImageLayout.Stretch;
+            this.pauseGameButt.Location = new System.Drawing.Point(450, 37);
+            this.pauseGameButt.Name = "pauseGameButt";
+            this.pauseGameButt.Size = new System.Drawing.Size(24, 24);
+            this.pauseGameButt.TabIndex = 12;
+            this.pauseGameButt.UseVisualStyleBackColor = true;
+            this.pauseGameButt.BackColorChanged += new System.EventHandler(this.pauseGameButt_BackColorChanged);
+            this.pauseGameButt.ForeColorChanged += new System.EventHandler(this.pauseGameButt_ForeColorChanged);
+            this.pauseGameButt.Click += new System.EventHandler(this.pauseGameButt_Click);
+            // 
+            // startGameButt
+            // 
+            this.startGameButt.BackgroundImage = ((System.Drawing.Image)(resources.GetObject("startGameButt.BackgroundImage")));
+            this.startGameButt.BackgroundImageLayout = System.Windows.Forms.ImageLayout.Stretch;
+            this.startGameButt.Location = new System.Drawing.Point(420, 37);
+            this.startGameButt.Name = "startGameButt";
+            this.startGameButt.Size = new System.Drawing.Size(24, 24);
+            this.startGameButt.TabIndex = 13;
+            this.startGameButt.UseVisualStyleBackColor = true;
+            this.startGameButt.BackColorChanged += new System.EventHandler(this.startGameButt_BackColorChanged);
+            this.startGameButt.ForeColorChanged += new System.EventHandler(this.startGameButt_ForeColorChanged);
+            this.startGameButt.Click += new System.EventHandler(this.startGameButt_Click);
+            // 
             // Form1
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
@@ -1031,6 +1092,8 @@
             this.AutoScroll = true;
             this.BackColor = System.Drawing.Color.Black;
             this.ClientSize = new System.Drawing.Size(485, 463);
+            this.Controls.Add(this.startGameButt);
+            this.Controls.Add(this.pauseGameButt);
             this.Controls.Add(this.optButton);
             this.Controls.Add(this.refPlugin);
             this.Controls.Add(this.statusStrip1);
@@ -1043,8 +1106,9 @@
             this.MaximumSize = new System.Drawing.Size(501, 501);
             this.MinimumSize = new System.Drawing.Size(501, 501);
             this.Name = "Form1";
-            this.Text = "NetCheat PS3 4.1 by Dnawrkshp";
+            this.Text = "NetCheat PS3 by Dnawrkshp";
             this.Load += new System.EventHandler(this.Main_Load);
+            this.KeyDown += new System.Windows.Forms.KeyEventHandler(this.Form1_KeyDown);
             this.KeyUp += new System.Windows.Forms.KeyEventHandler(this.Form1_KeyUp);
             this.TabCon.ResumeLayout(false);
             this.CodesTab.ResumeLayout(false);
@@ -1146,6 +1210,11 @@
         private System.Windows.Forms.ToolStripMenuItem refreshFromDumptxtToolStripMenuItem;
         private System.Windows.Forms.ContextMenuStrip contextMenuStrip1;
         private System.Windows.Forms.ToolStripStatusLabel statusLabel1;
+        private System.Windows.Forms.ToolStripMenuItem updateStripMenuItem1;
+        private System.Windows.Forms.ProgressBar findRangeProgBar;
+        private System.Windows.Forms.Button findRanges;
+        private System.Windows.Forms.Button pauseGameButt;
+        private System.Windows.Forms.Button startGameButt;
     }
 }
 

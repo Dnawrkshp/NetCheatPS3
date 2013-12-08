@@ -70,6 +70,12 @@ namespace NetCheatPS3
                 bcolCB.Text = "Custom";
             if (fcolCB.Text == "")
                 fcolCB.Text = "Custom";
+
+            /* API */
+            if (Form1.apiDLL == 0)
+                tmapiDLL.Checked = true;
+            else
+                ccapiDLL.Checked = true;
         }
 
         private string ParseKeyData(Keys Key)
@@ -223,6 +229,8 @@ namespace NetCheatPS3
             ib.fmLeft = this.Left;
             ib.fmTop = this.Top;
             ib.TopMost = true;
+            ib.BackColor = Form1.ncBackColor;
+            ib.ForeColor = Form1.ncForeColor;
             ib.Show();
 
             while (ib.ret == 0)
@@ -245,21 +253,22 @@ namespace NetCheatPS3
             if (Form1.settFile == "")
                 return;
 
-            using (System.IO.StreamWriter fd = new System.IO.StreamWriter(Form1.settFile, false))
-            {
-                //KeyBinds
-                for (int x = 0; x < Form1.keyBinds.Length; x++)
-                {
-                    string key = Form1.keyBinds[x].GetHashCode().ToString();
-                    fd.WriteLine(key);
-                }
+            //KeyBinds
+            //for (int x = 0; x < Form1.keyBinds.Length; x++)
+            //{
+            //    string key = Form1.keyBinds[x].GetHashCode().ToString();
+            //    fd.WriteLine(key);
+            //}
 
-                //Colors
-                Color bColor = Color.FromArgb(int.Parse(bcolR.Text), int.Parse(bcolG.Text), int.Parse(bcolB.Text));
-                fd.WriteLine(bColor.Name);
-                Color fColor = Color.FromArgb(int.Parse(fcolR.Text), int.Parse(fcolG.Text), int.Parse(fcolB.Text));
-                fd.WriteLine(fColor.Name);
-            }
+            //Colors
+            Form1.ncBackColor = Color.FromArgb(int.Parse(bcolR.Text), int.Parse(bcolG.Text), int.Parse(bcolB.Text));
+            Form1.ncForeColor = Color.FromArgb(int.Parse(fcolR.Text), int.Parse(fcolG.Text), int.Parse(fcolB.Text));
+
+            //API
+            Form1.apiDLL = ccapiDLL.Checked ? 1 : 0;
+            Form1.PS3.ChangeAPI((Form1.apiDLL == 0) ? PS3Lib.SelectAPI.TargetManager : PS3Lib.SelectAPI.ControlConsole);
+
+            Form1.SaveOptions();
         }
 
         private void cancButt_Click(object sender, EventArgs e)

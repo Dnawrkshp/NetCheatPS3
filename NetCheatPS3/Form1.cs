@@ -8,22 +8,39 @@ using System.Text;
 using System.Windows.Forms;
 using System.Runtime.InteropServices;
 using System.Diagnostics;
+using System.Net;
+using System.IO;
+using System.Speech.Synthesis;
+using System.Speech.Recognition;
+using PS3Lib;
+using System.Reflection;
+using System.IO.Compression;
 
 namespace NetCheatPS3
 {
 
     public partial class Form1 : Form
     {
+
         #region NetCheat PS3 Global Variables
+
+        public static string versionNum = "4.30";
+
+        public static PS3API PS3 = new PS3API();
+        public static string IPAddrStr = "";
+
+        bool isRecognizing = false;
+        SpeechRecognitionEngine sRecognize = new SpeechRecognitionEngine();
         public static uint ProcessID;
         public static uint[] processIDs;
-        public static PS3TMAPI.SNRESULT snresult;
+        public static PS3Lib.NET.PS3TMAPI.SNRESULT snresult;
         public static string usage;
         public static string Info;
-        public static PS3TMAPI.ConnectStatus connectStatus;
+        public static PS3Lib.NET.PS3TMAPI.ConnectStatus connectStatus;
         public static string Status;
         public static string MemStatus;
         public static bool connected = false;
+        public static bool attached = false;
         public static int CodesCount = 0; /* Number of codes */
         public static int ConstantLoop = 0; /* 0 = loop but don't exec, 1 = loop and exec, 2 = exit */
         public static bool bComment = false; // If true, all code lines will be skipped until a "*/" is reached
@@ -116,6 +133,8 @@ namespace NetCheatPS3
             "Initial Scan", "Next Scan", "Stop", "Refresh Results",
             "Toggle Constant Write", "Write"
         };
+        /* API dll */
+        public static int apiDLL = 0;
         /* Settings file path */
         public static string settFile = "";
         /* String array that holds each range import */
@@ -143,15 +162,155 @@ namespace NetCheatPS3
         /* API related functions */
         public static void apiSetMem(ulong addr, byte[] val) //Set the memory
         {
-            if (val != null && snresult == PS3TMAPI.SNRESULT.SN_S_OK)
-                PS3TMAPI.ProcessSetMemory(0, PS3TMAPI.UnitType.PPU, Form1.ProcessID, 0, addr, val);
+            if (val != null && connected)
+                PS3.SetMemory((uint)addr, val);
+            //PS3TMAPI.ProcessSetMemory(0, PS3TMAPI.UnitType.PPU, Form1.ProcessID, 0, addr, val);
         }
 
-        public static void apiGetMem(ulong addr, ref byte[] val) //Gets the memory as a byte array
+        public static bool apiGetMem(ulong addr, ref byte[] val) //Gets the memory as a byte array
         {
-            if (val != null && snresult == PS3TMAPI.SNRESULT.SN_S_OK)
-                PS3TMAPI.ProcessGetMemory(0, PS3TMAPI.UnitType.PPU, Form1.ProcessID, 0, addr, ref val);
+            bool ret = false;
+            if (val != null && connected)
+            {
+                if (apiDLL == 0)
+                    ret = (PS3Lib.NET.PS3TMAPI.ProcessGetMemory(0, PS3Lib.NET.PS3TMAPI.UnitType.PPU, PS3Lib.TMAPI.Parameters.ProcessID, 0, addr, ref val) ==
+                        PS3Lib.NET.PS3TMAPI.SNRESULT.SN_S_OK);
+                else
+                    ret = (PS3.CCAPI.GetMemory(addr, val) >= 0);
+            }
+            return ret;
         }
+        #endregion
+
+        #region NetCheat Updater
+
+        public void RunUpdateChecker(bool allowForce)
+        {
+            string[] updateStr = CheckForUpdate();
+            string newVer = updateStr[0].Replace("\r", "").Replace("\n", "");
+            bool update = int.Parse(newVer.Replace(".", "")) > int.Parse(versionNum.Replace(".", ""));
+            string title = update ?
+                "NetCheat PS3 Version " + newVer + " is available for download.\nWould you like to update and restart NetCheat?" :
+                "NetCheat is up-to-date! Would you like to Force Update?";
+            string updateArg = "";
+            if (updateStr.Length > 1)
+                updateArg = String.Join(Environment.NewLine, updateStr);
+            else
+                updateArg = "";
+
+            //string title = update ? "Update Available" : "Force Update?";
+
+            bool allow = false;
+            if (allowForce || update)
+            {
+                updateForm mBox = new updateForm();
+                mBox.Title = title;
+                mBox.UpdateStr = updateArg;
+                mBox.ForeColor = ForeColor;
+                mBox.BackColor = BackColor;
+                mBox.Show();
+
+                while (mBox.Return < 0)
+                    Application.DoEvents();
+                allow = (mBox.Return == 0) ? false : true;
+                mBox.Close();
+            }
+
+            if (allow)
+            {
+
+                Form loadingFrm = new Form();
+                loadingFrm.FormBorderStyle = System.Windows.Forms.FormBorderStyle.FixedSingle;
+                loadingFrm.ControlBox = false;
+                loadingFrm.Size = new System.Drawing.Size(200, 75);
+                Label lbl = new Label();
+                lbl.Text = "Updating NetCheat PS3...";
+                lbl.AutoSize = false;
+                lbl.Size = loadingFrm.Size;
+                lbl.Location = new Point(0, 0);
+                lbl.TextAlign = ContentAlignment.MiddleCenter;
+                lbl.Font = new System.Drawing.Font(this.Font.FontFamily, 15.0f);
+                loadingFrm.Controls.Add(lbl);
+                loadingFrm.BackColor = BackColor;
+                loadingFrm.ForeColor = ForeColor;
+                loadingFrm.Show();
+                loadingFrm.TopLevel = true;
+                loadingFrm.Location = new Point(Screen.PrimaryScreen.WorkingArea.Width / 2 - (loadingFrm.Width / 2),
+                    Screen.PrimaryScreen.WorkingArea.Height / 2 - (loadingFrm.Height / 2));
+                Application.DoEvents();
+
+                UpdateNetCheatPS3();
+            }
+        }
+
+        public string[] CheckForUpdate()
+        {
+            string webpath = "http://www.cod-orc.com/NetCheatUpdate.txt";
+            string store = Path.GetTempFileName();
+
+            WebClient Client = new WebClient();
+            Client.DownloadFile(webpath, store);
+
+            string[] ver = File.ReadAllLines(store);
+            File.Delete(store);
+
+            return ver;
+        }
+
+        public void UpdateNetCheatPS3()
+        {
+            string webpath = "http://www.cod-orc.com/ncUpdateDir.zip";
+            //FileInfo ncFI = new FileInfo(Application.ExecutablePath);
+            string store = Application.StartupPath + "\\" + "ncUpdateDir.zip";
+
+            WebClient Client = new WebClient();
+            Client.DownloadFile(webpath, store);
+
+            //Decompress rar
+            DecompressFile(store, Application.StartupPath + "\\ncUpdateDir\\");
+            File.Delete(store);
+
+            //If there is a new updater use that and delete it from the extracted directory
+            if (File.Exists(Application.StartupPath + "\\ncUpdateDir\\NetCheatPS3Updater.exe"))
+            {
+                File.Copy(Application.StartupPath + "\\ncUpdateDir\\NetCheatPS3Updater.exe",
+                    Application.StartupPath + "\\NetCheatPS3Updater.exe", true);
+                File.Delete(Application.StartupPath + "\\ncUpdateDir\\NetCheatPS3Updater.exe");
+            }
+
+            System.Threading.Thread.Sleep(1000);
+            Process.Start("NetCheatPS3Updater.exe", Process.GetCurrentProcess().Id.ToString() + 
+                " \"" + Application.StartupPath + "\\ncUpdateDir\"" +
+                " \"" + Application.StartupPath + "\"" +
+                " \"" + Application.ExecutablePath + "\"");
+            Close();
+        }
+
+        public static void DecompressFile(string file, string directory)
+        {
+            using (ZipArchive archive = ZipFile.OpenRead(file))
+            {
+                foreach (ZipArchiveEntry entry in archive.Entries)
+                {
+                    try
+                    {
+                        if (entry.Length > 0)
+                        {
+                            string mergedPath = Path.Combine(directory, entry.FullName);
+                            FileInfo fi = new FileInfo(mergedPath);
+                            if (!Directory.Exists(fi.Directory.FullName))
+                                Directory.CreateDirectory(fi.Directory.FullName);
+                            entry.ExtractToFile(mergedPath, true);
+                        }
+                    }
+                    catch (Exception error)
+                    {
+                        MessageBox.Show("Exception: \n" + error.Message);
+                    }
+                }
+            }
+        }
+
         #endregion
 
         public Form1()
@@ -165,6 +324,14 @@ namespace NetCheatPS3
             ps3Disc.KeyUp += new KeyEventHandler(Form1_KeyUp);
             refPlugin.KeyUp += new KeyEventHandler(Form1_KeyUp);
             optButton.KeyUp += new KeyEventHandler(Form1_KeyUp);
+            TabCon.KeyUp += new KeyEventHandler(Form1_KeyUp);
+
+            connectButton.KeyDown += new KeyEventHandler(Form1_KeyDown);
+            attachProcessButton.KeyDown += new KeyEventHandler(Form1_KeyDown);
+            ps3Disc.KeyDown += new KeyEventHandler(Form1_KeyDown);
+            refPlugin.KeyDown += new KeyEventHandler(Form1_KeyDown);
+            optButton.KeyDown += new KeyEventHandler(Form1_KeyDown);
+            TabCon.KeyDown += new KeyEventHandler(Form1_KeyDown);
         }
 
         /* Saves the options to the ncps3.ini file */
@@ -187,13 +354,20 @@ namespace NetCheatPS3
                 string range = "";
                 foreach (int val in rangeOrder)
                     range += val.ToString() + ";";
+                if (range == "")
+                    range = ";";
                 fd.WriteLine(range);
 
                 //Recently opened ranges paths
                 range = "";
                 foreach (string str in rangeImports)
                     range += str + ";";
+                if (range == "")
+                    range = ";";
                 fd.WriteLine(range);
+
+                //API
+                fd.WriteLine(apiDLL.ToString());
             }
         }
 
@@ -201,7 +375,7 @@ namespace NetCheatPS3
         private void Form1_Closing(object sender, System.ComponentModel.CancelEventArgs e)
         {
             ConstantLoop = 2;
-            PS3TMAPI.Disconnect(0);
+            PS3.DisconnectTarget();
             this.statusLabel1.Text = "Disconnected";
             System.IO.File.Delete(dFileName);
 
@@ -218,6 +392,14 @@ namespace NetCheatPS3
 
         private void Main_Load(object sender, EventArgs e)
         {
+            RunUpdateChecker(false);
+            //if (File.Exists(Application.ExecutablePath + ".bak"))
+            //    File.Delete(Application.ExecutablePath + ".bak");
+            //if (File.Exists(Application.StartupPath + "\\updateNC.bat"))
+            //    File.Delete(Application.StartupPath + "\\updateNC.bat");
+            
+            this.Text = "NetCheat PS3 " + versionNum + " by Dnawrkshp";
+
             int x = 0;
             //Set the settings file and load the settings
             settFile = Application.StartupPath + "\\ncps3.ini";
@@ -233,7 +415,7 @@ namespace NetCheatPS3
                     //Read the colors and update the form
                     ncBackColor = Color.FromArgb(int.Parse(settLines[x], System.Globalization.NumberStyles.HexNumber)); BackColor = ncBackColor; x++;
                     ncForeColor = Color.FromArgb(int.Parse(settLines[x], System.Globalization.NumberStyles.HexNumber)); ForeColor = ncForeColor; x++;
-                    
+
                     //Read the recently opened ranges
                     string[] strRangeOrder = settLines[x].Split(';');
                     Array.Resize(ref rangeOrder, strRangeOrder.Length - 1);
@@ -242,13 +424,28 @@ namespace NetCheatPS3
                             rangeOrder[valRO] = int.Parse(strRangeOrder[valRO]);
 
                     x++;
-                    rangeImports = settLines[x].Split(';'); 
+                    rangeImports = settLines[x].Split(';');
                     //Get rid of extra "" at the end
                     Array.Resize(ref rangeImports, rangeImports.Length - 1);
                     UpdateRecRangeBox();
                     x++;
+
+                    apiDLL = int.Parse(settLines[x]);
+                    x++;
                 }
-                catch { }
+                catch
+                {
+                }
+            }
+
+            PS3.ChangeAPI((apiDLL == 0) ? SelectAPI.TargetManager : SelectAPI.ControlConsole);
+            if (apiDLL == 0)
+                PS3.PS3TMAPI_NET();
+            else
+            {
+                SchPWS.Visible = false; //Can't stop/continue process with CCAPI
+                pauseGameButt.Visible = false;
+                startGameButt.Visible = false;
             }
 
             refPlugin_Click(null, null);
@@ -265,7 +462,7 @@ namespace NetCheatPS3
             Codes[CodesCount].state = false;
             cbSchAlign.SelectedIndex = 2;
             compBox.SelectedIndex = 0;
-            dFileName = misc.DirOf(Application.ExecutablePath) + "\\dump.txt";
+            dFileName = Application.StartupPath + "\\dump.txt";
 
             cbList.Items[0].Selected = true;
             cbList.Items[0].Selected = false;
@@ -299,64 +496,69 @@ namespace NetCheatPS3
                 }
             }
 
+            
+
             toolStripDropDownButton1.BackColor = Color.Maroon;
+
+            try
+            {
+                sRecognize.RequestRecognizerUpdate();
+                DictationGrammar _dictationGrammar = new DictationGrammar();
+                sRecognize.LoadGrammar(_dictationGrammar);
+                sRecognize.SpeechRecognized += sr_SpeechRecognized;
+                sRecognize.SetInputToDefaultAudioDevice();
+            }
+            catch
+            {
+                return;
+            }
         }
 
         /* Connects to PS3 */
         private void connectButton_Click(object sender, EventArgs e)
-        {
-            int retryAttempts = 0;
-
-        label_retryConnect:
-
-            if (retryAttempts > 2)
-                return;
-
-            retryAttempts++;
-
-            ps3Disc_Click(null, null);
-            
+        {   
             this.statusLabel1.Text = "Connecting...";
             try
             {
-                snresult = PS3TMAPI.InitTargetComms();
-                if (snresult == PS3TMAPI.SNRESULT.SN_E_TM_NOT_RUNNING)
+                if (apiDLL == 0) //TMAPI
                 {
-                    this.statusLabel1.Text = "Failed to connect to PS3";
-                    connected = false;
-                    return;
+                    if (PS3.ConnectTarget())
+                    {
+                        connected = true;
+                        this.statusLabel1.Text = "Connected";
+
+                        connectButton.Enabled = false;
+                        attachProcessButton.Enabled = true;
+                        toolStripDropDownButton1.BackColor = Color.DarkGoldenrod;
+                    }
                 }
-                //Debug.WriteLine("".PadRight(30) + snresult.ToString());
-
-                PS3TMAPI.TCPIPConnectProperties connectProperties = new PS3TMAPI.TCPIPConnectProperties();
-
-                snresult = PS3TMAPI.Connect(0, null);
-                if (snresult == PS3TMAPI.SNRESULT.SN_S_OK)
+                else //CCAPI
                 {
-                    //Debug.WriteLine("".PadRight(30) + snresult.ToString());
+                    IBArg[] ibArg = new IBArg[1];
+                    ibArg[0].defStr = (IPAddrStr == "") ? "0.0.0.0" : IPAddrStr;
+                    ibArg[0].label = "PS3 IP Address";
+                    ibArg = CallIBox(ibArg);
 
-                    PS3TMAPI.ConnectStatus connectStatus;
-                    string usage;
-                    snresult = PS3TMAPI.GetConnectStatus(0, out connectStatus, out usage);
-                    //Debug.WriteLine("".PadRight(30) + snresult.ToString());
+                    if (ibArg == null)
+                    {
+                        this.statusLabel1.Text = "Cancelled Connecting";
+                        return;
+                    }
 
-                    //PS3TMAPI.TargetInfo targetInfo = new PS3TMAPI.TargetInfo();
-                    //snresult = PS3TMAPI.GetTargetInfo(ref targetInfo);
-                    //Debug.WriteLine("".PadRight(30) + snresult.ToString());
-                    connected = true;
-                    this.statusLabel1.Text = "Connected";
-
-                    connectButton.Enabled = false;
-                    attachProcessButton.Enabled = true;
-                    toolStripDropDownButton1.BackColor = Color.DarkGoldenrod;
+                    IPAddrStr = ibArg[0].retStr;
+                    if (ibArg[0].retStr != "")
+                    {
+                        if (PS3.ConnectTarget(ibArg[0].retStr))
+                        {
+                            connected = true;
+                            this.statusLabel1.Text = "Connected";
+                            connectButton.Enabled = false;
+                            attachProcessButton.Enabled = true;
+                            toolStripDropDownButton1.BackColor = Color.DarkGoldenrod;
+                        }
+                    }
                 }
-                else if (snresult == PS3TMAPI.SNRESULT.SN_S_NO_ACTION && connected == false)
-                    goto label_retryConnect;
-                else if (snresult == PS3TMAPI.SNRESULT.SN_S_NO_ACTION)
-                {
-                    this.statusLabel1.Text = "Already connected to PS3";
-                }
-                else
+                if (connected == false)
                 {
                     this.statusLabel1.Text = "Failed to connect to PS3";
                     connected = false;
@@ -374,17 +576,20 @@ namespace NetCheatPS3
         {
             try
             {
-                PS3TMAPI.GetProcessList(0, out processIDs);
-                ulong uProcess = processIDs[0];
-                ProcessID = Convert.ToUInt32(uProcess);
-                PS3TMAPI.ProcessAttach(0, PS3TMAPI.UnitType.PPU, ProcessID);
-
-                PS3TMAPI.ProcessContinue(0, ProcessID);
-                this.statusLabel1.Text = "Process Attached";
-                ConstantLoop = 1;
-
-                attachProcessButton.Enabled = false;
-                toolStripDropDownButton1.BackColor = Color.DarkGreen;
+                if (PS3.AttachProcess())
+                {
+                    this.statusLabel1.Text = "Process Attached";
+                    ConstantLoop = 1;
+                    attachProcessButton.Enabled = false;
+                    toolStripDropDownButton1.BackColor = Color.DarkGreen;
+                    attached = true;
+                }
+                else
+                {
+                    this.statusLabel1.Text = "Error attaching process; no game started?";
+                    toolStripDropDownButton1.BackColor = Color.DarkGoldenrod;
+                }
+                
             }
             catch (Exception)
             {
@@ -396,10 +601,12 @@ namespace NetCheatPS3
         /* Disconnects from PS3 */
         private void ps3Disc_Click(object sender, EventArgs e)
         {
-            PS3TMAPI.Disconnect(0);
+            PS3.DisconnectTarget();
             ConstantLoop = 2;
             this.statusLabel1.Text = "Disconnected";
             processIDs = null;
+            attached = false;
+            connected = false;
 
             attachProcessButton.Enabled = false;
             connectButton.Enabled = true;
@@ -414,6 +621,12 @@ namespace NetCheatPS3
                 cbListIndex = 0;
 
             UpdateCB(cbListIndex);
+            cbCodes.BackColor = BackColor;
+            cbCodes.ForeColor = ForeColor;
+            cbCodes.SelectionStart = 0;
+            cbCodes.SelectionLength = cbCodes.Text.Length;
+            cbCodes.SelectionColor = ForeColor;
+            cbCodes.SelectionLength = 0;
         }
 
         /* Finds the listindex of the listview cbList */
@@ -622,30 +835,33 @@ namespace NetCheatPS3
         /* Converts the values in the search textboxes between hex and decimal */
         private void SchHexCheck_CheckedChanged(object sender, EventArgs e)
         {
-            ValHex = SchHexCheck.Checked;
-
-            if (schVal.Text.Length == 0)
-                return;
-
-            if (ValHex && schVal.Text.Length <= 8)
-                schVal.Text = int.Parse(schVal.Text).ToString("X8"); //Dec to Hex
-            else if (ValHex && schVal.Text.Length > 8)
-                schVal.Text = Int64.Parse(schVal.Text).ToString("X16"); //Dec to Hex
-            else if (schVal.Text.Length <= 8)
-                schVal.Text = Convert.ToInt32(schVal.Text, 16).ToString(); //Hex to Dec
-            else
-                schVal.Text = Convert.ToInt64(schVal.Text, 16).ToString(); //Hex to Dec
-
-            if (schVal2.Visible)
+            if (SchHexCheck.Text == "Hex")
             {
-                if (ValHex && schVal2.Text.Length <= 8)
-                    schVal2.Text = int.Parse(schVal2.Text).ToString("X8"); //Dec to Hex
-                else if (ValHex && schVal2.Text.Length > 8)
-                    schVal2.Text = Int64.Parse(schVal2.Text).ToString("X16"); //Dec to Hex
-                else if (schVal2.Text.Length <= 8)
-                    schVal2.Text = Convert.ToInt32(schVal2.Text, 16).ToString(); //Hex to Dec
+                ValHex = SchHexCheck.Checked;
+
+                if (schVal.Text.Length == 0)
+                    return;
+
+                if (ValHex && schVal.Text.Length <= 8)
+                    schVal.Text = int.Parse(schVal.Text).ToString("X8"); //Dec to Hex
+                else if (ValHex && schVal.Text.Length > 8)
+                    schVal.Text = Int64.Parse(schVal.Text).ToString("X16"); //Dec to Hex
+                else if (schVal.Text.Length <= 8)
+                    schVal.Text = Convert.ToInt32(schVal.Text, 16).ToString(); //Hex to Dec
                 else
-                    schVal2.Text = Convert.ToInt64(schVal2.Text, 16).ToString(); //Hex to Dec
+                    schVal.Text = Convert.ToInt64(schVal.Text, 16).ToString(); //Hex to Dec
+
+                if (schVal2.Visible)
+                {
+                    if (ValHex && schVal2.Text.Length <= 8)
+                        schVal2.Text = int.Parse(schVal2.Text).ToString("X8"); //Dec to Hex
+                    else if (ValHex && schVal2.Text.Length > 8)
+                        schVal2.Text = Int64.Parse(schVal2.Text).ToString("X16"); //Dec to Hex
+                    else if (schVal2.Text.Length <= 8)
+                        schVal2.Text = Convert.ToInt32(schVal2.Text, 16).ToString(); //Hex to Dec
+                    else
+                        schVal2.Text = Convert.ToInt64(schVal2.Text, 16).ToString(); //Hex to Dec
+                }
             }
         }
 
@@ -803,7 +1019,7 @@ namespace NetCheatPS3
 
                     byte[] retByte = new byte[incVal];
 
-                    PS3TMAPI.ProcessGetMemory(0, PS3TMAPI.UnitType.PPU, ProcessID, 0, cnt, ref retByte);
+                    apiGetMem(cnt, ref retByte);
                     fs.Write(retByte, 0, retByte.Length);
 
                     if ((schProg.Value + 1) <= schProg.Maximum)
@@ -825,6 +1041,7 @@ namespace NetCheatPS3
 
         private void schSearch_Click(object sender, EventArgs e)
         {
+            Stopwatch watch = Stopwatch.StartNew();
             ulong rDif = 0, rStart = 0, rStop = 0;
             int align = 4;
 
@@ -839,8 +1056,8 @@ namespace NetCheatPS3
                     compBox.SelectedIndex = 0;
 
                 CancelSearch = 2;
-                if (SchPWS.Checked)
-                    PS3TMAPI.ProcessContinue(0, ProcessID);
+                if (SchPWS.Checked && SchPWS.Visible)
+                    PS3Lib.NET.PS3TMAPI.ProcessContinue(0, PS3Lib.TMAPI.Parameters.ProcessID);
                 return;
             }
 
@@ -850,8 +1067,8 @@ namespace NetCheatPS3
                 return;
             }
 
-            if (SchPWS.Checked && schSearch.Text != "New Scan")
-                PS3TMAPI.ProcessStop(0, ProcessID);
+            if (SchPWS.Checked && SchPWS.Visible && schSearch.Text != "New Scan")
+                PS3Lib.NET.PS3TMAPI.ProcessAttach(0, PS3Lib.NET.PS3TMAPI.UnitType.PPU, PS3Lib.TMAPI.Parameters.ProcessID);
 
             switch (cbSchAlign.SelectedItem.ToString())
             {
@@ -899,13 +1116,14 @@ namespace NetCheatPS3
                 }
                 else
                 {
-                    if (align == 8)
-                        ValStr = ulong.Parse(schVal.Text).ToString("X16");
-                    else
-                        ValStr = ulong.Parse(schVal.Text).ToString("X8");
+                    ValStr = ulong.Parse(schVal.Text).ToString("X");
+                    ValStr = ValStr.PadLeft(align * 2, '0');
 
                     if (schVal2.Visible)
+                    {
                         ValStr2 = ulong.Parse(schVal2.Text).ToString("X");
+                        ValStr2 = ValStr2.PadLeft(align * 2, '0');
+                    }
                 }
             }
 
@@ -1022,7 +1240,7 @@ namespace NetCheatPS3
                     if (align > 0)
                         ret = InitSearch(recvCnt, sVal, c, align, sSize, file);
                     else if (align == -1)
-                        ret = InitSearchText(recvCnt, sVal, c, len * 2, sSize, file);
+                        ret = InitSearchText(SchHexCheck.Checked, recvCnt, sVal, c, len * 2, sSize, file);
                     else if (align == -2)
                         ret = InitSearchText(recvCnt, sVal, c, len, sSize, file);
 
@@ -1073,6 +1291,10 @@ namespace NetCheatPS3
             }
                 //RefreshSearchResults(0);
 
+            watch.Stop();
+            long elapsedMs = watch.ElapsedMilliseconds;
+            statusLabel1.Text += ", Search time: " + ((Single)elapsedMs / (Single)1000).ToString("F") + " seconds";
+
             schSearch.Text = "New Scan";
             schProg.Maximum = 0;
             NewSearch = false;
@@ -1080,8 +1302,8 @@ namespace NetCheatPS3
             schProg.Value = 0;
 
             GlobAlign = (ulong)align;
-            if (SchPWS.Checked)
-                PS3TMAPI.ProcessContinue(0, ProcessID);
+            if (SchPWS.Checked && SchPWS.Visible)
+                PS3Lib.NET.PS3TMAPI.ProcessContinue(0, PS3Lib.TMAPI.Parameters.ProcessID);
             CancelSearch = 0;
             lvSch.EndUpdate();
         }
@@ -1093,6 +1315,7 @@ namespace NetCheatPS3
 
         private void schNSearch_Click(object sender, EventArgs e)
         {
+            Stopwatch watch = Stopwatch.StartNew();
             byte[] sVal = null;
             byte[] c = null;
 
@@ -1100,7 +1323,7 @@ namespace NetCheatPS3
             {
                 CancelSearch = 1;
                 if (SchPWS.Checked)
-                    PS3TMAPI.ProcessContinue(0, ProcessID);
+                    PS3Lib.NET.PS3TMAPI.ProcessContinue(0, PS3Lib.TMAPI.Parameters.ProcessID);
                 return;
             }
 
@@ -1154,7 +1377,7 @@ namespace NetCheatPS3
             }
 
             if (SchPWS.Checked)
-                PS3TMAPI.ProcessStop(0, ProcessID);
+                PS3Lib.NET.PS3TMAPI.ProcessAttach(0, PS3Lib.NET.PS3TMAPI.UnitType.PPU, PS3Lib.TMAPI.Parameters.ProcessID);
 
             ulong a = 0;
             if (NextSAlign == -1)
@@ -1179,13 +1402,17 @@ namespace NetCheatPS3
                 RefreshSearchResults(0);
             }
 
+            watch.Stop();
+            long elapsedMs = watch.ElapsedMilliseconds;
+            statusLabel1.Text += ", Search time: " + ((Single)elapsedMs / (Single)1000).ToString("F") + " seconds";
+
             schNSearch.Text = "Next Scan";
             NewSearch = false;
             schProg.Maximum = 0;
             schProg.Value = 0;
 
             if (SchPWS.Checked)
-                PS3TMAPI.ProcessContinue(0, ProcessID);
+                PS3Lib.NET.PS3TMAPI.ProcessContinue(0, PS3Lib.TMAPI.Parameters.ProcessID);
             CancelSearch = 0;
             lvSch.EndUpdate();
         }
@@ -1209,9 +1436,17 @@ namespace NetCheatPS3
             }
         }
 
+        bool hexSchHexVal = true;
+        bool textSchHexVal = false;
         private void SearchMode(int mode)
         {
-
+            if (mode != 5 && SchHexCheck.Text == "MCase")
+            {
+                SchHexCheck.Text = "Hex";
+                textSchHexVal = SchHexCheck.Checked;
+                SchHexCheck.Checked = hexSchHexVal;
+                SchHexCheck.Font = Font;
+            }
             switch (mode)
             {
                 case 0: //1 byte
@@ -1230,7 +1465,11 @@ namespace NetCheatPS3
                     SchHexCheck.Visible = true;
                     break;
                 case 5: //Text
-                    SchHexCheck.Visible = false;
+                    hexSchHexVal = SchHexCheck.Checked;
+                    SchHexCheck.Checked = textSchHexVal;
+                    SchHexCheck.Visible = true;
+                    SchHexCheck.Text = "MCase";
+                    SchHexCheck.Font = new Font(Font.FontFamily, 6.75f, FontStyle.Regular);
                     break;
             }
         }
@@ -1240,7 +1479,7 @@ namespace NetCheatPS3
             ulong ResCnt = 0, sCount = 0;
             byte[] ret = new byte[sSize];
 
-            PS3TMAPI.ProcessGetMemory(0, PS3TMAPI.UnitType.PPU, Form1.ProcessID, 0, sStart, ref ret);
+            apiGetMem(sStart, ref ret);
 
             while (sCount < sSize)
             {
@@ -1272,7 +1511,7 @@ namespace NetCheatPS3
             ulong ResCnt = 0, sCount = 0;
             byte[] ret = new byte[sSize];
 
-            PS3TMAPI.ProcessGetMemory(0, PS3TMAPI.UnitType.PPU, Form1.ProcessID, 0, sStart, ref ret);
+            apiGetMem(sStart, ref ret);
 
             while ((sCount + (ulong)sText.Length) <= sSize)
             {
@@ -1290,6 +1529,42 @@ namespace NetCheatPS3
 
                     ListRes a = misc.GetlvVals((int)NextSAlign, newB, 0);
                     string[] row = { (sStart + sCount).ToString("X8"), a.HexVal, a.DecVal, a.AlignStr};
+
+                    var listViewItem = new ListViewItem(row);
+                    lvSch.Items.Add(listViewItem);
+
+                    if ((int)NextSAlign == -1)
+                        fStream.WriteLine((sStart + sCount) + " " + misc.ByteAToStringInt(sText, " ") + " " + (len / 2) + " -1");
+                    else if ((int)NextSAlign == -2)
+                        fStream.WriteLine((sStart + sCount) + " " + misc.ByteAToStringInt(sText, " ") + " " + (len / 2) + " -2");
+
+                    ResCnt++;
+                }
+                sCount++;
+            }
+            return ResCnt;
+        }
+
+        public ulong InitSearchText(bool matchCase, ulong sStart, byte[] sText, byte[] c, int len, ulong sSize, System.IO.StreamWriter fStream)
+        {
+            ulong ResCnt = 0, sCount = 0;
+            byte[] ret = new byte[sSize];
+            apiGetMem(sStart, ref ret);
+
+            while ((sCount + (ulong)sText.Length) <= sSize)
+            {
+                if (Form1.CancelSearch == 1)
+                    return 0;
+
+                byte[] argB = new byte[len / 2];
+                Array.Copy(ret, (int)sCount, argB, 0, argB.Length);
+                if (misc.ArrayCompare(sText, argB, c, compMode, matchCase))
+                {
+                    byte[] newB = new byte[len / 2];
+                    Array.Copy(ret, (int)sCount, newB, 0, newB.Length);
+
+                    ListRes a = misc.GetlvVals((int)NextSAlign, newB, 0);
+                    string[] row = { (sStart + sCount).ToString("X8"), a.HexVal, a.DecVal, a.AlignStr };
 
                     var listViewItem = new ListViewItem(row);
                     lvSch.Items.Add(listViewItem);
@@ -1348,7 +1623,7 @@ namespace NetCheatPS3
                         if (CancelSearch == 2)
                             return 0;
 
-                        PS3TMAPI.ProcessGetMemory(0, PS3TMAPI.UnitType.PPU, Form1.ProcessID, 0, tempSchRes[x].addr, ref ret);
+                        apiGetMem(tempSchRes[x].addr, ref ret);
 
                         schProg.Value++;
                         Application.DoEvents();
@@ -1405,7 +1680,7 @@ namespace NetCheatPS3
                             return 0;
                         }
 
-                        PS3TMAPI.ProcessGetMemory(0, PS3TMAPI.UnitType.PPU, Form1.ProcessID, 0, tempSchRes[x].addr, ref ret);
+                        apiGetMem(tempSchRes[x].addr, ref ret);
 
                         schProg.Value++;
                         Application.DoEvents();
@@ -1555,7 +1830,7 @@ namespace NetCheatPS3
                                 align = retRes[z].val.Length;
 
                             byte[] ret = new byte[align];
-                            PS3TMAPI.ProcessGetMemory(0, PS3TMAPI.UnitType.PPU, Form1.ProcessID, 0, retRes[z].addr, ref ret);
+                            apiGetMem(retRes[z].addr, ref ret);
 
                             ListRes a = new ListRes();
                             a = misc.GetlvVals((int)GlobAlign, ret, 0);
@@ -1774,7 +2049,7 @@ namespace NetCheatPS3
                 //Update range array
                 UpdateMemArray();
 
-                Text = "NetCheat PS3 4.1 by Dnawrkshp (" + new System.IO.FileInfo(fd.FileName).Name + ")";
+                Text = "NetCheat PS3 " + versionNum + " by Dnawrkshp (" + new System.IO.FileInfo(fd.FileName).Name + ")";
             }
         }
 
@@ -1876,6 +2151,12 @@ namespace NetCheatPS3
         {
             if (refPlugin.Text == "Close Plugins")
             {
+                foreach (PluginForm pF in pluginForm)
+                {
+                    pF.Close();
+                    //pF = null;
+                }
+
                 Global.Plugins.ClosePlugins();
                 //TabCon.SelectedIndex = 0;
 
@@ -1930,7 +2211,9 @@ namespace NetCheatPS3
                 refPlugin.Text = "Close Plugins";
             }
 
-            toolStripDropDownButton1.DropDownItems[1].Text = refPlugin.Text;
+            //loadPluginsToolStripMenuItem
+            int index = toolStripDropDownButton1.DropDownItems.IndexOfKey("loadPluginsToolStripMenuItem");
+            toolStripDropDownButton1.DropDownItems[index].Text = refPlugin.Text;
         }
 
         private void optButton_Click(object sender, EventArgs e)
@@ -2068,8 +2351,31 @@ namespace NetCheatPS3
 
         private void Form1_KeyUp(object sender, KeyEventArgs e)
         {
+            if (e.KeyCode == Keys.Oemtilde)
+            {
+                try
+                {
+                    sRecognize.RecognizeAsyncStop();
+                    isRecognizing = false;
+                }
+                catch { }
+            }
             if (ProcessKeyBinds(e.KeyData))
                 e.SuppressKeyPress = true;
+        }
+
+        private void Form1_KeyDown(object sender, KeyEventArgs e)
+        {
+            if (e.KeyCode == Keys.Oemtilde && !isRecognizing)
+            {
+                try
+                {
+                    sRecognize.RecognizeAsync(RecognizeMode.Multiple);
+                    //sRecognize.Recognize();
+                    isRecognizing = true;
+                }
+                catch { }
+            }
         }
 
         private void HandlePlugin_Closing(object sender, System.ComponentModel.CancelEventArgs e)
@@ -2191,7 +2497,7 @@ namespace NetCheatPS3
                     a.val = BitConverter.GetBytes(uint.Parse(lvSch.Items[x].SubItems[1].Text, System.Globalization.NumberStyles.HexNumber));
                     if (a.val == null)
                         return;
-                    Array.Reverse(a.val);
+                    if (BitConverter.IsLittleEndian) Array.Reverse(a.val);
                 }
 
                 switch (align)
@@ -2323,7 +2629,7 @@ namespace NetCheatPS3
                     //Update range array
                     UpdateMemArray();
 
-                    Text = "NetCheat PS3 4.1 by Dnawrkshp (" + recRangeBox.Items[ind].Text + ")";
+                    Text = "NetCheat PS3 " + versionNum + " by Dnawrkshp (" + recRangeBox.Items[ind].Text + ")";
 
                     int roInd = int.Parse(recRangeBox.Items[ind].Tag.ToString());
                     if (ind != 0)
@@ -2446,7 +2752,13 @@ namespace NetCheatPS3
 
         private void shutdownPS3ToolStripMenuItem_Click(object sender, EventArgs e)
         {
-            PS3TMAPI.PowerOff(0, true);
+            if (apiDLL == 0)
+            {
+                if (MessageBox.Show("PS3Lib doesn't support TMAPI shutdown.\nWould you like to reset to the XMB?", "Error - Unsupported", MessageBoxButtons.YesNo) == System.Windows.Forms.DialogResult.Yes)
+                    PS3.TMAPI.ResetToXMB(TMAPI.ResetTarget.Soft);
+            }
+            else
+                PS3.CCAPI.ShutDown(CCAPI.RebootFlags.ShutDown);
         }
 
         private void loadPluginsToolStripMenuItem_Click(object sender, EventArgs e)
@@ -2457,6 +2769,312 @@ namespace NetCheatPS3
         private void optionsToolStripMenuItem_Click(object sender, EventArgs e)
         {
             optButton_Click(null, null);
+        }
+
+        private void updateStripMenuItem1_Click(object sender, EventArgs e)
+        {
+            RunUpdateChecker(true);
+        }
+
+        private void gameStatusStripMenuItem1_Click(object sender, EventArgs e)
+        {
+            /*
+            if (connected)
+            {
+                PS3TMAPI.UnitStatus ret;
+                PS3TMAPI.GetStatus(0, PS3TMAPI.UnitType.PPU, out ret);
+                if (ret == PS3TMAPI.UnitStatus.Stopped)
+                {
+                    PS3TMAPI.ProcessContinue(0, ProcessID);
+                    gameStatusStripMenuItem1.Text = "Pause Game";
+                }
+                else
+                {
+                    PS3TMAPI.ProcessStop(0, ProcessID);
+                    gameStatusStripMenuItem1.Text = "Continue Game";
+                }
+            }
+            else
+                MessageBox.Show("Not yet connected!");
+            */
+        }
+
+        bool findRangesCancel = false;
+        private void findRanges_Click(object sender, EventArgs e)
+        {
+            if (!connected)
+            {
+                MessageBox.Show("Not connected to the PS3!");
+                return;
+            }
+
+            if (findRanges.Text == "Stop")
+            {
+                findRangesCancel = true;
+                return;
+            }
+
+            rangeView.Items.Clear();
+
+            ulong findAddr = 0;
+            ulong blockSize = 0x10000;
+            findRanges.Text = "Stop";
+            bool inMemRange = false;
+            findRangeProgBar.Maximum = 4096;
+
+            ulong blockStart = 0;
+
+            for (findAddr = 0; findAddr < 0xFFFFFFFC; findAddr += blockSize)
+            {
+                if (findRangesCancel)
+                    break;
+
+                if ((findAddr % 0x100000) == 0)
+                {
+                    statusLabel1.Text = "Scanning memory at 0x" + findAddr.ToString("X8");
+                    findRangeProgBar.Increment(1);
+                    Application.DoEvents();
+                }
+
+                byte[] ret = new byte[1];
+                bool validRegion = apiGetMem(findAddr, ref ret);
+
+                //Start new mem block
+                if (validRegion && !inMemRange)
+                {
+                    blockStart = findAddr;
+                    inMemRange = true;
+                }
+                //Add block
+                else if (!validRegion && inMemRange)
+                {
+                    string[] str = new string[2];
+                    str[0] = blockStart.ToString("X8");
+                    str[1] = findAddr.ToString("X8");
+                    ListViewItem strLV = new ListViewItem(str);
+                    rangeView.Items.Add(strLV);
+                    inMemRange = false;
+                }
+            }
+
+            findRangesCancel = false;
+            findRanges.Text = "Find Ranges";
+            findRangeProgBar.Value = 0;
+
+            //Update range array
+            UpdateMemArray();
+            if (misc.MemArray != null || misc.MemArray.Length > 0)
+                MessageBox.Show("Find Ranges Completed!\nUnderstand that the range finder searches in blocks of 0x10000.\nThis may cause the ranges to be off by a value from 1 to 0xFFFF.");
+        }
+
+        private void button1_Click(object sender, EventArgs e)
+        {
+
+        }
+
+        void sr_SpeechRecognized(object sender, SpeechRecognizedEventArgs e)
+        {
+            //MessageBox.Show(e.Result.Text);
+            switch (e.Result.Words[0].Text.ToLower())
+            {
+                case "connect":
+                    connectButton_Click(null, null);
+                    break;
+                case "attach":
+                    attachProcessButton_Click(null, null);
+                    break;
+                case "shutdown":
+                    shutdownPS3ToolStripMenuItem_Click(null, null);
+                    break;
+                case "value":
+                    if (e.Result.Words.Count > 2 && e.Result.Words[1].Text.ToLower() == "type")
+                    {
+                        switch (e.Result.Words[2].Text.ToLower())
+                        {
+                            case "one":
+                                cbSchAlign.SelectedIndex = 0;
+                                break;
+                            case "two":
+                                cbSchAlign.SelectedIndex = 1;
+                                break;
+                            case "four":
+                                cbSchAlign.SelectedIndex = 2;
+                                break;
+                            case "eight":
+                                cbSchAlign.SelectedIndex = 3;
+                                break;
+                            case "ex":
+                            case "x":
+                                cbSchAlign.SelectedIndex = 4;
+                                break;
+                            case "text":
+                                cbSchAlign.SelectedIndex = 5;
+                                break;
+                        }
+                    }
+                    break;
+                case "scan":
+                    if (e.Result.Words.Count > 1)
+                    {
+                        string cmp = e.Result.Words[1].Text.ToLower();
+                        if (cmp == "a" && e.Result.Words.Count > 2)
+                            cmp = e.Result.Words[2].Text.ToLower();
+                        if (cmp == "style")
+                            cmp = "stop";
+
+                        if (cmp == "new" || cmp == "initial" || cmp == "next")
+                        {
+                            if (schSearch.Text == "Stop")
+                                schSearch_Click(null, null);
+                            else if (schNSearch.Text == "Cancel")
+                                schNSearch_Click(null, null);
+                        }
+
+                        switch (cmp)
+                        {
+                            case "new":
+                                if (schSearch.Text == "New Scan")
+                                    schSearch_Click(null, null);
+                                break;
+                            case "initial":
+                                if (schSearch.Text == "Initial Scan")
+                                    schSearch_Click(null, null);
+                                break;
+                            case "next":
+                                if (schNSearch.Text == "Next Scan")
+                                    schNSearch_Click(null, null);
+                                break;
+                        }
+                    }
+                    break;
+            }
+            if (e.Result.Words[0].Text.ToLower() == "compare")
+            {
+                //Equal
+                if (e.Result.Words.Count == 2)
+                {
+                    if (e.Result.Words[1].Text.ToLower() == "equal")
+                        compBox.SelectedIndex = 0;
+                }
+                //Not Equal, Less Than, Greater Than, Value Between
+                //Increased By, Decreased By, Changed Value, Unchanged Value
+                if (e.Result.Words.Count == 3)
+                {
+
+                    if (e.Result.Words[1].Text.ToLower() == "not" &&
+                            e.Result.Words[2].Text.ToLower() == "equal")
+                        compBox.SelectedIndex = 1;
+                    else if (e.Result.Words[1].Text.ToLower() == "less" &&
+                            e.Result.Words[2].Text.ToLower() == "than")
+                        compBox.SelectedIndex = 2;
+                    else if (e.Result.Words[1].Text.ToLower() == "greater" &&
+                            e.Result.Words[2].Text.ToLower() == "than")
+                        compBox.SelectedIndex = 4;
+                    else if (e.Result.Words[1].Text.ToLower() == "value" &&
+                            e.Result.Words[2].Text.ToLower() == "between")
+                        compBox.SelectedIndex = 6;
+                    else if (compBox.Items.Count > 7)
+                    {
+                        if (e.Result.Words[1].Text.ToLower() == "increased" &&
+                            e.Result.Words[2].Text.ToLower() == "by")
+                        compBox.SelectedIndex = 7;
+                        else if (e.Result.Words[1].Text.ToLower() == "decreased" &&
+                            e.Result.Words[2].Text.ToLower() == "by")
+                            compBox.SelectedIndex = 8;
+                        else if (e.Result.Words[1].Text.ToLower() == "changed" &&
+                            e.Result.Words[2].Text.ToLower() == "value")
+                            compBox.SelectedIndex = 9;
+                        else if (e.Result.Words[1].Text.ToLower() == "unchanged" &&
+                            e.Result.Words[2].Text.ToLower() == "value")
+                            compBox.SelectedIndex = 10;
+                    }
+                }
+                //Less Than or Equal, Greater Than or Equal
+                if (e.Result.Words.Count == 5)
+                {
+                    if (e.Result.Words[1].Text.ToLower() == "less" &&
+                            e.Result.Words[2].Text.ToLower() == "than" &&
+                            e.Result.Words[3].Text.ToLower() == "or" &&
+                            e.Result.Words[4].Text.ToLower() == "equal")
+                        compBox.SelectedIndex = 3;
+                    else if (e.Result.Words[1].Text.ToLower() == "greater" &&
+                            e.Result.Words[2].Text.ToLower() == "than" &&
+                            e.Result.Words[3].Text.ToLower() == "or" &&
+                            e.Result.Words[4].Text.ToLower() == "equal")
+                        compBox.SelectedIndex = 5;
+                }
+            }
+        }
+
+        string ParseValFromStr(string val)
+        {
+            val = val.ToLower();
+            val = val.Replace(" ", "");
+            val = val.Replace("zero", "0");
+            val = val.Replace("one", "1");
+            val = val.Replace("two", "2");
+            val = val.Replace("three", "3");
+            val = val.Replace("four", "4");
+            val = val.Replace("five", "5");
+            val = val.Replace("six", "6");
+            val = val.Replace("seven", "7");
+            val = val.Replace("eight", "8");
+            val = val.Replace("nine", "9");
+            val = val.Replace("see", "C");
+            val = val.Replace("be", "B");
+            return val;
+        }
+
+        private void TabCon_SelectedIndexChanged(object sender, EventArgs e)
+        {
+            if (apiDLL == 0)
+            {
+                SchPWS.Visible = true;
+                pauseGameButt.Visible = true;
+                startGameButt.Visible = true;
+            }
+            else
+            {
+                SchPWS.Visible = false;
+                pauseGameButt.Visible = false;
+                startGameButt.Visible = false;
+            }
+        }
+
+        private void startGameButt_Click(object sender, EventArgs e)
+        {
+            if (apiDLL == 0)
+                PS3Lib.NET.PS3TMAPI.ProcessContinue(0, PS3Lib.TMAPI.Parameters.ProcessID);
+        }
+
+        private void pauseGameButt_Click(object sender, EventArgs e)
+        {
+            if (apiDLL == 0)
+                PS3Lib.NET.PS3TMAPI.ProcessAttach(0, PS3Lib.NET.PS3TMAPI.UnitType.PPU, PS3Lib.TMAPI.Parameters.ProcessID);
+        }
+
+        private void pauseGameButt_BackColorChanged(object sender, EventArgs e)
+        {
+            if (pauseGameButt.BackColor != Color.White)
+                pauseGameButt.BackColor = Color.White;
+        }
+
+        private void pauseGameButt_ForeColorChanged(object sender, EventArgs e)
+        {
+            if (pauseGameButt.ForeColor != Color.FromArgb(0, 130, 210))
+                pauseGameButt.ForeColor = Color.FromArgb(0, 130, 210);
+        }
+
+        private void startGameButt_BackColorChanged(object sender, EventArgs e)
+        {
+            if (startGameButt.BackColor != Color.White)
+                startGameButt.BackColor = Color.White;
+        }
+
+        private void startGameButt_ForeColorChanged(object sender, EventArgs e)
+        {
+            if (startGameButt.ForeColor != Color.FromArgb(0, 130, 210))
+                startGameButt.ForeColor = Color.FromArgb(0, 130, 210);
         }
 
     }

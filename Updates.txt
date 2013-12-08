@@ -1,0 +1,46 @@
+4.30
+*** YOU WILL HAVE TO UPDATE TWICE THE FIRST TIME ***
+Fixed 6 pointer write bug (thanks RealMaster)
+Fixed incorrect progress bar on initial search
+Fixed Load/Close plugins bug
+Added match case checkbox to Text scanning (MCase)
+Added CCAPI support (now using PS3Lib)
+Added scan timer for efficiency testing
+Moved pause/play game to buttons on form (TMAPI only)
+Removed/lost ability to shutdown using TMAPI, you can reset to XMB
+Allowed multiple files to be updated in one update
+
+4.23
+Fixed 1, 2, and 8 byte decimal scanning
+Fixed Value Between decimal scanning
+Added changelog to update
+
+4.22
+Added Find Ranges in the Ranges tab
+Fixed Update bug
+
+4.21
+Fixed Greater, Greater + Equal, Less, Less + Equal, and Value Between scanning
+Added Pause and Continue Game in the status drop down
+
+4.20
+Added Update ability
+
+4.1
+Fixed X byte searching only allowing up to 8 bytes
+Fixed 1 byte searching
+Fixed 2 byte searching
+Fixed Value Between
+
+4.0
+Colored status button for connection state
+Load and Store search results
+Search for X byte alignment (where X is a positive integer)
+Search for changed value and unchanged value
+Recent memory ranges menu
+A few new plugin features
+Plugin icons
+Faster searching
+Fixed color bug in codes tab
+Fixed cheat file having a bunch of extra '/n'
+Fixed labels in codes beginning with "//" disappearing

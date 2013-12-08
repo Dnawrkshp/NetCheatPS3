@@ -33,12 +33,12 @@ namespace NetCheatPS3
             {
                 if (!Form1.connected)
                     connected = 0;
-                else if (Form1.connected && connected == 0)
+                if (Form1.connected && connected == 0)
                     connected = ConnectPS3();
-                else if (Form1.processIDs != null && connected == 1)
+                if (connected == 1 && Form1.attached)
                     connected = AttachPS3();
 
-                if (Form1.ConstantLoop == 1)
+                if (Form1.ConstantLoop == 1 && (Form1.apiDLL == 0 || connected == 2))
                 {
                     sleepThread = false;
                     for (int x = 0; x <= Form1.CodesCount; x++)
@@ -71,51 +71,32 @@ namespace NetCheatPS3
             }
         }
 
-        public static int AttachPS3()
-        {
-            try
-            {
-                uint[] processIDs;
-                PS3TMAPI.GetProcessList(0, out processIDs);
-                ulong uProcess = processIDs[0];
-                uint  ProcessID = Convert.ToUInt32(uProcess);
-                PS3TMAPI.ProcessAttach(0, PS3TMAPI.UnitType.PPU, ProcessID);
-
-                PS3TMAPI.ProcessContinue(0, ProcessID);
-                return 2;
-            }
-            catch { return 1; }
-        }
-
         public static int ConnectPS3()
         {
-            PS3TMAPI.SNRESULT snresult;
             try
             {
-                snresult = PS3TMAPI.InitTargetComms();
-                if (snresult == PS3TMAPI.SNRESULT.SN_E_TM_NOT_RUNNING)
-                    return 0;
-                //Debug.WriteLine("".PadRight(30) + snresult.ToString());
-
-                PS3TMAPI.TCPIPConnectProperties connectProperties = new PS3TMAPI.TCPIPConnectProperties();
-
-                snresult = PS3TMAPI.Connect(0, null);
-                if (snresult == PS3TMAPI.SNRESULT.SN_S_OK)
+                if (Form1.apiDLL == 0) //TMAPI
                 {
-                    //Debug.WriteLine("".PadRight(30) + snresult.ToString());
-
-                    PS3TMAPI.ConnectStatus connectStatus;
-                    string usage;
-                    snresult = PS3TMAPI.GetConnectStatus(0, out connectStatus, out usage);
-                    //Debug.WriteLine("".PadRight(30) + snresult.ToString());
-
-                    //PS3TMAPI.TargetInfo targetInfo = new PS3TMAPI.TargetInfo();
-                    //snresult = PS3TMAPI.GetTargetInfo(ref targetInfo);
-                    //Debug.WriteLine("".PadRight(30) + snresult.ToString());
-                    return 1;
+                    if (Form1.PS3.ConnectTarget())
+                        return 1;
+                }
+                else //CCAPI
+                {
+                    if (Form1.IPAddrStr != "" && Form1.PS3.ConnectTarget(Form1.IPAddrStr))
+                        return 1;
                 }
             }
-            catch { return 0; }
+            catch
+            {
+            }
+
+            return 0;
+        }
+
+        public static int AttachPS3()
+        {
+            if (Form1.PS3.AttachProcess())
+                return 2;
 
             return 0;
         }
@@ -248,17 +229,28 @@ namespace NetCheatPS3
 
             switch (type)
             {
-                case '0': case '1': case '2':
+                case '0':
+                    byte[] stw0 = new byte[1];
+                    stw0[0] = val[val.Length - 1];
+                    Form1.apiSetMem(addr, stw0);
+                    break;
+                case '1':
+                    byte[] stw1 = new byte[2];
+                    stw1[0] = val[val.Length - 2];
+                    stw1[1] = val[val.Length - 1];
+                    Form1.apiSetMem(addr, val);
+                    break;
+                case '2':
                     Form1.apiSetMem(addr, val);
                     //PS3TMAPI.ProcessSetMemory(0, PS3TMAPI.UnitType.PPU, Form1.ProcessID, 0, addr, val);
                     break;
                 case '6':
                     byte[] pretByte = new byte[4];
                     Form1.apiGetMem(addr, ref pretByte);
-                    //PS3TMAPI.ProcessGetMemory(0, PS3TMAPI.UnitType.PPU, Form1.ProcessID, 0, addr, ref pretByte);
+                    //apiGetMem(addr, ref pretByte);
 
                     Codes.CData[cnt + 1].addr = (misc.ByteArrayToLong(pretByte, 0, 4) + misc.ByteArrayToLong(val, 0, 4));
-                    ProcPreProcCode(Codes, cnt + 1);
+                    //ProcPreProcCode(Codes, cnt + 1);
                     break;
                 case 'D': case 'E':
                     int size = Codes.CData[cnt].jsize;
@@ -266,7 +258,7 @@ namespace NetCheatPS3
 
                     byte[] retByte = new byte[0x4];
                     Form1.apiGetMem(addr, ref retByte);
-                    //PS3TMAPI.ProcessGetMemory(0, PS3TMAPI.UnitType.PPU, Form1.ProcessID, 0, addr, ref retByte);
+                    //apiGetMem(addr, ref retByte);
 
                     bool ret = false;
                     if (type == 'D')
@@ -281,8 +273,7 @@ namespace NetCheatPS3
                         ProcPreProcCode(Codes, x);
                     break;
             }
-
-
+            
             return skip;
         }
 
@@ -389,7 +380,7 @@ namespace NetCheatPS3
                             break;
 
                         //Skip comments and whatnot
-                        check = 0; //CheckForComment(splitList[cnt + y]);
+                        check = CheckForComment(splitList[cnt + y]);
                         if (check == 1 || Form1.bComment == true)
                             y++;
                         else if (check == 2)
@@ -401,16 +392,17 @@ namespace NetCheatPS3
                                 if (splitList.Length <= (cnt + y))
                                     break;
 
-                                //CheckForComment(splitList[cnt + y]);
+                                CheckForComment(splitList[cnt + y]);
                             }
                         }
 
                         byte[] pretByte = new byte[0x4];
-                        PS3TMAPI.ProcessGetMemory(0, PS3TMAPI.UnitType.PPU, Form1.ProcessID, 0, ret.CData[cnt].addr, ref pretByte);
+                        Form1.apiGetMem(ret.CData[cnt].addr, ref pretByte);
 
                         if (splitList.Length <= (cnt + y))
                             break;
 
+                        Array.Resize(ref ret.CData, ret.CData.Length + 1);
                         ret.CData[cnt + 1].addr = (misc.ByteArrayToLong(pretByte, 0, 4) + ulong.Parse(misc.sLeft(val, 8), NumberStyles.HexNumber));
                         ret.CData[cnt + 1].val = BitConverter.GetBytes(int.Parse(misc.sRight(splitList[cnt + y], 8), System.Globalization.NumberStyles.HexNumber));
                         ret.CData[cnt + 1].type = splitList[cnt + y][0];

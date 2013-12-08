@@ -55,10 +55,16 @@
             this.label7 = new System.Windows.Forms.Label();
             this.label8 = new System.Windows.Forms.Label();
             this.linkLabel1 = new System.Windows.Forms.LinkLabel();
+            this.groupBox2 = new System.Windows.Forms.GroupBox();
+            this.ccapiDLL = new System.Windows.Forms.RadioButton();
+            this.label9 = new System.Windows.Forms.Label();
+            this.label10 = new System.Windows.Forms.Label();
+            this.tmapiDLL = new System.Windows.Forms.RadioButton();
             this.groupColor.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)(this.fcolPB)).BeginInit();
             ((System.ComponentModel.ISupportInitialize)(this.bcolPB)).BeginInit();
             this.groupBox1.SuspendLayout();
+            this.groupBox2.SuspendLayout();
             this.SuspendLayout();
             // 
             // groupColor
@@ -259,7 +265,7 @@
             // 
             this.okayButt.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
             this.okayButt.ForeColor = System.Drawing.Color.White;
-            this.okayButt.Location = new System.Drawing.Point(13, 326);
+            this.okayButt.Location = new System.Drawing.Point(13, 383);
             this.okayButt.Name = "okayButt";
             this.okayButt.Size = new System.Drawing.Size(95, 23);
             this.okayButt.TabIndex = 1;
@@ -312,7 +318,7 @@
             // 
             this.cancButt.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
             this.cancButt.ForeColor = System.Drawing.Color.White;
-            this.cancButt.Location = new System.Drawing.Point(212, 326);
+            this.cancButt.Location = new System.Drawing.Point(212, 383);
             this.cancButt.Name = "cancButt";
             this.cancButt.Size = new System.Drawing.Size(95, 23);
             this.cancButt.TabIndex = 3;
@@ -324,7 +330,7 @@
             // 
             this.label6.AutoSize = true;
             this.label6.ForeColor = System.Drawing.Color.White;
-            this.label6.Location = new System.Drawing.Point(13, 356);
+            this.label6.Location = new System.Drawing.Point(10, 415);
             this.label6.Name = "label6";
             this.label6.Size = new System.Drawing.Size(186, 13);
             this.label6.TabIndex = 4;
@@ -334,7 +340,7 @@
             // 
             this.label7.AutoSize = true;
             this.label7.ForeColor = System.Drawing.Color.White;
-            this.label7.Location = new System.Drawing.Point(13, 369);
+            this.label7.Location = new System.Drawing.Point(10, 428);
             this.label7.Name = "label7";
             this.label7.Size = new System.Drawing.Size(184, 13);
             this.label7.TabIndex = 5;
@@ -344,7 +350,7 @@
             // 
             this.label8.AutoSize = true;
             this.label8.ForeColor = System.Drawing.Color.White;
-            this.label8.Location = new System.Drawing.Point(13, 382);
+            this.label8.Location = new System.Drawing.Point(10, 441);
             this.label8.Name = "label8";
             this.label8.Size = new System.Drawing.Size(172, 13);
             this.label8.TabIndex = 6;
@@ -356,7 +362,7 @@
             this.linkLabel1.AutoSize = true;
             this.linkLabel1.ForeColor = System.Drawing.Color.White;
             this.linkLabel1.LinkColor = System.Drawing.Color.Silver;
-            this.linkLabel1.Location = new System.Drawing.Point(13, 396);
+            this.linkLabel1.Location = new System.Drawing.Point(10, 455);
             this.linkLabel1.Name = "linkLabel1";
             this.linkLabel1.Size = new System.Drawing.Size(140, 13);
             this.linkLabel1.TabIndex = 7;
@@ -364,12 +370,67 @@
             this.linkLabel1.Text = "NetCheat PS3 Source Code";
             this.linkLabel1.LinkClicked += new System.Windows.Forms.LinkLabelLinkClickedEventHandler(this.linkLabel1_LinkClicked);
             // 
+            // groupBox2
+            // 
+            this.groupBox2.Controls.Add(this.label10);
+            this.groupBox2.Controls.Add(this.tmapiDLL);
+            this.groupBox2.Controls.Add(this.label9);
+            this.groupBox2.Controls.Add(this.ccapiDLL);
+            this.groupBox2.ForeColor = System.Drawing.Color.White;
+            this.groupBox2.Location = new System.Drawing.Point(13, 321);
+            this.groupBox2.Name = "groupBox2";
+            this.groupBox2.Size = new System.Drawing.Size(294, 56);
+            this.groupBox2.TabIndex = 8;
+            this.groupBox2.TabStop = false;
+            this.groupBox2.Text = "API";
+            // 
+            // ccapiDLL
+            // 
+            this.ccapiDLL.AutoSize = true;
+            this.ccapiDLL.Location = new System.Drawing.Point(167, 33);
+            this.ccapiDLL.Name = "ccapiDLL";
+            this.ccapiDLL.Size = new System.Drawing.Size(120, 17);
+            this.ccapiDLL.TabIndex = 0;
+            this.ccapiDLL.TabStop = true;
+            this.ccapiDLL.Text = "CCAPI (CEX + DEX)";
+            this.ccapiDLL.UseVisualStyleBackColor = true;
+            // 
+            // label9
+            // 
+            this.label9.AutoSize = true;
+            this.label9.Location = new System.Drawing.Point(204, 17);
+            this.label9.Name = "label9";
+            this.label9.Size = new System.Drawing.Size(51, 13);
+            this.label9.TabIndex = 1;
+            this.label9.Text = "CCAPI.dll";
+            // 
+            // label10
+            // 
+            this.label10.AutoSize = true;
+            this.label10.Location = new System.Drawing.Point(21, 17);
+            this.label10.Name = "label10";
+            this.label10.Size = new System.Drawing.Size(83, 13);
+            this.label10.TabIndex = 3;
+            this.label10.Text = "ps3tmapi_net.dll";
+            // 
+            // tmapiDLL
+            // 
+            this.tmapiDLL.AutoSize = true;
+            this.tmapiDLL.Location = new System.Drawing.Point(7, 33);
+            this.tmapiDLL.Name = "tmapiDLL";
+            this.tmapiDLL.Size = new System.Drawing.Size(109, 17);
+            this.tmapiDLL.TabIndex = 2;
+            this.tmapiDLL.TabStop = true;
+            this.tmapiDLL.Text = "PS3TMAPI (DEX)";
+            this.tmapiDLL.UseVisualStyleBackColor = true;
+            // 
             // OptionForm
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.BackColor = System.Drawing.Color.Black;
-            this.ClientSize = new System.Drawing.Size(319, 418);
+            this.ClientSize = new System.Drawing.Size(319, 475);
+            this.Controls.Add(this.groupBox2);
             this.Controls.Add(this.linkLabel1);
             this.Controls.Add(this.label8);
             this.Controls.Add(this.label7);
@@ -389,6 +450,8 @@
             ((System.ComponentModel.ISupportInitialize)(this.fcolPB)).EndInit();
             ((System.ComponentModel.ISupportInitialize)(this.bcolPB)).EndInit();
             this.groupBox1.ResumeLayout(false);
+            this.groupBox2.ResumeLayout(false);
+            this.groupBox2.PerformLayout();
             this.ResumeLayout(false);
             this.PerformLayout();
 
@@ -422,6 +485,11 @@
         private System.Windows.Forms.Label label7;
         private System.Windows.Forms.Label label8;
         private System.Windows.Forms.LinkLabel linkLabel1;
+        private System.Windows.Forms.GroupBox groupBox2;
+        private System.Windows.Forms.Label label10;
+        private System.Windows.Forms.RadioButton tmapiDLL;
+        private System.Windows.Forms.Label label9;
+        private System.Windows.Forms.RadioButton ccapiDLL;
 
 
     }

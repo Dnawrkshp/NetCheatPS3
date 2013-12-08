@@ -70,10 +70,15 @@ namespace NetCheatPS3
             int x = 0;
             if (MemArray != null)
             {
-                for (x = 1; x < (MemArray.Length - 1); x += 2)
+                for (x = 0; x < (MemArray.Length - 1); x += 2)
                 {
-                    if (addr >= MemArray[x] && addr < MemArray[x + 1])
-                        return MemArray[x + 1];
+                    bool a = false;
+                    if (x == 0)
+                        a = true;
+                    else
+                        a = addr >= MemArray[x-1];
+                    if (a && addr < MemArray[x])
+                        return MemArray[x];
                 }
 
                 if (addr >= MemArray[MemArray.Length-1])
@@ -88,16 +93,19 @@ namespace NetCheatPS3
          */
         public static int ParseRealDif(ulong a, ulong b, ulong div)
         {
-            ulong ret = b - a;
+            ulong ret = 0; //b - a;
             if (MemArray != null)
             {
                 int x = 0;
-                for (x = 2; x < MemArray.Length; x += 2)
+                for (x = 1; x < MemArray.Length; x += 2)
                 {
-                    if (b > MemArray[x] && a < MemArray[x])
-                        ret -= (MemArray[x] - MemArray[x - 1]);
+                    if (b > MemArray[x] && a < MemArray[x - 1])
+                        ret += (MemArray[x] - MemArray[x - 1]);
                 }
             }
+
+            if (ret == 0)
+                ret = b - a;
             return (int)((ret / div) + 1);
         }
 
@@ -242,32 +250,43 @@ namespace NetCheatPS3
                     for (cnt = 0; cnt < a.Length; cnt++)
                         if (b[cnt] < a[cnt])
                             return true;
+                        else if (b[cnt] != a[cnt])
+                            return false;
                     break;
                 case Form1.compLTE:
                     for (cnt = 0; cnt < a.Length; cnt++)
-                        if ((b[cnt] < a[cnt]) || (isBAEqual(a, b)))
+                        if (b[cnt] < a[cnt])
                             return true;
+                        else if (isBAEqual(a, b))
+                            return true;
+                        else if (b[cnt] != a[cnt])
+                            return false;
                     break;
                 case Form1.compGT:
                     for (cnt = 0; cnt < a.Length; cnt++)
                         if (b[cnt] > a[cnt])
                             return true;
+                        else if (b[cnt] != a[cnt])
+                            return false;
                     break;
                 case Form1.compGTE:
                     for (cnt = 0; cnt < a.Length; cnt++)
-                        if ((b[cnt] > a[cnt]) || (isBAEqual(a, b)))
+                        if (b[cnt] > a[cnt])
                             return true;
+                        else if (isBAEqual(a, b))
+                            return true;
+                        else if (b[cnt] != a[cnt])
+                            return false;
                     break;
                 case Form1.compVBet:
                     if (c == null || c.Length < a.Length)
                         return false;
 
                     //if ((intB >= intA) && (intB <= intC))
-                    for (cnt = 0; cnt < a.Length; cnt++)
-                        if ((b[cnt] < a[cnt]) || (b[cnt] > c[cnt]))
-                            return false;
+                    if (ArrayCompare(a, b, null, Form1.compGTE) && ArrayCompare(c, b, null, Form1.compLTE))
+                        return true;
 
-                    return true;
+                    break;
                 case Form1.compINC:
                     if (c == null || c.Length < a.Length)
                         return false;
@@ -314,20 +333,40 @@ namespace NetCheatPS3
             return false;
         }
 
+
+        public static bool ArrayCompare(byte[] a, byte[] b, byte[] c, int mode, bool matchCase)
+        {
+            if (b.Length < a.Length)
+                return false;
+
+            if (!matchCase)
+            {
+                //Make both arrays lowercase
+                for (int x = 0; x < a.Length; x++)
+                {
+                    if (a[x] >= 0x61 && a[x] <= 0x7E)
+                        a[x] -= 0x20;
+                    if (b[x] >= 0x61 && b[x] <= 0x7E)
+                        b[x] -= 0x20;
+                    if (c != null)
+                        if (c[x] >= 0x61 && c[x] <= 0x7E)
+                            c[x] -= 0x20;
+                }
+            }
+
+            return ArrayCompare(a, b, c, mode);
+        }
+
         /*
          * Determines whether the byte array a is equal to the byte array b
          */
         private static bool isBAEqual(byte[] a, byte[] b)
         {
-            bool ret = true;
-
             for (int cnt = 0; cnt < a.Length; cnt++)
-                if (a[cnt] == b[cnt])
-                    ret &= true;
-                else
-                    ret &= false;
+                if (a[cnt] != b[cnt])
+                    return false;
 
-            return ret;
+            return true;
         }
 
         /*
@@ -538,7 +577,7 @@ namespace NetCheatPS3
                         Array.Resize(ref temp, b + 1);
                         temp[b] = ret[off + b];
                     }
-                    Array.Reverse(temp);
+                    if (BitConverter.IsLittleEndian) Array.Reverse(temp);
                     tempInt = misc.ByteArrayToLong(temp, 0, temp.Length - 1);
                     string val = tempInt.ToString("X");
                     if ((val.Length % 2) != 0)

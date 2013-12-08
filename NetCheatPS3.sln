@@ -5,6 +5,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "NetCheatPS3", "NetCheatPS3\
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "PluginInterface", "NetCheatPS3\NetCheat Interface\PluginInterface\PluginInterface.csproj", "{00D0C21D-D94C-4B0F-A710-1EFBABB4C4C6}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "NetCheatPS3Updater", "NetCheatPS3Updater\NetCheatPS3Updater.csproj", "{0722D1A4-16A6-4F6B-8C28-5ED05CBDF47C}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -37,6 +39,16 @@ Global
 		{00D0C21D-D94C-4B0F-A710-1EFBABB4C4C6}.Release|Mixed Platforms.ActiveCfg = Release|Any CPU
 		{00D0C21D-D94C-4B0F-A710-1EFBABB4C4C6}.Release|Mixed Platforms.Build.0 = Release|Any CPU
 		{00D0C21D-D94C-4B0F-A710-1EFBABB4C4C6}.Release|x86.ActiveCfg = Release|Any CPU
+		{0722D1A4-16A6-4F6B-8C28-5ED05CBDF47C}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{0722D1A4-16A6-4F6B-8C28-5ED05CBDF47C}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{0722D1A4-16A6-4F6B-8C28-5ED05CBDF47C}.Debug|Mixed Platforms.ActiveCfg = Debug|Any CPU
+		{0722D1A4-16A6-4F6B-8C28-5ED05CBDF47C}.Debug|Mixed Platforms.Build.0 = Debug|Any CPU
+		{0722D1A4-16A6-4F6B-8C28-5ED05CBDF47C}.Debug|x86.ActiveCfg = Debug|Any CPU
+		{0722D1A4-16A6-4F6B-8C28-5ED05CBDF47C}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{0722D1A4-16A6-4F6B-8C28-5ED05CBDF47C}.Release|Any CPU.Build.0 = Release|Any CPU
+		{0722D1A4-16A6-4F6B-8C28-5ED05CBDF47C}.Release|Mixed Platforms.ActiveCfg = Release|Any CPU
+		{0722D1A4-16A6-4F6B-8C28-5ED05CBDF47C}.Release|Mixed Platforms.Build.0 = Release|Any CPU
+		{0722D1A4-16A6-4F6B-8C28-5ED05CBDF47C}.Release|x86.ActiveCfg = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
