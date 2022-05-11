@@ -321,7 +321,18 @@
   <PropertyGroup>
     <PostBuildEvent>IF $(PlatformName)==x64 (
 copy "$(TargetDir)NetCheatPS3.exe" "$(TargetDir)NetCheatPS3_64.exe"
-)</PostBuildEvent>
+)
+</PostBuildEvent>
+  </PropertyGroup>
+  <PropertyGroup>
+    <PreBuildEvent>if not EXIST "$(TargetDir)APIs" (
+  mkdir $(TargetDir)APIs
+)
+
+if not EXIST "$(TargetDir)Plugins" (
+  mkdir $(TargetDir)Plugins
+)
+</PreBuildEvent>
   </PropertyGroup>
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
        Other similar extension points exist, see Microsoft.Common.targets.
