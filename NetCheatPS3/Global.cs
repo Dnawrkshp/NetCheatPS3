@@ -16,7 +16,9 @@ namespace NetCheatPS3
 		
 		//What have we done here?	
 		public static NetCheatPS3.PluginServices Plugins = new PluginServices();
-		
+
+        public static NetCheatPS3.APIServices APIs = new APIServices();
+
 		/*
 			instead of on the frmMain.cs having to declare a PluginService object
 			what i've done here is created one in the Global Class.. i've also made

@@ -1,3 +1,129 @@
+4.53
+-- Download: http://netcheat.gamehacking.org/ncUpdater/ncUpdateDir.zip --
+
+Fixed bug with Float Value Between showing as text
+Fixed bug where 64 bit is always set to TMAPI on boot
+Added Copy/Paste codetype (basically F codetype but compatible with pointers)
+Added ability to increment the value of a multiwrite/condensed code
+Added type of write to X byte write (0 = normal, 1 = OR, 2 = AND, 3 = XOR)
+Added API for CCAPI 2.50
+Added API for PS3MAPI 1.2.1
+Pressing DELETE key on search result will delete it
+
+4.52
+
+Fixed ghost results in search results after you delete results
+Added custom alignment to Text and X Bytes searches (leave as 1 if you don't understand)
+Fixed API template's API.cs class type (IAPI)
+Fixed CCAPI staying on Connecting... on boot of NC
+Fixed Memory Viewer PS3 plugin resetting address on resize
+
+4.51
+
+Fixed bug with PS3Lib extension functions (PluginInterface) writing reversed bytes
+
+4.50
+
+Added online code database
+Made Dump Memory less confusing
+Fixed settings file format error (caused donation form to always appear, and probably other bugs...)
+Made NetCheat resizable
+Fixed CCAPI 2.5 not working
+Fixed booting up for first time with it saying CCAPI, yet TMAPI is being used
+Fixed search type being set to 1 byte after Pointer is selected
+Fixed search methods, like Pointer, being visible in Next Scan when search type is invalid for that method
+Fixed game resuming, when already paused, during/after scan
+Added double search method
+Added support for CCAPI 2.60
+Made the Pointer scan method actually useful
+Made Copy results a lot faster
+Fixed Next Scan crashing when scanning past 0x80000000
+Added Search in little/big endian
+Made MemoryViewer plugin a lot better
+	Multiple Windows (saved on close and opened on shown)
+	Assembly, Text, Bytes, Float, Double, Decimal, Notes
+	Load/Save windows individually
+	Notes (displayed on the side)
+	Todo:
+		Color changed bytes
+		Add Options menu
+Added Stop Dump button when Dump is in progress
+Added conversion tools to codes tab (highlight/select codes in textbox and right click)
+Added Joker/Pad Finding search method
+Added support for PS3 Manager API by NzV (Not to be confused with TMAPI)
+Added support for custom APIs
+No longer dependant on PS3Lib
+If one plugin fails to load, NetCheat will still open fully functional
+
+4.40
+
+Fixed auto-updater causing error on boot because host site is down
+Fixed Less/Greater Searching -- Added Signed (S) and Unsigned (U) scans
+Added 64 bit support fully (auto-updating, remove CCAPI support, title bar)
+Fixed range difference bug (progress bar max is incorrect)
+Added Progress Bar to Task Bar
+Made updaters occur on separate thread to increase boot time
+Color NetCheat immediately without rebooting
+Added Find/Replace code type
+Added Condensed Write code type
+
+4.37
+Fixed F appearing as an invalid character in byte searches
+Added SearchMemory() functions to PluginInterface.dll that support a variety of types
+
+4.36
+If an invalid character is entered in a search argument, it is detected
+Fixed Decimal searching
+Fixed saving Pointer scan results
+Fixed Greater Than, GTE, LT, and LTE searching treating values as unsigned
+Added label stating which API is in use
+Added Unknown Value initial search
+Added functions from PS3Lib's Extension class to the PluginInterface.dll
+Added RingBuzzerPS3(), GetTemperatureCELL(), GetTemperatureRSX(), GetFirmwareType(), and GetFirmwareVersion() to the PluginInterface.dll
+XML documentation included with PluginInterface.dll (plugin development)
+Fixed auto-update bug. This means that everyone is going to have to force update this version
+
+4.35
+This is basically a bug version. So please report any bugs you encounter to my account Dnawrkshp on PS3Hax or NGU.
+
+Added F codetype. Copies X bytes from address A to address B
+Added Backup Memory button in the codes tab. It just saves what the codes are equal to before they get set.
+Rewrote the searching process entirely. New controls and more efficient handling.
+Searching is way faster and less memory intensive. So searching for 0 is now possible! I got around 7 million results in 20 seconds (TMAPI).
+Added Notifications to the PluginInterface.dll (plugins can now display notifications (CCAPI)).
+Added Pointer search type. It automatically does a value between search of Value +- 0x7FFF.
+Fixed error when launching without internet connection.
+Added NetCheat Memory Viewer plugin as a crappy memory viewing/editing solution for CCAPI users.
+Pressing Ctrl-C in the snapshotter plugin will save the image to a temporary file and copy the path to your clipboard (puush users).
+
+4.34
+-- Download: https://www.mediafire.com/?budss4800r6s9lr --
+Fixed 720p snapshot
+Fixed X byte searching bug that cut off the search byte
+Made ConnectionState() return -1 when NetCheat is closing/closed (threading)
+Made HD and SD say 720p and 480p respectively
+Updated code system (read Code types.txt for more info)
+Updated Conversion and copy results to new code system
+Added text write code
+Added 1080p snap shot (may not work...)
+Added donation link in Options form :)
+
+4.33
+Fixed ConnectionState() interface function only returning 1
+Fixed scan progress bar's max when start is the start of mem region
+Fixed Conversion tool bugs (Float to Hex and Hex String Array)
+Added snapshotter plugin
+
+4.32
+Lowered PS3Lib and NetCheat to .NET 3.5
+Added Ionic.Zip.dll for zip extracting (updating)
+
+4.31
+Added PowerOff function to PS3Lib
+Fixed range list bug (shows extra ncm)
+Fixed importing multiple codes coloring bug
+Lowered PS3Lib to .NET v4.0 for WinXP support
+
 4.30
 *** YOU WILL HAVE TO UPDATE TWICE THE FIRST TIME ***
 Fixed 6 pointer write bug (thanks RealMaster)

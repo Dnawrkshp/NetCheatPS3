@@ -1,32 +1,49 @@
 Codetypes for Dnawrkshp's NetCheat PS3:
 
 Format:
-[COMMAND] [ADDRESS] [VALUE]
+[COMMAND][ARGS] [ADDRESS] [VALUE]
 
----------- 0 -- 8 Bit write
-Writes 8 bits (1 byte) to the specified address
+---------- 0 -- X Byte Write
+Writes X number of bytes to a (address)
 
-0 aaaaaaaa vv000000
-
-Example:
-0 00B1F4A6 7F000000
-0 00B1F4A7 FF000000
-
----------- 1 -- 16 Bit write
-Writes 16 bits (2 byte) to the specified address
-
-1 aaaaaaaa vvvv0000
+0 aaaaaaaa vvvvvv
+You can have as many bytes after it (no spaces, new lines, and must have even number of digits)
+0102030405 would work, but 010203040 would not
 
 Example:
-1 00B1F4A6 7FFF0000
+0 00B1F4A1 FFFFFF01FFFFFF02FFFFFF03
 
----------- 2 -- 32 Bit write
-Writes 32 bits (4 byte) to the specified address
+---------- 1 -- Text write
+Writes the text to a (address)
+The text can contain spaces so be sure to not have comments on the same line
 
-2 aaaaaaaa vvvvvvvv
+1 aaaaaaaa TEXT
 
 Example:
-2 00B1F4A4 00007FFF
+1 00B1F4A6 This is an example of a text write
+
+---------- 2 -- Float write
+Writes the float to a (address)
+
+2 aaaaaaaa float
+
+Example:
+2 00B1F4A0 -3.14159
+
+---------- 4 -- Multi/Condensed write
+Starting at a, the value v is written and then a is incremented by the value i. This is done c many times.
+So if you look at the example below, the start address is 00B36E40.
+It then writes FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF to 00B36E40 and increments by 00000010 (i).
+So the address becomes 00B36E50 and FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF is written there.
+That happens 0x27 times, which if you do the math, will end at 00B36E40 + (0x27 * 0x10) or 00B370B0.
+This is the alternative to having a huge X write that, in this case, would be 0x270 bytes in length
+
+4 aaaaaaaa vvvv
+4 iiiiiiii cc
+
+Example:
+4 00B36E40 FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF
+4 00000010 27
 
 ---------- 6 -- Pointer write
 Reads the value at a, adds o, then uses that as the address for the next line.
@@ -36,26 +53,57 @@ a = address, o = offset, c = command, v = value
 c 00000000 vvvvvvvv
 
 Example:
-6 00B611C4 010010FC
-2 00000000 42480000
+6 00B611C4 000010FC
+0 00000000 424800003F800000
 
----------- D -- 24 Bit comparison
-Reads 24 bits from a and compares it with v. If they are equal it will execute the c of lines below it.
-D type codes must be constantly written!
+---------- B -- Find/Replace
+Searches the memory starting at a and going until b is reached.
+If COUNT is given and is greater than 0, the search will last until the number of replaces is equal to COUNT, or if b is reached.
+For every instance of o (aka OGP) found, it will be replaced with n (COP).
+Both o and n should be the same length.
+Game regions are used in the searching, so to make the code faster do specify/find/import the game's regions in the Range tab.
 
-D aaaaaaaa ccvvvvvv
+Because of how complicated the use of this can be in regard to multiple codes using the same o (OGP) value... I've added another window to help manage the find/replace results
+If you got a code from somewhere but it is in OGP/COP format (no start/stop specified), just use the first region for the game (Range tab->Find Ranges).
+
+B[COUNT] aaaaaaaa bbbbbbbb
+B oooooooo nnnnnnnn
 
 Example:
-D 00B122F8 01010000
-2 009C356D 00006000
+-- All within region
+B 00010000 01CC0000
+B 1234567890ABCDEF FEDCBA0987654321
+-- First 4 found
+B4 00010000 FFFFFFFC
+B 1234567890ABCDEF FEDCBA0987654321
 
----------- E -- 24 bit comparison mask unset
-Reads 24 bits from a and ands it with v. If that is equal to v it will execute the c of lines below it.
+---------- D -- Equal To Comparison
+Reads the number of bytes v contains from a and compares it with v. If they are equal it will execute the count (hex) number of lines below it.
+D type codes must be constantly written!
+
+D[COUNT] aaaaaaaa vvvvvvvv
+
+Example:
+D1 00B122F8 0001000000000000
+0 009C356D 00006000
+
+---------- E -- comparison mask unset
+Reads the number of bytes v contains from a and ands it with v. If that logical AND v is equal to v it will execute the count number (hex) of lines below it.
+So pretty much if the bits in v, are set in a, it will execute. D comparisons will execute if the bits in v are the only bits set at a.
 if ((intB & intA) == intA) From misc.ArrayCompare
 E type codes must be constantly written!
 
-E aaaaaaaa ccvvvvvv
+E[COUNT] aaaaaaaa vvvvvvvv
 
 Example:
-E 00B122F8 01000044
-2 010D4568 3E000000
+E2 00B122F8 00000044
+0 010D4568 3E000000
+1 0125CCA4 Activated
+
+---------- F -- Copy bytes
+Reads COUNT number of bytes from a and stores it in b
+
+F[COUNT] aaaaaaaa bbbbbbbb
+
+Example:
+FC0 00B00000 00C00000

@@ -1,20 +1,14 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.ComponentModel;
-using System.Data;
 using System.Drawing;
 using System.Linq;
-using System.Text;
 using System.Windows.Forms;
-using System.Runtime.InteropServices;
 using System.Diagnostics;
 using System.Net;
 using System.IO;
-using System.Speech.Synthesis;
 using System.Speech.Recognition;
-using PS3Lib;
-using System.Reflection;
-using System.IO.Compression;
+using System.Runtime.Serialization.Formatters.Binary;
+using Ionic.Zip;
 
 namespace NetCheatPS3
 {
@@ -22,23 +16,61 @@ namespace NetCheatPS3
     public partial class Form1 : Form
     {
 
+        public static Form1 Instance = null;
+        public static FindReplaceManager FRManager = null;
+
+        public static string versionNum = "4.53";
+        public static string apiName = "Target Manager API (420.1.14.7)";
+
+        private static Types.AvailableAPI _curapi;
+        public static Types.AvailableAPI curAPI
+        {
+            get { return _curapi; }
+            set
+            {
+                _curapi = value;
+                if (_curapi == null)
+                {
+                    apiName = "None";
+                    Form1.Instance.Text = "NetCheat " + versionNum + " by Dnawrkshp" + ((IntPtr.Size == 8) ? " (64 Bit)" : " (32 Bit)");
+                    Form1.Instance.statusLabel2.Text = "API: None";
+
+                    // disable parts of the ui
+                    foreach (Control tabPage in Form1.Instance.TabCon.TabPages)
+                    {
+                        if (tabPage.Name == "apiTab")
+                        {
+                            Form1.Instance.TabCon.SelectedTab = (TabPage)tabPage;
+                            tabPage.Enabled = true;
+                        }
+                        else
+                        {
+                            tabPage.Enabled = false;
+                        }
+                    }
+                }
+                else
+                {
+                    Form1.Instance.CurrentEndian = _curapi.Instance.isPlatformLittleEndian ? Endian.Little : Endian.Big;
+                    apiName = _curapi.Instance.Name + " (" + _curapi.Instance.Version + ")";
+                    Form1.Instance.Text = "NetCheat " + _curapi.Instance.Platform + " " + versionNum + " by Dnawrkshp" + ((IntPtr.Size == 8) ? " (64 Bit)" : " (32 Bit)");
+                    Form1.Instance.statusLabel2.Text = "API: " + _curapi.Instance.Name;
+                }
+            }
+        }
+
+        public bool allowForce = false;
+
         #region NetCheat PS3 Global Variables
 
-        public static string versionNum = "4.30";
+        //public static AppDomain pluginDomain = AppDomain.CreateDomain("NC Plugin Domain");
 
-        public static PS3API PS3 = new PS3API();
-        public static string IPAddrStr = "";
+        public static bool PluginAllowColoring = false;
+        public static bool DefaultPluginAllowColoring = true;
 
         bool isRecognizing = false;
+        public static bool isClosing = false;
         SpeechRecognitionEngine sRecognize = new SpeechRecognitionEngine();
-        public static uint ProcessID;
-        public static uint[] processIDs;
-        public static PS3Lib.NET.PS3TMAPI.SNRESULT snresult;
-        public static string usage;
-        public static string Info;
-        public static PS3Lib.NET.PS3TMAPI.ConnectStatus connectStatus;
-        public static string Status;
-        public static string MemStatus;
         public static bool connected = false;
         public static bool attached = false;
         public static int CodesCount = 0; /* Number of codes */
@@ -60,23 +92,33 @@ namespace NetCheatPS3
         public static int compMode = 0; /* Comparison type */
 
         /* Pre-parsed code struct */
-        public struct CodeData
+        public struct ncCode
         {
-            public byte[] val;
-            public ulong addr;
-            public char type;
-            public byte[] jbool; /* Joker boolean value */
-            public int jsize; /* Numbero of lines to execute with it true; joker */
+            public char codeType;
+            public byte[] codeArg2;
+            public ulong codeArg1;
+            public byte[] codeArg1_BA;
+            public uint codeArg0;
+        }
+
+        public delegate ncCode ParseCode(string code);
+        public delegate int ExecCode(int cnt, ref CodeDB cDB, bool isCWrite);
+        public struct ncCodeType
+        {
+            public ParseCode ParseCode;         //Function that parses the code
+            public ExecCode ExecCode;           //Function that executes the code
+            public char Command;                //What defines the code type
         }
 
         /* Code struct */
         public struct CodeDB
         {          /* Structure for a single code */
-            public bool state;          /* Determines whether to write constantly or not */
-            public string name;         /* Name of Code */
-            public string codes;        /* Holds codes string */
-            public CodeData[] CData;    /* Holds codes in parsed format */
-            public string filename;     /* For use with the 'Save' button */
+            public bool state;              /* Determines whether to write constantly or not */
+            public string name;             /* Name of Code */
+            public string codes;            /* Holds codes string */
+            public ncCode[] CData;          /* Holds codes in parsed format */
+            public string filename;         /* For use with the 'Save' button */
+            public ncCode[] backUp;         /* Holds what the memory originally held before writing */
         };
 
         /* Search result struct - NOT USED */
@@ -98,20 +140,25 @@ namespace NetCheatPS3
         }
 
         /* Codes Array */
-        public static CodeDB[] Codes = new CodeDB[MaxCodes];
+        public static List<CodeDB> Codes = new List<CodeDB>();
 
         /* Search Types */
         public const int compEq = 0;        /* Equal To */
         public const int compNEq = 1;       /* Not Equal To */
-        public const int compLT = 2;        /* Less Than */
-        public const int compLTE = 3;       /* Less Than Or Equal To */
-        public const int compGT = 4;        /* Greater Than */
-        public const int compGTE = 5;       /* Greater Than Or Equal To */
+        public const int compLT = 2;        /* Less Than Signed */
+        public const int compLTE = 3;       /* Less Than Or Equal To Signed */
+        public const int compGT = 4;        /* Greater Than Signed */
+        public const int compGTE = 5;       /* Greater Than Or Equal To Signed */
         public const int compVBet = 6;      /* Value Between */
-        public const int compINC = 7;       /* Increased Value */
-        public const int compDEC = 8;       /* Decreased Value */
+        public const int compINC = 7;       /* Increased Value Signed */
+        public const int compDEC = 8;       /* Decreased Value Signed */
         public const int compChg = 9;       /* Changed Value */
         public const int compUChg = 10;     /* Unchanged Value */
+        public const int compLTU = 11;      /* Less Than Unsigned */
+        public const int compLTEU = 12;     /* Less Than Or Equal To Unsigned */
+        public const int compGTU = 13;      /* Greater Than Unsigned */
+        public const int compGTEU = 14;     /* Greater Than Or Equal To Unsigned */
+
 
         public const int compANEq = 20;     /* And Equal (used with E joker type) */
 
@@ -123,6 +170,36 @@ namespace NetCheatPS3
             public string retStr;
         };
 
+        /* Little and Big Endian */
+        public enum Endian
+        {
+            Little,
+            Big
+        }
+
+        private static Endian _curEndian = Endian.Big;
+        public static bool doFlipArray = false;
+        public Endian CurrentEndian
+        {
+            get { return _curEndian; }
+            set
+            {
+                _curEndian = value;
+
+                if (_curEndian == Endian.Big)
+                    endianStripMenuItem.Checked = true;
+                else
+                    endianStripMenuItem.Checked = false;
+
+
+                doFlipArray = false;
+                if (CurrentEndian == Endian.Big && BitConverter.IsLittleEndian)
+                    doFlipArray = true;
+                else if (CurrentEndian == Endian.Little && !BitConverter.IsLittleEndian)
+                    doFlipArray = true;
+            }
+        }
+
         /* ForeColor and BackColor */
         public static Color ncBackColor = Color.Black;
         public static Color ncForeColor = Color.FromArgb(0, 130, 210);
@@ -133,8 +210,9 @@ namespace NetCheatPS3
             "Initial Scan", "Next Scan", "Stop", "Refresh Results",
             "Toggle Constant Write", "Write"
         };
-        /* API dll */
-        public static int apiDLL = 0;
+        /* Whether to have the donations form pop up or not */
+        public static bool ncDonatePopup = true;
+
         /* Settings file path */
         public static string settFile = "";
         /* String array that holds each range import */
@@ -143,7 +221,7 @@ namespace NetCheatPS3
         public static int[] rangeOrder = new int[0];
 
         /* Plugin form related arrays */
-        static PluginForm[] pluginForm = new PluginForm[0];
+        public static PluginForm[] pluginForm = new PluginForm[0];
         public static bool[] pluginFormActive = new bool[0];
         public static int setplugWindow = -1;
 
@@ -154,17 +232,30 @@ namespace NetCheatPS3
             public int size;
         }
 
+        public struct OnlineCode
+        {
+            public string id;
+            public int ver;
+        }
+
         /* Constant writing thread */
         public static System.Threading.Thread tConstWrite = new System.Threading.Thread(new System.Threading.ThreadStart(codes.BeginConstWriting));
         #endregion
 
         #region Interface Functions
+
         /* API related functions */
         public static void apiSetMem(ulong addr, byte[] val) //Set the memory
         {
             if (val != null && connected)
-                PS3.SetMemory((uint)addr, val);
-            //PS3TMAPI.ProcessSetMemory(0, PS3TMAPI.UnitType.PPU, Form1.ProcessID, 0, addr, val);
+            {
+
+                byte[] newV = new byte[val.Length];
+                Array.Copy(val, 0, newV, 0, val.Length);
+                newV = misc.notrevif(newV);
+                curAPI.Instance.SetBytes(addr, newV);
+            }
+            //PS3TMAPI.ProcessSetMemory(Target, PS3TMAPI.UnitType.PPU, Form1.ProcessID, 0, addr, val);
         }
 
         public static bool apiGetMem(ulong addr, ref byte[] val) //Gets the memory as a byte array
@@ -172,20 +263,113 @@ namespace NetCheatPS3
             bool ret = false;
             if (val != null && connected)
             {
-                if (apiDLL == 0)
-                    ret = (PS3Lib.NET.PS3TMAPI.ProcessGetMemory(0, PS3Lib.NET.PS3TMAPI.UnitType.PPU, PS3Lib.TMAPI.Parameters.ProcessID, 0, addr, ref val) ==
-                        PS3Lib.NET.PS3TMAPI.SNRESULT.SN_S_OK);
-                else
-                    ret = (PS3.CCAPI.GetMemory(addr, val) >= 0);
+                ret = curAPI.Instance.GetBytes(addr, ref val);
             }
             return ret;
         }
+
+        public enum ValueType
+        {
+            CHAR,
+            SHORT,
+            INT,
+            LONG,
+            USHORT,
+            UINT,
+            ULONG,
+            STRING,
+            FLOAT,
+            DOUBLE
+        }
+
+        public static object getVal(uint addr, ValueType type)
+        {
+            return getVal((ulong)addr, type);
+        }
+
+        public static object getVal(ulong addr, ValueType type)
+        {
+            byte[] b;
+
+            switch (type)
+            {
+                case ValueType.CHAR:
+                    b = new byte[1];
+                    apiGetMem(addr, ref b);
+                    return (char)b[0];
+                case ValueType.DOUBLE:
+                    b = new byte[8];
+                    apiGetMem(addr, ref b);
+                    if (doFlipArray)
+                        Array.Reverse(b);
+                    return BitConverter.ToDouble(b, 0);
+                case ValueType.FLOAT:
+                    b = new byte[4];
+                    apiGetMem(addr, ref b);
+                    if (doFlipArray)
+                        Array.Reverse(b);
+                    return BitConverter.ToSingle(b, 0);
+                case ValueType.INT:
+                    b = new byte[4];
+                    apiGetMem(addr, ref b);
+                    if (doFlipArray)
+                        Array.Reverse(b);
+                    return BitConverter.ToInt32(b, 0);
+                case ValueType.LONG:
+                    b = new byte[4];
+                    apiGetMem(addr, ref b);
+                    if (doFlipArray)
+                        Array.Reverse(b);
+                    return BitConverter.ToInt64(b, 0);
+                case ValueType.SHORT:
+                    b = new byte[4];
+                    apiGetMem(addr, ref b);
+                    if (doFlipArray)
+                        Array.Reverse(b);
+                    return BitConverter.ToInt16(b, 0);
+                case ValueType.STRING:
+                    b = new byte[256];
+                    apiGetMem(addr, ref b);
+                    if (doFlipArray)
+                        Array.Reverse(b);
+                    string valStringRet = "";
+                    for (int str = 0; str < 256; str++)
+                    {
+                        if (b[str] == 0)
+                            break;
+                        valStringRet += ((char)b[str]).ToString();
+                    }
+                    return valStringRet;
+                case ValueType.UINT:
+                    b = new byte[4];
+                    apiGetMem(addr, ref b);
+                    if (doFlipArray)
+                        Array.Reverse(b);
+                    return BitConverter.ToUInt32(b, 0);
+                case ValueType.ULONG:
+                    b = new byte[4];
+                    apiGetMem(addr, ref b);
+                    if (doFlipArray)
+                        Array.Reverse(b);
+                    return BitConverter.ToUInt64(b, 0);
+                case ValueType.USHORT:
+                    b = new byte[4];
+                    apiGetMem(addr, ref b);
+                    if (doFlipArray)
+                        Array.Reverse(b);
+                    return BitConverter.ToUInt16(b, 0);
+            }
+
+            return 0;
+        }
+
         #endregion
 
         #region NetCheat Updater
 
-        public void RunUpdateChecker(bool allowForce)
+        public static void RunUpdateChecker()
         {
+            bool allowForce = Form1.Instance.allowForce;
             string[] updateStr = CheckForUpdate();
             string newVer = updateStr[0].Replace("\r", "").Replace("\n", "");
             bool update = int.Parse(newVer.Replace(".", "")) > int.Parse(versionNum.Replace(".", ""));
@@ -206,8 +390,8 @@ namespace NetCheatPS3
                 updateForm mBox = new updateForm();
                 mBox.Title = title;
                 mBox.UpdateStr = updateArg;
-                mBox.ForeColor = ForeColor;
-                mBox.BackColor = BackColor;
+                mBox.ForeColor = Form1.Instance.ForeColor;
+                mBox.BackColor = Form1.Instance.BackColor;
                 mBox.Show();
 
                 while (mBox.Return < 0)
@@ -229,10 +413,10 @@ namespace NetCheatPS3
                 lbl.Size = loadingFrm.Size;
                 lbl.Location = new Point(0, 0);
                 lbl.TextAlign = ContentAlignment.MiddleCenter;
-                lbl.Font = new System.Drawing.Font(this.Font.FontFamily, 15.0f);
+                lbl.Font = new System.Drawing.Font(Form1.Instance.Font.FontFamily, 15.0f);
                 loadingFrm.Controls.Add(lbl);
-                loadingFrm.BackColor = BackColor;
-                loadingFrm.ForeColor = ForeColor;
+                loadingFrm.BackColor = Form1.Instance.BackColor;
+                loadingFrm.ForeColor = Form1.Instance.ForeColor;
                 loadingFrm.Show();
                 loadingFrm.TopLevel = true;
                 loadingFrm.Location = new Point(Screen.PrimaryScreen.WorkingArea.Width / 2 - (loadingFrm.Width / 2),
@@ -243,23 +427,30 @@ namespace NetCheatPS3
             }
         }
 
-        public string[] CheckForUpdate()
+        public static string[] CheckForUpdate()
         {
-            string webpath = "http://www.cod-orc.com/NetCheatUpdate.txt";
+            string webpath = "http://netcheat.gamehacking.org/ncUpdater/NetCheatUpdate.txt";
             string store = Path.GetTempFileName();
 
-            WebClient Client = new WebClient();
-            Client.DownloadFile(webpath, store);
+            try
+            {
+                WebClient Client = new WebClient();
+                Client.DownloadFile(webpath, store);
 
-            string[] ver = File.ReadAllLines(store);
-            File.Delete(store);
+                string[] ver = File.ReadAllLines(store);
+                File.Delete(store);
 
-            return ver;
+                return ver;
+            }
+            catch (Exception)
+            {
+                return new string[] { "0" };
+            }
         }
 
-        public void UpdateNetCheatPS3()
+        public static void UpdateNetCheatPS3()
         {
-            string webpath = "http://www.cod-orc.com/ncUpdateDir.zip";
+            string webpath = "http://netcheat.gamehacking.org/ncUpdater/ncUpdateDir.zip";
             //FileInfo ncFI = new FileInfo(Application.ExecutablePath);
             string store = Application.StartupPath + "\\" + "ncUpdateDir.zip";
 
@@ -283,24 +474,29 @@ namespace NetCheatPS3
                 " \"" + Application.StartupPath + "\\ncUpdateDir\"" +
                 " \"" + Application.StartupPath + "\"" +
                 " \"" + Application.ExecutablePath + "\"");
-            Close();
+
+
+            Process.GetCurrentProcess().Kill();
+            //Form1.Instance.Close();
         }
 
         public static void DecompressFile(string file, string directory)
         {
-            using (ZipArchive archive = ZipFile.OpenRead(file))
+            using (ZipFile archive = ZipFile.Read(file))
             {
-                foreach (ZipArchiveEntry entry in archive.Entries)
+                foreach (ZipEntry entry in archive.Entries)
                 {
                     try
                     {
-                        if (entry.Length > 0)
+                        if (entry.UncompressedSize > 0)
                         {
-                            string mergedPath = Path.Combine(directory, entry.FullName);
-                            FileInfo fi = new FileInfo(mergedPath);
+                            string mergedPath = Path.Combine(directory, entry.FileName);
+                            FileInfo fi = new FileInfo(directory);
                             if (!Directory.Exists(fi.Directory.FullName))
                                 Directory.CreateDirectory(fi.Directory.FullName);
-                            entry.ExtractToFile(mergedPath, true);
+                            if (File.Exists(mergedPath))
+                                File.Delete(mergedPath);
+                            entry.Extract(directory, ExtractExistingFileAction.OverwriteSilently);
                         }
                     }
                     catch (Exception error)
@@ -316,7 +512,13 @@ namespace NetCheatPS3
         public Form1()
         {
             InitializeComponent();
+
+            Instance = this;
+            compare.LoadSearch();
+
             this.FormClosing += new System.Windows.Forms.FormClosingEventHandler(this.Form1_Closing);
+            this.GotFocus += new EventHandler(Form1_Focused);
+            HandleFocusControls(this.Controls);
 
             /* Related to the keybindings */
             connectButton.KeyUp += new KeyEventHandler(Form1_KeyUp);
@@ -332,6 +534,9 @@ namespace NetCheatPS3
             refPlugin.KeyDown += new KeyEventHandler(Form1_KeyDown);
             optButton.KeyDown += new KeyEventHandler(Form1_KeyDown);
             TabCon.KeyDown += new KeyEventHandler(Form1_KeyDown);
+
+            CurrentEndian = Endian.Little;
+            CurrentEndian = Endian.Big;
         }
 
         /* Saves the options to the ncps3.ini file */
@@ -347,8 +552,8 @@ namespace NetCheatPS3
                 }
 
                 //Colors
-                fd.WriteLine(ncBackColor.Name);
-                fd.WriteLine(ncForeColor.Name);
+                fd.WriteLine(ncBackColor.A.ToString("X2") + ncBackColor.R.ToString("X2") + ncBackColor.G.ToString("X2") + ncBackColor.B.ToString("X2"));
+                fd.WriteLine(ncForeColor.A.ToString("X2") + ncForeColor.R.ToString("X2") + ncForeColor.G.ToString("X2") + ncForeColor.B.ToString("X2"));
 
                 //Recently opened ranges order
                 string range = "";
@@ -361,29 +566,52 @@ namespace NetCheatPS3
                 //Recently opened ranges paths
                 range = "";
                 foreach (string str in rangeImports)
-                    range += str + ";";
+                    if (str != "")
+                        range += str + ";";
                 if (range == "")
                     range = ";";
                 fd.WriteLine(range);
 
                 //API
-                fd.WriteLine(apiDLL.ToString());
+                if (curAPI != null)
+                    fd.WriteLine(curAPI.Instance.Name + " (" + curAPI.Instance.Version + ")");
+                else
+                    fd.WriteLine("0");
+
+                //Donation Popup
+                fd.WriteLine(ncDonatePopup.ToString());
+            }
+        }
+
+        private void Form1_Focused(object sender, EventArgs e)
+        {
+            if (Form1.Instance.ContainsFocus)
+            {
+                if (ProgressBar.progTaskBarError || (searchControl1.searchMemory.Text != "Stop" && searchControl1.nextSearchMem.Text != "Stop"))
+                {
+                    TaskbarProgress.SetState(this.Handle, TaskbarProgress.TaskbarStates.NoProgress);
+                    ProgressBar.progTaskBarError = false;
+                }
             }
         }
 
         /* Everything else because I have no organization skills... */
         private void Form1_Closing(object sender, System.ComponentModel.CancelEventArgs e)
         {
+            isClosing = true;
             ConstantLoop = 2;
-            PS3.DisconnectTarget();
             this.statusLabel1.Text = "Disconnected";
             System.IO.File.Delete(dFileName);
 
             //Close all plugins
             foreach (PluginForm a in pluginForm)
             {
-                a.Dispose();
-                a.Close();
+                try
+                {
+                    a.Dispose();
+                    a.Close();
+                }
+                catch { }
             }
 
             if (refPlugin.Text == "Close Plugins")
@@ -392,17 +620,71 @@ namespace NetCheatPS3
 
         private void Main_Load(object sender, EventArgs e)
         {
-            RunUpdateChecker(false);
+            if (!Debugger.IsAttached)
+                TabCon.TabPages.Remove(DumpCompTab);
+
+            if (IntPtr.Size == 8)
+            {
+                //MessageBox.Show("This is the 64 bit version of NetCheatPS3.\nThis version DOES NOT work with CCAPI 2.5! It is not my fault, if you want CCAPI to support 64 bit applications then please bug Enstone about it.\nThanks.");
+            }
+
+            System.Threading.Thread updateCheckThread = new System.Threading.Thread(new System.Threading.ThreadStart(RunUpdateChecker));
+            updateCheckThread.IsBackground = true;
+            updateCheckThread.Start();
+            //RunUpdateChecker(false);
+
             //if (File.Exists(Application.ExecutablePath + ".bak"))
             //    File.Delete(Application.ExecutablePath + ".bak");
             //if (File.Exists(Application.StartupPath + "\\updateNC.bat"))
             //    File.Delete(Application.StartupPath + "\\updateNC.bat");
-            
-            this.Text = "NetCheat PS3 " + versionNum + " by Dnawrkshp";
+
+            codes.ncCodeTypes = new ncCodeType[10];
+            //Byte Write
+            codes.ncCodeTypes[0].ParseCode = new ParseCode(codes.parseCode);
+            codes.ncCodeTypes[0].ExecCode = new ExecCode(codes.execByteWrite);
+            codes.ncCodeTypes[0].Command = '0';
+            //Text Write
+            codes.ncCodeTypes[1].ParseCode = new ParseCode(codes.parseTextCode);
+            codes.ncCodeTypes[1].ExecCode = new ExecCode(codes.execByteWrite);
+            codes.ncCodeTypes[1].Command = '1';
+            //Pointer Execute
+            codes.ncCodeTypes[2].ParseCode = new ParseCode(codes.parseCode);
+            codes.ncCodeTypes[2].ExecCode = new ExecCode(codes.execPointerExecute);
+            codes.ncCodeTypes[2].Command = '6';
+            //Conditional Equal To Execute
+            codes.ncCodeTypes[3].ParseCode = new ParseCode(codes.parseCode);
+            codes.ncCodeTypes[3].ExecCode = new ExecCode(codes.execEQConditionalExecute);
+            codes.ncCodeTypes[3].Command = 'D';
+            //Conditional Mask Unset Execute
+            codes.ncCodeTypes[4].ParseCode = new ParseCode(codes.parseCode);
+            codes.ncCodeTypes[4].ExecCode = new ExecCode(codes.execMUConditionalExecute);
+            codes.ncCodeTypes[4].Command = 'E';
+            //Copy to address
+            codes.ncCodeTypes[5].ParseCode = new ParseCode(codes.parseCode);
+            codes.ncCodeTypes[5].ExecCode = new ExecCode(codes.execCopyBytes);
+            codes.ncCodeTypes[5].Command = 'F';
+            //Float Write
+            codes.ncCodeTypes[6].ParseCode = new ParseCode(codes.parseCode);
+            codes.ncCodeTypes[6].ExecCode = new ExecCode(codes.execByteWrite);
+            codes.ncCodeTypes[6].Command = '2';
+            //Find Replace
+            codes.ncCodeTypes[7].ParseCode = new ParseCode(codes.parseCode);
+            codes.ncCodeTypes[7].ExecCode = new ExecCode(codes.execFindReplace);
+            codes.ncCodeTypes[7].Command = 'B';
+            //Condensed Multiline Code
+            codes.ncCodeTypes[8].ParseCode = new ParseCode(codes.parseCode);
+            codes.ncCodeTypes[8].ExecCode = new ExecCode(codes.execMultilineCondensed);
+            codes.ncCodeTypes[8].Command = '4';
+            //Copy Paste
+            codes.ncCodeTypes[9].ParseCode = new ParseCode(codes.parseCode);
+            codes.ncCodeTypes[9].ExecCode = new ExecCode(codes.execCopyPasteBytes);
+            codes.ncCodeTypes[9].Command = 'A';
+
+            LoadAPIs();
 
             int x = 0;
             //Set the settings file and load the settings
-            settFile = Application.StartupPath + "\\ncps3.ini";
+            settFile = Application.StartupPath + ((IntPtr.Size == 8) ? "\\ncps364.ini" : "\\ncps3.ini");
             if (System.IO.File.Exists(settFile))
             {
                 string[] settLines = System.IO.File.ReadAllLines(settFile);
@@ -411,41 +693,99 @@ namespace NetCheatPS3
                     //Read the keybinds from the array
                     for (x = 0; x < keyBinds.Length; x++)
                         keyBinds[x] = (Keys)int.Parse(settLines[x]);
+                }
+                catch { }
+                x = keyBinds.Length;
 
+                try
+                {
                     //Read the colors and update the form
-                    ncBackColor = Color.FromArgb(int.Parse(settLines[x], System.Globalization.NumberStyles.HexNumber)); BackColor = ncBackColor; x++;
-                    ncForeColor = Color.FromArgb(int.Parse(settLines[x], System.Globalization.NumberStyles.HexNumber)); ForeColor = ncForeColor; x++;
+                    ncBackColor = Color.FromArgb(int.Parse(settLines[x], System.Globalization.NumberStyles.HexNumber)); BackColor = ncBackColor;
+                    ncForeColor = Color.FromArgb(int.Parse(settLines[x + 1], System.Globalization.NumberStyles.HexNumber)); ForeColor = ncForeColor;
+                }
+                catch { }
+                x += 2;
 
+                try
+                {
                     //Read the recently opened ranges
                     string[] strRangeOrder = settLines[x].Split(';');
-                    Array.Resize(ref rangeOrder, strRangeOrder.Length - 1);
+                    int size = 0;
+                    foreach (string strTMP in strRangeOrder)
+                        if (strTMP != "")
+                            size++;
+                    Array.Resize(ref rangeOrder, size);
                     for (int valRO = 0; valRO < rangeOrder.Length; valRO++)
                         if (strRangeOrder[valRO] != "")
                             rangeOrder[valRO] = int.Parse(strRangeOrder[valRO]);
 
-                    x++;
-                    rangeImports = settLines[x].Split(';');
-                    //Get rid of extra "" at the end
-                    Array.Resize(ref rangeImports, rangeImports.Length - 1);
+                    size = 0;
+                    rangeImports = settLines[x + 1].Split(';');
+                    foreach (string strTMP in strRangeOrder)
+                        if (strTMP != "")
+                            size++;
+                    Array.Resize(ref rangeImports, size);
                     UpdateRecRangeBox();
-                    x++;
-
-                    apiDLL = int.Parse(settLines[x]);
-                    x++;
                 }
-                catch
+                catch { }
+                x += 2;
+
+                try
                 {
-                }
-            }
+                    if (settLines[x] == "0")
+                    {
+                        int apiDLL = Global.APIs.AvailableAPIs.GetIndex("Target Manager API", "420.1.14.7");
+                        curAPI = Global.APIs.AvailableAPIs.GetIndex(apiDLL);
+                        curAPI.Instance.Initialize();
+                    }
+                    else
+                    {
+                        apiName = settLines[x];
+                        int apiC = 0;
+                        foreach (Types.AvailableAPI api in Global.APIs.AvailableAPIs)
+                        {
+                            if ((api.Instance.Name + " (" + api.Instance.Version + ")") == apiName)
+                            {
+                                //apiDLL = apiC;
+                                curAPI = api;
+                                curAPI.Instance.Initialize();
+                                break;
+                            }
+                            apiC++;
+                        }
 
-            PS3.ChangeAPI((apiDLL == 0) ? SelectAPI.TargetManager : SelectAPI.ControlConsole);
-            if (apiDLL == 0)
-                PS3.PS3TMAPI_NET();
+                        if (apiC == Global.APIs.AvailableAPIs.Count)
+                        {
+                            apiC = 0;
+                            apiName = "Control Console API (2.60)";
+                            foreach (Types.AvailableAPI api in Global.APIs.AvailableAPIs)
+                            {
+                                if ((api.Instance.Name + " (" + api.Instance.Version + ")") == apiName)
+                                {
+                                    //apiDLL = apiC;
+                                    curAPI = api;
+                                    break;
+                                }
+                                apiC++;
+                            }
+                        }
+                    }
+                }
+                catch { }
+                x++;
+
+                try
+                {
+                    ncDonatePopup = bool.Parse(settLines[x]);
+                }
+                catch { }
+                x++;
+            }
             else
             {
-                SchPWS.Visible = false; //Can't stop/continue process with CCAPI
-                pauseGameButt.Visible = false;
-                startGameButt.Visible = false;
+                //apiDLL = 1;
+                curAPI = Global.APIs.AvailableAPIs.GetIndex(0);
+                curAPI?.Instance?.Initialize();
             }
 
             refPlugin_Click(null, null);
@@ -458,10 +798,12 @@ namespace NetCheatPS3
             cbList.Items[0].ForeColor = ncForeColor;
             cbList.Items[0].BackColor = ncBackColor;
 
-            Codes[CodesCount].name = "NEW CODE";
-            Codes[CodesCount].state = false;
-            cbSchAlign.SelectedIndex = 2;
-            compBox.SelectedIndex = 0;
+            CodeDB cdb = new CodeDB();
+            cdb.name = "NEW CODE";
+            cdb.state = false;
+            //Codes[CodesCount].name = "NEW CODE";
+            //Codes[CodesCount].state = false;
+            Codes.Add(cdb);
             dFileName = Application.StartupPath + "\\dump.txt";
 
             cbList.Items[0].Selected = true;
@@ -496,77 +838,44 @@ namespace NetCheatPS3
                 }
             }
 
-            
-
             toolStripDropDownButton1.BackColor = Color.Maroon;
 
-            try
-            {
-                sRecognize.RequestRecognizerUpdate();
-                DictationGrammar _dictationGrammar = new DictationGrammar();
-                sRecognize.LoadGrammar(_dictationGrammar);
-                sRecognize.SpeechRecognized += sr_SpeechRecognized;
-                sRecognize.SetInputToDefaultAudioDevice();
-            }
-            catch
-            {
-                return;
-            }
+            FRManager = new FindReplaceManager();
+            FRManager.BackColor = ncBackColor;
+            FRManager.ForeColor = ncForeColor;
+
+            HandlePluginControls(searchControl1.Controls);
+            HandlePluginControls(FRManager.Controls);
         }
 
         /* Connects to PS3 */
         private void connectButton_Click(object sender, EventArgs e)
-        {   
+        {
+            if (curAPI == null)
+                return;
+
             this.statusLabel1.Text = "Connecting...";
             try
             {
-                if (apiDLL == 0) //TMAPI
+                if (curAPI.Instance.Connect())
                 {
-                    if (PS3.ConnectTarget())
-                    {
-                        connected = true;
-                        this.statusLabel1.Text = "Connected";
+                    connected = true;
+                    this.statusLabel1.Text = "Connected";
 
-                        connectButton.Enabled = false;
-                        attachProcessButton.Enabled = true;
-                        toolStripDropDownButton1.BackColor = Color.DarkGoldenrod;
-                    }
+
+                    connectButton.Enabled = false;
+                    attachProcessButton.Enabled = true;
+                    toolStripDropDownButton1.BackColor = Color.DarkGoldenrod;
                 }
-                else //CCAPI
+                else
                 {
-                    IBArg[] ibArg = new IBArg[1];
-                    ibArg[0].defStr = (IPAddrStr == "") ? "0.0.0.0" : IPAddrStr;
-                    ibArg[0].label = "PS3 IP Address";
-                    ibArg = CallIBox(ibArg);
-
-                    if (ibArg == null)
-                    {
-                        this.statusLabel1.Text = "Cancelled Connecting";
-                        return;
-                    }
-
-                    IPAddrStr = ibArg[0].retStr;
-                    if (ibArg[0].retStr != "")
-                    {
-                        if (PS3.ConnectTarget(ibArg[0].retStr))
-                        {
-                            connected = true;
-                            this.statusLabel1.Text = "Connected";
-                            connectButton.Enabled = false;
-                            attachProcessButton.Enabled = true;
-                            toolStripDropDownButton1.BackColor = Color.DarkGoldenrod;
-                        }
-                    }
-                }
-                if (connected == false)
-                {
-                    this.statusLabel1.Text = "Failed to connect to PS3";
+                    this.statusLabel1.Text = "Failed to connect";
                     connected = false;
                 }
             }
             catch
             {
-                this.statusLabel1.Text = "Failed to connect to PS3";
+                this.statusLabel1.Text = "Failed to connect";
                 connected = false;
             }
         }
@@ -576,9 +885,10 @@ namespace NetCheatPS3
         {
             try
             {
-                if (PS3.AttachProcess())
+                if (curAPI.Instance.Attach())
                 {
                     this.statusLabel1.Text = "Process Attached";
+
                     ConstantLoop = 1;
                     attachProcessButton.Enabled = false;
                     toolStripDropDownButton1.BackColor = Color.DarkGreen;
@@ -586,14 +896,14 @@ namespace NetCheatPS3
                 }
                 else
                 {
-                    this.statusLabel1.Text = "Error attaching process; no game started?";
+                    this.statusLabel1.Text = "Error attaching process";
                     toolStripDropDownButton1.BackColor = Color.DarkGoldenrod;
                 }
                 
             }
             catch (Exception)
             {
-                this.statusLabel1.Text = "Error attaching process; no game started?";
+                this.statusLabel1.Text = "Error attaching process";
                 toolStripDropDownButton1.BackColor = Color.DarkGoldenrod;
             }
         }
@@ -601,16 +911,25 @@ namespace NetCheatPS3
         /* Disconnects from PS3 */
         private void ps3Disc_Click(object sender, EventArgs e)
         {
-            PS3.DisconnectTarget();
-            ConstantLoop = 2;
-            this.statusLabel1.Text = "Disconnected";
-            processIDs = null;
-            attached = false;
-            connected = false;
+            if (curAPI == null)
+                return;
 
-            attachProcessButton.Enabled = false;
-            connectButton.Enabled = true;
-            toolStripDropDownButton1.BackColor = Color.Maroon;
+            try
+            {
+                curAPI.Instance.Disconnect();
+                ConstantLoop = 2;
+                this.statusLabel1.Text = "Disconnected";
+                attached = false;
+                connected = false;
+
+                attachProcessButton.Enabled = false;
+                connectButton.Enabled = true;
+                toolStripDropDownButton1.BackColor = Color.Maroon;
+            }
+            catch (Exception)
+            {
+
+            }
         }
 
         /* Calculates the list index and updates the controls */
@@ -651,9 +970,16 @@ namespace NetCheatPS3
         private void UpdateCB(int Index)
         {
             if (Index < 0 || Index >= MaxCodes)
+            {
+                cbName.Text = "";
+                cbCodes.Text = "";
+                cbState.Checked = false;
                 return;
+            }
 
             //Update the textboxes to the new code
+            if (Index >= Codes.Count)
+                return;
             cbName.Text = Codes[Index].name;
             cbCodes.Text = Codes[Index].codes;
             cbState.Checked = Codes[Index].state;
@@ -666,30 +992,28 @@ namespace NetCheatPS3
             CodesCount = cbList.Items.Count - 1;
             cbList.Items[CodesCount].ForeColor = ncForeColor;
             cbList.Items[CodesCount].BackColor = ncBackColor;
-            Codes[CodesCount].name = "NEW CODE";
-            Codes[CodesCount].state = false;
-            Codes[CodesCount].codes = "";
+
+            CodeDB cdb = new CodeDB();
+            cdb.name = "NEW CODE";
+            cdb.state = false;
+            cdb.codes = "";
+            //Codes[CodesCount].name = "NEW CODE";
+            //Codes[CodesCount].state = false;
+            //Codes[CodesCount].codes = "";
+            Codes.Add(cdb);
         }
 
         /* Removes a code from the list */
         private void cbRemove_Click(object sender, EventArgs e)
         {
-            int ind = cbListIndex, x = 0;
+            int ind = cbListIndex;
             if (ind < 0)
                 return;
 
             cbList.Items[ind].Remove();
 
-            for (x = ind; x <= (cbList.Items.Count - 1); x++)
-            {
-                Codes[x].codes = Codes[x + 1].codes;
-                Codes[x].name = Codes[x + 1].name;
-                Codes[x].state = Codes[x + 1].state;
-            }
-
-            Codes[x].codes = "NEW CODE";
-            Codes[x].name = "";
-            Codes[x].state = false;
+            if (ind < Codes.Count)
+                Codes.RemoveAt(ind);
 
             if (cbListIndex >= (cbList.Items.Count - 1))
                 cbListIndex = cbList.Items.Count - 1;
@@ -727,9 +1051,9 @@ namespace NetCheatPS3
                         cbList.Items.Add(ret[x].name);
 
                     cnt = cbList.Items.Count - 1;
-                    cbList.Items[cnt].ForeColor = Color.FromArgb(0, 130, 210);
-                    cbList.Items[cnt].BackColor = Color.Black;
-                    Codes[cnt] = ret[x];
+                    cbList.Items[cnt].ForeColor = ncForeColor;
+                    cbList.Items[cnt].BackColor = ncBackColor;
+                    Codes.Add(ret[x]);
                 }
 
                 CodesCount = cnt;
@@ -747,7 +1071,11 @@ namespace NetCheatPS3
             if (fd.ShowDialog() == DialogResult.OK)
             {
                 fileio.SaveFile(fd.FileName, Codes[cbListIndex]);
-                Codes[cbListIndex].filename = fd.FileName;
+
+                CodeDB c = Codes[cbListIndex];
+                c.filename = fd.FileName;
+                //Codes[cbListIndex].filename = fd.FileName;
+                Codes[cbListIndex] = c;
             }
         }
 
@@ -773,6 +1101,13 @@ namespace NetCheatPS3
         /* Writes the selected code to the PS3 */
         private void cbWrite_Click(object sender, EventArgs e)
         {
+            if (Codes[cbListIndex].backUp == null || Codes[cbListIndex].backUp.Length == 0)
+            {
+                CodeDB c = Codes[cbListIndex];
+                c.backUp = codes.CreateBackupPS3(Codes[cbListIndex]);
+                //Codes[cbListIndex].backUp = codes.CreateBackupPS3(Codes[cbListIndex]);
+                Codes[cbListIndex] = c;
+            }
             codes.WriteToPS32(Codes[cbListIndex]);
         }
 
@@ -787,7 +1122,10 @@ namespace NetCheatPS3
                 cbList.Items[ind].Text = "+ " + Codes[ind].name;
             else
                 cbList.Items[ind].Text = Codes[ind].name;
-            Codes[ind].state = cbState.Checked;
+
+            CodeDB c = Codes[ind];
+            c.state = cbState.Checked;
+            Codes[ind] = c;
 
             ConstantLoop = 1;
         }
@@ -799,7 +1137,10 @@ namespace NetCheatPS3
             if (ind < 0)
                 return;
 
-            Codes[ind].name = cbName.Text;
+            CodeDB c = Codes[ind];
+            c.name = cbName.Text;
+            //Codes[ind].name = cbName.Text;
+            Codes[ind] = c;
             if (Codes[ind].state == true)
             {
                 cbList.Items[ind].Text = "+ " + cbName.Text;
@@ -820,1046 +1161,21 @@ namespace NetCheatPS3
             if (Codes[ind].state == true)
             {
                 cbList.Items[ind].Text = Codes[ind].name;
-                Codes[ind].state = false;
+
+                CodeDB c = Codes[ind];
+                c.state = false;
+                Codes[ind] = c;
             }
             else
             {
                 cbList.Items[ind].Text = "+ " + Codes[ind].name;
-                Codes[ind].state = true;
+                CodeDB c = Codes[ind];
+                c.state = true;
+                Codes[ind] = c;
                 ConstantLoop = 1;
             }
             Application.DoEvents();
             UpdateCB(ind);
-        }
-
-        /* Converts the values in the search textboxes between hex and decimal */
-        private void SchHexCheck_CheckedChanged(object sender, EventArgs e)
-        {
-            if (SchHexCheck.Text == "Hex")
-            {
-                ValHex = SchHexCheck.Checked;
-
-                if (schVal.Text.Length == 0)
-                    return;
-
-                if (ValHex && schVal.Text.Length <= 8)
-                    schVal.Text = int.Parse(schVal.Text).ToString("X8"); //Dec to Hex
-                else if (ValHex && schVal.Text.Length > 8)
-                    schVal.Text = Int64.Parse(schVal.Text).ToString("X16"); //Dec to Hex
-                else if (schVal.Text.Length <= 8)
-                    schVal.Text = Convert.ToInt32(schVal.Text, 16).ToString(); //Hex to Dec
-                else
-                    schVal.Text = Convert.ToInt64(schVal.Text, 16).ToString(); //Hex to Dec
-
-                if (schVal2.Visible)
-                {
-                    if (ValHex && schVal2.Text.Length <= 8)
-                        schVal2.Text = int.Parse(schVal2.Text).ToString("X8"); //Dec to Hex
-                    else if (ValHex && schVal2.Text.Length > 8)
-                        schVal2.Text = Int64.Parse(schVal2.Text).ToString("X16"); //Dec to Hex
-                    else if (schVal2.Text.Length <= 8)
-                        schVal2.Text = Convert.ToInt32(schVal2.Text, 16).ToString(); //Hex to Dec
-                    else
-                        schVal2.Text = Convert.ToInt64(schVal2.Text, 16).ToString(); //Hex to Dec
-                }
-            }
-        }
-
-        private void compBox_SelectedIndexChanged(object sender, EventArgs e)
-        {
-            compMode = compBox.SelectedIndex;
-            if (compMode == 6)
-            {
-                schVal2.Visible = true;
-                schVal2.Size = schVal.Size;
-                schVal2.Left = schVal.Size.Width + 20 + schVal.Left;
-
-                if (cbSchAlign.SelectedIndex == 5)
-                    cbSchAlign.SelectedIndex = 0;
-            }
-            else
-                schVal2.Visible = false;
-        }
-
-        private void cbSchAlign_SelectedIndexChanged(object sender, EventArgs e)
-        {
-            SearchMode(cbSchAlign.SelectedIndex);
-
-            /* Sizes */
-            Size size_0 = new Size(30, 20);
-            Size size_1 = new Size(60, 20);
-            Size size_2 = new Size(120, 20);
-            Size size_3 = new Size(240, 20);
-            Size size_4 = new Size(180, 20);
-            Size size_5 = new Size(394, 20);
-
-            switch (cbSchAlign.SelectedIndex)
-            {
-                case 0: //1 byte
-                    schVal.Size = size_0;
-                    if (schVal2.Visible)
-                    {
-                        schVal2.Left = size_0.Width + 20 + schVal.Left;
-                        schVal2.Size = size_0;
-                    }
-                    break;
-                case 1: //2 bytes
-                    schVal.Size = size_1;
-
-                    if (schVal2.Visible)
-                    {
-                        schVal2.Left = size_1.Width + 20 + schVal.Left;
-                        schVal2.Size = size_1;
-                    }
-                    break;
-                case 2: //4 bytes
-                    schVal.Size = size_2;
-
-                    if (schVal2.Visible)
-                    {
-                        schVal2.Left = size_2.Width + 20 + schVal.Left;
-                        schVal2.Size = size_2;
-                    }
-                    break;
-                case 3: //8 bytes
-                    schVal.Size = size_3;
-
-                    if (schVal2.Visible)
-                    {
-                        schVal2.Left = size_3.Width + 20 + schVal.Left;
-                        schVal2.Size = size_3;
-                    }
-                    break;
-                case 4: //X bytes
-                    schVal.Size = size_4;
-
-                    if (schVal2.Visible)
-                    {
-                        schVal2.Left = size_4.Width + 20 + schVal.Left;
-                        schVal2.Size = size_4;
-                    }
-                    break;
-                case 5: //Text
-                    schVal.Size = size_5;
-                    schVal2.Visible = false;
-                    if (compMode == 6)
-                    {
-                        compMode = 0;
-                        compBox.SelectedIndex = 0;
-                    }
-                    break;
-
-            }
-        }
-
-        private void DumpMem_Click(object sender, EventArgs e)
-        {
-            ulong rStart = 0, rStop = 0, cnt = 0, incVal = 0x10000;
-            int rDif = 0;
-            string file = "";
-            bool NextSearch = false;
-
-            if (schRange1.Text.Length != 8 || schRange2.Text.Length != 8)
-                return;
-
-            SaveFileDialog fd = new SaveFileDialog();
-            fd.Filter = "Binary files (*.bin)|*.bin|All files (*.*)|*.*";
-            fd.RestoreDirectory = true;
-
-            if (fd.ShowDialog() == DialogResult.OK)
-                file = fd.FileName;
-
-            if (file == "")
-                return;
-
-            if (System.IO.File.Exists(file))
-                System.IO.File.Delete(file);
-
-            rStart = ulong.Parse(schRange1.Text, System.Globalization.NumberStyles.HexNumber);
-            rStop = ulong.Parse(schRange2.Text, System.Globalization.NumberStyles.HexNumber);
-            rDif = (int)misc.ParseRealDif(rStart, rStop, incVal);
-            schProg.Maximum = rDif;
-            schProg.Value = 0;
-
-            statusLabel1.Text = "No, I am not going to add a cancel button. Just wait through it.";
-
-            schSearch.Enabled = false;
-            SchRef.Enabled = false;
-            DumpMem.Enabled = false;
-            NextSearch = schNSearch.Enabled;
-            schNSearch.Enabled = false;
-
-            System.IO.FileStream fs = new System.IO.FileStream(file, System.IO.FileMode.Append,
-                System.IO.FileAccess.Write);
-
-            for (cnt = rStart; cnt < rStop; cnt += incVal)
-            {
-                if (cnt != misc.ParseSchAddr(cnt))
-                {
-                    int maCnt = 0;
-                    uint size = 0;
-                    while (maCnt < misc.MemArray.Length && cnt > misc.MemArray[maCnt])
-                        maCnt++;
-
-                    if (maCnt < misc.MemArray.Length)
-                    {
-                        size = (uint)misc.MemArray[maCnt] - (uint)misc.MemArray[maCnt - 1];
-                        fs.Write(new byte[size], 0, (int)size);
-                        cnt = misc.MemArray[maCnt];
-                    }
-
-                    int newVal = misc.ParseRealDif((ulong)rStart, cnt, incVal);
-                    if ((int)newVal <= schProg.Maximum)
-                        schProg.Value = (int)newVal;
-                }
-                else
-                {
-                    if ((cnt + incVal) > rStop)
-                        incVal = (rStop - cnt);
-
-                    byte[] retByte = new byte[incVal];
-
-                    apiGetMem(cnt, ref retByte);
-                    fs.Write(retByte, 0, retByte.Length);
-
-                    if ((schProg.Value + 1) <= schProg.Maximum)
-                        schProg.Value++;
-                }
-                Application.DoEvents();
-            }
-            fs.Close();
-
-            schSearch.Enabled = true;
-            SchRef.Enabled = true;
-            DumpMem.Enabled = true;
-            schNSearch.Enabled = NextSearch;
-
-            schProg.Value = 0;
-            schProg.Maximum = 0;
-            statusLabel1.Text = "Dump complete";
-        }
-
-        private void schSearch_Click(object sender, EventArgs e)
-        {
-            Stopwatch watch = Stopwatch.StartNew();
-            ulong rDif = 0, rStart = 0, rStop = 0;
-            int align = 4;
-
-            if (schSearch.Text == "Stop")
-            {
-                /* Setup CompBox */
-                compBox.Items.RemoveAt(compBox.Items.Count - 1);
-                compBox.Items.RemoveAt(compBox.Items.Count - 1);
-                compBox.Items.RemoveAt(compBox.Items.Count - 1);
-                compBox.Items.RemoveAt(compBox.Items.Count - 1);
-                if (compBox.SelectedIndex < 0)
-                    compBox.SelectedIndex = 0;
-
-                CancelSearch = 2;
-                if (SchPWS.Checked && SchPWS.Visible)
-                    PS3Lib.NET.PS3TMAPI.ProcessContinue(0, PS3Lib.TMAPI.Parameters.ProcessID);
-                return;
-            }
-
-            if (schRange1.Text.Length != 8 || schRange2.Text.Length != 8)
-            {
-                MessageBox.Show("Error: range addresses are not of proper length 8.");
-                return;
-            }
-
-            if (SchPWS.Checked && SchPWS.Visible && schSearch.Text != "New Scan")
-                PS3Lib.NET.PS3TMAPI.ProcessAttach(0, PS3Lib.NET.PS3TMAPI.UnitType.PPU, PS3Lib.TMAPI.Parameters.ProcessID);
-
-            switch (cbSchAlign.SelectedItem.ToString())
-            {
-                case "1 byte":
-                    align = 1;
-                    break;
-                case "2 bytes":
-                    align = 2;
-                    break;
-                case "4 bytes":
-                    align = 4;
-                    break;
-                case "8 bytes":
-                    align = 8;
-                    break;
-                case "X bytes":
-                    align = -2;
-                    break;
-                case "Text":
-                    align = -1;
-                    break;
-            }
-
-            String ValStr = "", ValStr2 = "";
-            if (align > 0 || align == -2)
-            {
-                if (ValHex)
-                {
-                    if (align > 0)
-                    {
-                        ValStr = schVal.Text.PadLeft(align * 2, '0');
-                        schVal.Text = ValStr;
-                        if (schVal2.Visible)
-                        {
-                            ValStr2 = schVal2.Text.PadLeft(align * 2, '0');
-                            schVal2.Text = ValStr2;
-                        }
-                    }
-                    else if (align == -2)
-                    {
-                        ValStr = schVal.Text;
-                        if (schVal2.Visible)
-                            ValStr2 = schVal2.Text;
-                    }
-                }
-                else
-                {
-                    ValStr = ulong.Parse(schVal.Text).ToString("X");
-                    ValStr = ValStr.PadLeft(align * 2, '0');
-
-                    if (schVal2.Visible)
-                    {
-                        ValStr2 = ulong.Parse(schVal2.Text).ToString("X");
-                        ValStr2 = ValStr2.PadLeft(align * 2, '0');
-                    }
-                }
-            }
-
-            byte[] sVal = null;
-            byte[] c = null;
-            if (align > 0)
-                sVal = new byte[align];
-            else if (align == -1)
-                sVal = new byte[schVal.Text.Length];
-            else if (align == -2)
-                sVal = new byte[schVal.Text.Length / 2];
-
-            rStart = ulong.Parse(schRange1.Text, System.Globalization.NumberStyles.HexNumber);
-            rStop = ulong.Parse(schRange2.Text, System.Globalization.NumberStyles.HexNumber);
-
-            if (align == 8)
-                sVal = BitConverter.GetBytes(Int64.Parse(misc.ReverseE(ValStr.PadLeft(align * 2, '0'), (align * 2)), System.Globalization.NumberStyles.HexNumber));
-            else if (align == -1)
-                sVal = misc.StringToByteArray(schVal.Text);
-            else if (align == -2)
-                sVal = misc.StringBAToBA(schVal.Text);
-            else if (align > 0)
-                sVal = misc.StringBAToBA(ValStr); //BitConverter.GetBytes(int.Parse(misc.ReverseE(ValStr, (align * 2)), System.Globalization.NumberStyles.HexNumber));
-            rDif = rStop - rStart;
-
-            if (schVal2.Visible)
-            {
-                if (align == -2)
-                    c = misc.StringBAToBA(ValStr2);
-                else
-                    c = misc.StringBAToBA(ValStr2);
-            }
-
-            if ((Int64)rDif <= 0)
-            {
-                MessageBox.Show("Error: range addresses are incompatible.");
-                return;
-            }
-
-            if (compMode >= compBox.Items.Count)
-            {
-                compMode = 0;
-                compBox.SelectedIndex = 0;
-                return;
-            }
-
-
-            /* Setup the buttons */
-            if (NewSearch)
-            {
-                /* Setup CompBox */
-                compBox.Items.Add("Increased By");
-                compBox.Items.Add("Decreased By");
-                compBox.Items.Add("Changed Value");
-                compBox.Items.Add("Unchanged Value");
-                NewSearch = false;
-                schSearch.Text = "Stop";
-                //schNSearch.Enabled = true;
-            }
-            else
-            {
-                /* Setup CompBox */
-                if (compBox.Items[compBox.Items.Count - 1].ToString() == "Unchanged Value")
-                {
-                    compBox.Items.RemoveAt(compBox.Items.Count - 1);
-                    compBox.Items.RemoveAt(compBox.Items.Count - 1);
-                    compBox.Items.RemoveAt(compBox.Items.Count - 1);
-                    compBox.Items.RemoveAt(compBox.Items.Count - 1);
-                    if (compBox.SelectedIndex < 0)
-                        compBox.SelectedIndex = 0;
-                }
-                NewSearch = true;
-                lvSch.Items.Clear();
-                schSearch.Text = "Initial Scan";
-                schNSearch.Enabled = false;
-                return;
-            }
-
-            ulong recvCnt = 0, sSize = 0x10000;
-
-            rDif = (ulong)misc.ParseRealDif(rStart, rStop, sSize);
-            schProg.Value = 0;
-            schProg.Maximum = (int)rDif;
-            SchResCnt = 0;
-            int len = schVal.Text.Length;
-            if (!SchHexCheck.Checked)
-                len = sVal.Length;
-            NextSAlign = align;
-
-            //Calculate the size of the ret byte
-            if ((rStop - rStart) < sSize)
-                sSize = (rStop - rStart);
-
-            if (System.IO.File.Exists(dFileName))
-                System.IO.File.Delete(dFileName);
-
-            Application.DoEvents();
-            using (System.IO.StreamWriter file = new System.IO.StreamWriter(dFileName, true))
-            {
-
-                lvSch.BeginUpdate();
-                for (recvCnt = rStart; rDif > 0; recvCnt += sSize)
-                {
-                    ulong oldRecv = recvCnt;
-                    recvCnt = misc.ParseSchAddr(recvCnt);
-                    if (recvCnt >= rStop || (recvCnt == 0 && oldRecv != 0))
-                        break;
-
-                    ulong ret = 0;
-                    //Calculate the size of the ret byte
-                    if ((rStop - recvCnt) < sSize)
-                        sSize = (rStop - recvCnt);
-
-                    if (align > 0)
-                        ret = InitSearch(recvCnt, sVal, c, align, sSize, file);
-                    else if (align == -1)
-                        ret = InitSearchText(SchHexCheck.Checked, recvCnt, sVal, c, len * 2, sSize, file);
-                    else if (align == -2)
-                        ret = InitSearchText(recvCnt, sVal, c, len, sSize, file);
-
-                    //Only refresh if there are results to add
-                    if (ret > 0)
-                    {
-                        lvSch.EndUpdate();
-                        Application.DoEvents();
-                        lvSch.BeginUpdate();
-                    }
-
-                    SchResCnt += ret;
-                    this.statusLabel1.Text = "Results found: " + SchResCnt.ToString();
-                    /*
-                    if (SchResCnt >= MaxRes)
-                    {
-                        SchResCnt = MaxRes; SchResCnt--;
-                        schSearch.Text = "New Scan";
-                        schProg.Value = 0;
-                        schProg.Maximum = 0;
-                        statusStrip1.Text = "Last result of search: " + recvCnt.ToString("X8");
-                        break;
-                    }
-                    */
-
-                    if (CancelSearch == 1)
-                    {
-                        NewSearch = true;
-                        schSearch.Text = "Initial Scan";
-                        schNSearch.Enabled = false;
-                        schProg.Maximum = 0;
-                        schProg.Value = 0;
-                        SchResCnt = 0;
-                        lvSch.Items.Clear();
-                        CancelSearch = 0;
-                        lvSch.EndUpdate();
-                        return;
-                    }
-                    else if (CancelSearch == 2)
-                        goto exitInitSearchLoop;
-
-                    if ((schProg.Value + 1) < schProg.Maximum)
-                        schProg.Value++; //+= (int)sSize;
-                    rDif--; //-= sSize;
-                    Application.DoEvents();
-                }
-            exitInitSearchLoop: ;
-            }
-                //RefreshSearchResults(0);
-
-            watch.Stop();
-            long elapsedMs = watch.ElapsedMilliseconds;
-            statusLabel1.Text += ", Search time: " + ((Single)elapsedMs / (Single)1000).ToString("F") + " seconds";
-
-            schSearch.Text = "New Scan";
-            schProg.Maximum = 0;
-            NewSearch = false;
-            schNSearch.Enabled = true;
-            schProg.Value = 0;
-
-            GlobAlign = (ulong)align;
-            if (SchPWS.Checked && SchPWS.Visible)
-                PS3Lib.NET.PS3TMAPI.ProcessContinue(0, PS3Lib.TMAPI.Parameters.ProcessID);
-            CancelSearch = 0;
-            lvSch.EndUpdate();
-        }
-
-        private void SchRef_Click(object sender, EventArgs e)
-        {
-            RefreshSearchResults(1);
-        }
-
-        private void schNSearch_Click(object sender, EventArgs e)
-        {
-            Stopwatch watch = Stopwatch.StartNew();
-            byte[] sVal = null;
-            byte[] c = null;
-
-            if (schNSearch.Text == "Cancel")
-            {
-                CancelSearch = 1;
-                if (SchPWS.Checked)
-                    PS3Lib.NET.PS3TMAPI.ProcessContinue(0, PS3Lib.TMAPI.Parameters.ProcessID);
-                return;
-            }
-
-            if (NewSearch == false)
-            {
-                NewSearch = true;
-                schNSearch.Text = "Cancel";
-            }
-            else
-            {
-                NewSearch = false;
-                schNSearch.Text = "Next Scan";
-                return;
-            }
-
-            if (NextSAlign > 0 || NextSAlign == -2)
-            {
-                int align = Form1.NextSAlign;
-                String ValStr = "", ValStr2 = "";
-                int oldA = align;
-                if (align == -2)
-                    align = schVal.Text.Length / 2;
-
-                if (ValHex)
-                {
-                    ValStr = schVal.Text.PadLeft(align * 2, '0');
-                    schVal.Text = ValStr;
-                    if (schVal2.Visible)
-                    {
-                        ValStr2 = schVal2.Text.PadLeft(align * 2, '0');
-                        schVal2.Text = ValStr2;
-                    }
-                }
-                else
-                {
-                    ValStr = int.Parse(schVal.Text).ToString("X8");
-                }
-
-                if (ValStr == "")
-                {
-                    MessageBox.Show("Error: please perform an initial search first.");
-                    return;
-                }
-
-                sVal = misc.StringBAToBA(ValStr);
-                if ((int)NextSAlign == -2)
-                    align = ValStr2.Length;
-                if (schVal2.Visible)
-                    c = misc.StringBAToBA(ValStr2);
-                align = oldA;
-            }
-
-            if (SchPWS.Checked)
-                PS3Lib.NET.PS3TMAPI.ProcessAttach(0, PS3Lib.NET.PS3TMAPI.UnitType.PPU, PS3Lib.TMAPI.Parameters.ProcessID);
-
-            ulong a = 0;
-            if (NextSAlign == -1)
-            {                                                           
-                sVal = misc.StringToByteArray(schVal.Text);                                                                            
-                a = NextSearchText(sVal, c, NextSAlign);
-            }
-            else if (NextSAlign == -2)
-            {
-                byte[] newB = new byte[schVal.Text.Length / 2];
-                Array.Copy(sVal, 0, newB, 0, schVal.Text.Length / 2);
-                a = NextSearchText(newB, c, NextSAlign);
-            }
-            else if (NextSAlign > 0)
-                a = NextSearch(sVal, c, NextSAlign);
-
-            if (CancelSearch == 0)
-            {
-                SchResCnt = a;
-
-                this.statusLabel1.Text = "Results found: " + SchResCnt.ToString();
-                RefreshSearchResults(0);
-            }
-
-            watch.Stop();
-            long elapsedMs = watch.ElapsedMilliseconds;
-            statusLabel1.Text += ", Search time: " + ((Single)elapsedMs / (Single)1000).ToString("F") + " seconds";
-
-            schNSearch.Text = "Next Scan";
-            NewSearch = false;
-            schProg.Maximum = 0;
-            schProg.Value = 0;
-
-            if (SchPWS.Checked)
-                PS3Lib.NET.PS3TMAPI.ProcessContinue(0, PS3Lib.TMAPI.Parameters.ProcessID);
-            CancelSearch = 0;
-            lvSch.EndUpdate();
-        }
-
-        private void lvSch_SelectedIndexChanged(object sender, EventArgs e)
-        {
-
-        }
-
-        private void lvSch_KeyUp(object sender, KeyEventArgs e)
-        {
-            //Refresh
-            if (e.KeyCode == Keys.R && e.Control)
-            {
-                RefreshFromDump();
-            }
-            //Copy
-            else if (e.KeyValue == 67)
-            {
-                CopyResults();
-            }
-        }
-
-        bool hexSchHexVal = true;
-        bool textSchHexVal = false;
-        private void SearchMode(int mode)
-        {
-            if (mode != 5 && SchHexCheck.Text == "MCase")
-            {
-                SchHexCheck.Text = "Hex";
-                textSchHexVal = SchHexCheck.Checked;
-                SchHexCheck.Checked = hexSchHexVal;
-                SchHexCheck.Font = Font;
-            }
-            switch (mode)
-            {
-                case 0: //1 byte
-                    SchHexCheck.Visible = true;
-                    break;
-                case 1: //2 bytes
-                    SchHexCheck.Visible = true;
-                    break;
-                case 2: //4 bytes
-                    SchHexCheck.Visible = true;
-                    break;
-                case 3: //8 bytes
-                    SchHexCheck.Visible = true;
-                    break;
-                case 4: //X bytes
-                    SchHexCheck.Visible = true;
-                    break;
-                case 5: //Text
-                    hexSchHexVal = SchHexCheck.Checked;
-                    SchHexCheck.Checked = textSchHexVal;
-                    SchHexCheck.Visible = true;
-                    SchHexCheck.Text = "MCase";
-                    SchHexCheck.Font = new Font(Font.FontFamily, 6.75f, FontStyle.Regular);
-                    break;
-            }
-        }
-
-        public ulong InitSearch(ulong sStart, byte[] sVal, byte[] c, int align, ulong sSize, System.IO.StreamWriter fStream)
-        {
-            ulong ResCnt = 0, sCount = 0;
-            byte[] ret = new byte[sSize];
-
-            apiGetMem(sStart, ref ret);
-
-            while (sCount < sSize)
-            {
-                //if (Form1.CancelSearch)
-                //    return 0;
-
-                byte[] argB = new byte[(int)align];
-                Array.Copy(ret, (int)sCount, argB, 0, argB.Length);
-                if (misc.ArrayCompare(sVal, argB, c, compMode))
-                {
-                    ListRes a = misc.GetlvVals(align, ret, (int)sCount);
-
-                    string[] row = { (sStart + sCount).ToString("X8"), a.HexVal, a.DecVal, a.AlignStr };
-                    var listViewItem = new ListViewItem(row);
-                    lvSch.Items.Add(listViewItem);
-
-                    //fileio.AppendDump(Form1.SchRes[Form1.SchResCnt + ResCnt], dFileName);
-                    fStream.WriteLine((sStart + sCount) + " " + misc.ByteAToStringInt(sVal, " ") + " " + align);
-
-                    ResCnt++;
-                }
-                sCount += (ulong)align;
-            }
-            return ResCnt;
-        }
-
-        public ulong InitSearchText(ulong sStart, byte[] sText, byte[] c, int len, ulong sSize, System.IO.StreamWriter fStream)
-        {
-            ulong ResCnt = 0, sCount = 0;
-            byte[] ret = new byte[sSize];
-
-            apiGetMem(sStart, ref ret);
-
-            while ((sCount + (ulong)sText.Length) <= sSize)
-            {
-
-                if (Form1.CancelSearch == 1)
-                    return 0;
-                
-                //if (misc.ArrayCompare(sTextLong, ret, cLong, len / 2, (int)sCount, compMode))
-                byte[] argB = new byte[len / 2];
-                Array.Copy(ret, (int)sCount, argB, 0, argB.Length);
-                if (misc.ArrayCompare(sText, argB, c, compMode))
-                {
-                    byte[] newB = new byte[len / 2];
-                    Array.Copy(ret, (int)sCount, newB, 0, newB.Length);
-
-                    ListRes a = misc.GetlvVals((int)NextSAlign, newB, 0);
-                    string[] row = { (sStart + sCount).ToString("X8"), a.HexVal, a.DecVal, a.AlignStr};
-
-                    var listViewItem = new ListViewItem(row);
-                    lvSch.Items.Add(listViewItem);
-
-                    if ((int)NextSAlign == -1)
-                        fStream.WriteLine((sStart + sCount) + " " + misc.ByteAToStringInt(sText, " ") + " " + (len / 2) + " -1");
-                    else if ((int)NextSAlign == -2)
-                        fStream.WriteLine((sStart + sCount) + " " + misc.ByteAToStringInt(sText, " ") + " " + (len / 2) + " -2");
-
-                    ResCnt++;
-                }
-                sCount++;
-            }
-            return ResCnt;
-        }
-
-        public ulong InitSearchText(bool matchCase, ulong sStart, byte[] sText, byte[] c, int len, ulong sSize, System.IO.StreamWriter fStream)
-        {
-            ulong ResCnt = 0, sCount = 0;
-            byte[] ret = new byte[sSize];
-            apiGetMem(sStart, ref ret);
-
-            while ((sCount + (ulong)sText.Length) <= sSize)
-            {
-                if (Form1.CancelSearch == 1)
-                    return 0;
-
-                byte[] argB = new byte[len / 2];
-                Array.Copy(ret, (int)sCount, argB, 0, argB.Length);
-                if (misc.ArrayCompare(sText, argB, c, compMode, matchCase))
-                {
-                    byte[] newB = new byte[len / 2];
-                    Array.Copy(ret, (int)sCount, newB, 0, newB.Length);
-
-                    ListRes a = misc.GetlvVals((int)NextSAlign, newB, 0);
-                    string[] row = { (sStart + sCount).ToString("X8"), a.HexVal, a.DecVal, a.AlignStr };
-
-                    var listViewItem = new ListViewItem(row);
-                    lvSch.Items.Add(listViewItem);
-
-                    if ((int)NextSAlign == -1)
-                        fStream.WriteLine((sStart + sCount) + " " + misc.ByteAToStringInt(sText, " ") + " " + (len / 2) + " -1");
-                    else if ((int)NextSAlign == -2)
-                        fStream.WriteLine((sStart + sCount) + " " + misc.ByteAToStringInt(sText, " ") + " " + (len / 2) + " -2");
-
-                    ResCnt++;
-                }
-                sCount++;
-            }
-            return ResCnt;
-        }
-
-        public ulong NextSearch(byte[] sVal, byte[] c, int align)
-        {
-            ulong cnt = 0, ResCnt = 0;
-            byte[] ret = new byte[align];
-            schProg.Maximum = (int)SchResCnt + 1;
-            schProg.Value = 0;
-            ulong maxRes2 = SchResCnt;
-            ulong x = 0;
-            if (SchResCnt >= MaxRes)
-                maxRes2 = MaxCodes;
-
-            Form1.CodeRes[] tempSchRes = new Form1.CodeRes[maxRes2];
-
-            using (System.IO.StreamWriter file = new System.IO.StreamWriter(dFileName + "2", true))
-            {
-
-                for (cnt = 0; cnt < SchResCnt; cnt++)
-                {
-                    tempSchRes = fileio.ReadDumpArray(dFileName, (int)cnt, (int)maxRes2 + (int)cnt, align);
-
-                    for (x = 0; x < maxRes2; x++)
-                    {
-
-                        if (cnt >= SchResCnt)
-                            break;
-                        cnt++;
-
-                        if (cnt == (SchResCnt - 1))
-                            cnt = SchResCnt - 1;
-
-                        if (CancelSearch != 0)
-                        {
-                            schNSearch.Text = "Next Scan";
-                            schProg.Maximum = 0;
-                            schProg.Value = 0;
-                            lvSch.Items.Clear();
-                        }
-                        if (CancelSearch == 1)
-                            return 0;
-                        if (CancelSearch == 2)
-                            return 0;
-
-                        apiGetMem(tempSchRes[x].addr, ref ret);
-
-                        schProg.Value++;
-                        Application.DoEvents();
-
-                        if (compMode == compINC || compMode == compDEC || compMode == compChg || compMode == compUChg)
-                            c = tempSchRes[x].val;
-
-                        if (misc.ArrayCompare(sVal, ret, c, compMode))
-                        {
-                            file.WriteLine(tempSchRes[x].addr + " " + misc.ByteAToStringInt(ret, " ") + " " + align);
-                            ResCnt++;
-                        }
-                    }
-                }
-            }
-
-            System.IO.File.Delete(dFileName);
-            System.IO.File.Copy(dFileName + "2", dFileName);
-            System.IO.File.Delete(dFileName + "2");
-
-            return ResCnt;
-        }
-
-        public ulong NextSearchText(byte[] sVal, byte[] cVal, int align)
-        {
-            ulong cnt = 0, ResCnt = 0;
-            schProg.Maximum = (int)SchResCnt;
-            schProg.Value = 0;
-            ulong maxRes2 = SchResCnt;
-            ulong x = 0;
-            if (SchResCnt >= MaxRes)
-                maxRes2 = MaxCodes;
-
-            Form1.CodeRes[] tempSchRes = new Form1.CodeRes[maxRes2];
-            for (cnt = 0; cnt < SchResCnt; cnt++)
-            {
-
-                tempSchRes = fileio.ReadDumpArray(dFileName, (int)cnt, (int)maxRes2 + (int)cnt, align);
-
-                using (System.IO.StreamWriter file = new System.IO.StreamWriter(dFileName + "2", true))
-                {
-
-                    for (x = 0; x < maxRes2; x++)
-                    {
-                        cnt++;
-                        byte[] ret = new byte[sVal.Length];
-
-                        if (CancelSearch == 1)
-                        {
-                            schNSearch.Text = "Next Scan";
-                            schProg.Maximum = 0;
-                            schProg.Value = 0;
-
-                            return 0;
-                        }
-
-                        apiGetMem(tempSchRes[x].addr, ref ret);
-
-                        schProg.Value++;
-                        Application.DoEvents();
-
-                        if (misc.ArrayCompare(sVal, ret, cVal, compMode))
-                        {
-                            string end = " -1";
-                            if (NextSAlign == -2)
-                                end = " -2";
-                            file.WriteLine(tempSchRes[x].addr + " " + misc.ByteAToStringInt(ret, " ") + " " + sVal.Length + end);
-                            ResCnt++;
-                        }
-                    }
-                }
-
-                System.IO.File.Delete(dFileName);
-                System.IO.File.Copy(dFileName + "2", dFileName);
-                System.IO.File.Delete(dFileName + "2");
-            }
-
-            return ResCnt;
-        }
-
-        public void RefreshSearchResults(int mode)
-        {
-            ulong x = 0;
-            bool reloadDump = false;
-            ListView.ListViewItemCollection items = new ListView.ListViewItemCollection(lvSch);
-            //lvSch.Items.
-
-            switch (mode)
-            {
-                case 0: /* Refresh by reloading everything from the dump */
-                    lvSch.Items.Clear();
-
-                    if (Form1.SchResCnt == 0)
-                        reloadDump = true;
-
-                    if (reloadDump)
-                    {
-                        lvSch.BeginUpdate();
-                        while (true)
-                        {
-                            String Addr = "";
-
-                            CodeRes[] retRes = fileio.ReadDumpArray(dFileName, (int)x, (MaxRes - 1) + (int)x, (int)GlobAlign);
-                            if (retRes == null)
-                                return;
-
-                            GlobAlign = (ulong)retRes[0].align;
-                            NextSAlign = (int)retRes[0].align;
-
-                            for (int z = 0; z < retRes.Length; z++)
-                            {
-
-                                if (retRes[z].val == null)
-                                    goto nextZ;
-
-                                ListRes a = misc.GetlvVals((int)GlobAlign, retRes[z].val, 0);
-
-                                Addr = (retRes[z].addr).ToString("X8");
-
-                                string[] row = { Addr, a.HexVal, a.DecVal, a.AlignStr };
-                                var listViewItem = new ListViewItem(row);
-                                //lvSch.Items.Add(listViewItem);
-                                items.Add(listViewItem);
-
-                            nextZ:
-                                if ((x % 1000) == 0)
-                                {
-                                    statusLabel1.Text = "Results: " + x.ToString();
-                                    Application.DoEvents();
-                                }
-                                if (retRes[z].val == null && reloadDump)
-                                {
-                                    Form1.SchResCnt = x;
-                                    statusLabel1.Text = "Results: " + x.ToString();
-                                    lvSch.EndUpdate();
-                                    NewSearch = false;
-                                    schNSearch.Enabled = true;
-                                    return;
-                                }
-                                x++;
-                            }
-                        }
-                    }
-                    else
-                    {
-                        lvSch.BeginUpdate();
-                        //for (x = 0; x < Form1.SchResCnt; x++)
-                        while (x < Form1.SchResCnt)
-                        {
-                            String Addr = "";
-
-                            CodeRes[] retRes = fileio.ReadDumpArray(dFileName, (int)x, (MaxRes - 1) + (int)x, (int)GlobAlign);
-                            if (retRes == null)
-                                return;
-
-                            if ((int)x < retRes.Length)
-                            {
-                                GlobAlign = (ulong)retRes[x].align;
-                                NextSAlign = (int)retRes[x].align;
-                            }
-
-                            int z = 0;
-                            for (z = 0; z < retRes.Length; z++)
-                            {
-                                if (retRes[z].val == null)
-                                    goto nextZ;
-
-                                ListRes a = misc.GetlvVals((int)GlobAlign, retRes[z].val, 0);
-
-                                Addr = (retRes[z].addr).ToString("X8");
-
-                                string[] row = { Addr, a.HexVal, a.DecVal, a.AlignStr };
-                                var listViewItem = new ListViewItem(row);
-                                items.Add(listViewItem);
-
-                            nextZ:
-                                if ((z % 1000) == 0)
-                                    Application.DoEvents();
-                            }
-                            x += (ulong)z;
-                        }
-                        lvSch.EndUpdate();
-                    }
-
-                    break;
-                case 1: /* Refresh everything by grabbing the values from the PS3 */
-                    lvSch.BeginUpdate();
-                    for (x = 0; x < Form1.SchResCnt; x++)
-                    {
-                        String Addr = "";
-                        int align = (int)GlobAlign;
-
-                        CodeRes[] retRes = fileio.ReadDumpArray(dFileName, (int)x, MaxRes + (int)x, (int)GlobAlign);
-                        if (retRes == null)
-                            return;
-
-                        for (int z = 0; z < retRes.Length; z++)
-                        {
-
-                            if (x >= Form1.SchResCnt)
-                                break;
-
-                            if ((int)GlobAlign == -1 || (int)GlobAlign == -2)
-                                align = retRes[z].val.Length;
-
-                            byte[] ret = new byte[align];
-                            apiGetMem(retRes[z].addr, ref ret);
-
-                            ListRes a = new ListRes();
-                            a = misc.GetlvVals((int)GlobAlign, ret, 0);
-
-                            Addr = (retRes[z].addr).ToString("X8");
-
-                            if ((int)x < lvSch.Items.Count)
-                            {
-                                items[(int)x].SubItems[0].Text = Addr;
-                                items[(int)x].SubItems[1].Text = a.HexVal;
-                                items[(int)x].SubItems[2].Text = a.DecVal;
-                                items[(int)x].SubItems[3].Text = a.AlignStr;
-                            }
-                            else
-                            {
-                                string[] row = { Addr, a.HexVal, a.DecVal, a.AlignStr };
-                                var listViewItem = new ListViewItem(row);
-                                items.Add(listViewItem);
-                            }
-
-
-                            x++;
-                            if ((x % 500) == 0)
-                                Application.DoEvents();
-                        }
-                    }
-                    lvSch.EndUpdate();
-                    break;
-            }
         }
 
         private void cbCodes_TextChanged(object sender, EventArgs e)
@@ -1868,8 +1184,12 @@ namespace NetCheatPS3
             if (ind < 0)
                 return;
 
+            
+
             CodesCount = cbList.Items.Count - 1;
-            Codes[ind].codes = cbCodes.Text;
+            CodeDB c = Codes[ind];
+            c.codes = cbCodes.Text.Replace("{", "").Replace("}", "").Replace("#", "");
+            Codes[ind] = c;
             codes.UpdateCData(Codes[ind].codes, ind);
         }
 
@@ -1882,9 +1202,58 @@ namespace NetCheatPS3
             }
         }
 
+        private void cbCodes_MouseUp(object sender, MouseEventArgs e)
+        {
+            if (e.Button == System.Windows.Forms.MouseButtons.Right)
+            {
+                bool hasValidCode = false;
+                bool startsAsCond = false;
+                ncCode[] cds = null;
+
+                try
+                {
+                    cds = codes.ParseCodeStringFull(cbCodes.SelectedText);
+
+                    for (int x = 0; x < cds.Length; x++)
+                    {
+                        if (codes.isCodeValid(cds[x]))
+                        {
+                            hasValidCode = true;
+
+                            if (x == 0 && (cds[x].codeType.ToString().ToUpper() == "D" || cds[x].codeType.ToString().ToUpper() == "E"))
+                            {
+                                if (cbCodes.SelectedText.StartsWith(cds[x].codeType.ToString() + cds[x].codeArg0.ToString("X") + " " + cds[x].codeArg1.ToString("X8") + " " + misc.ByteAToStringHex(cds[x].codeArg2, "")))
+                                    startsAsCond = true;
+                            }
+
+                            break;
+                        }
+                    }
+                }
+                catch { }
+
+                editConditionalToolStripMenuItem.Visible = startsAsCond;
+
+                if (hasValidCode)
+                {
+                    bwStripMenuItem1.Visible = true;
+                    twStripMenuItem1.Visible = true;
+                    fwStripMenuItem1.Visible = true;
+                    codesToolMenuStrip.Show(sender as Control, e.Location);
+                }
+                else
+                {
+                    bwStripMenuItem1.Visible = false;
+                    twStripMenuItem1.Visible = false;
+                    fwStripMenuItem1.Visible = false;
+                    codesToolMenuStrip.Show(sender as Control, e.Location);
+                }
+            }
+        }
+
         private void cbCodes_KeyUp(object sender, KeyEventArgs e)
         {
-
+            
         }
 
         private void AddRange_Click(object sender, EventArgs e)
@@ -2138,13 +1507,59 @@ namespace NetCheatPS3
         {
             foreach (Control ctrl in plgCtrl)
             {
-                if (ctrl is GroupBox || ctrl is Panel || ctrl is TabControl || ctrl is TabPage||
-                    ctrl is UserControl || ctrl is ListBox || ctrl is ListView)
+                //if (ctrl is GroupBox || ctrl is Panel || ctrl is TabControl || ctrl is TabPage||
+                //    ctrl is UserControl || ctrl is ListBox || ctrl is ListView)
+                if (ctrl.Controls != null && ctrl.Controls.Count > 0)
+                {
                     HandlePluginControls(ctrl.Controls);
+                }
+                if (ctrl is ListView)
+                {
+                    foreach (ListViewItem ctrlLVI in (ctrl as ListView).Items)
+                    {
+                        ctrlLVI.BackColor = ncBackColor;
+                        ctrlLVI.ForeColor = ncForeColor;
+                    }
+                }
                 
                 ctrl.BackColor = ncBackColor;
                 ctrl.ForeColor = ncForeColor;
             }
+        }
+
+        public void HandleFocusControls(Control.ControlCollection focCtrl)
+        {
+            foreach (Control ctrl in focCtrl)
+            {
+                if (ctrl.Controls != null && ctrl.Controls.Count > 0)
+                    HandleFocusControls(ctrl.Controls);
+
+                ctrl.GotFocus += new EventHandler(Form1_Focused);
+            }
+        }
+
+        private void LoadAPIs()
+        {
+            apiList.Items.Clear();
+
+            if (System.IO.Directory.Exists(Application.StartupPath + @"\APIs") == false)
+                return;
+
+            //Delete any excess NCAppInterface.dll's (result of a build and not a copy)
+            foreach (string file in System.IO.Directory.GetFiles(Application.StartupPath + @"\APIs", "NCAppInterface.dll", System.IO.SearchOption.AllDirectories))
+                System.IO.File.Delete(file);
+
+            //Call the find apis routine, to search in our APIs Folder
+            Global.APIs.FindAPIs(Application.StartupPath + @"\APIs");
+
+            //Load apis
+            foreach (Types.AvailableAPI apiOn in Global.APIs.AvailableAPIs)
+            {
+                apiList.Items.Add(apiOn.Instance.Name + " (" + apiOn.Instance.Version + ")");
+            }
+
+            if (apiList.Items.Count > 0)
+                apiList.SelectedIndex = 0;
         }
 
         private void refPlugin_Click(object sender, EventArgs e)
@@ -2163,7 +1578,7 @@ namespace NetCheatPS3
                 pluginList.Items.Clear();
 
                 refPlugin.Text = "Load Plugins";
-                codes.ConstCodes = new codes.ConstCode[0];
+                codes.ConstCodes = new List<codes.ConstCode>();
             }
             else
             {
@@ -2185,6 +1600,14 @@ namespace NetCheatPS3
 
                 //Load plugins
                 pluginForm = Global.Plugins.GetPlugin(ncBackColor, ncForeColor);
+                Array.Resize(ref pluginForm, pluginForm.Length + 1);
+                pluginForm[pluginForm.Length - 1] = new PluginForm();
+                pluginForm[pluginForm.Length - 1].plugAuth = snapshot.author;
+                pluginForm[pluginForm.Length - 1].plugDesc = snapshot.desc;
+                pluginForm[pluginForm.Length - 1].plugName = snapshot.name;
+                pluginForm[pluginForm.Length - 1].plugText = snapshot.tabName;
+                pluginForm[pluginForm.Length - 1].plugVers = snapshot.version;
+
                 if (pluginForm != null)
                 {
                     Array.Resize(ref pluginFormActive, pluginForm.Length);
@@ -2195,6 +1618,8 @@ namespace NetCheatPS3
                         pluginList.Items.Add(pluginForm[x].plugText);
                     }
                 }
+
+
 
                 //Fixes a bug that causes the BackColor to be white after adding another TabPage
                 RangeTab.BackColor = ncForeColor;
@@ -2250,33 +1675,6 @@ namespace NetCheatPS3
                     break;
                 case 1: //Disconnect
                     ps3Disc_Click(null, null);
-                    break;
-                case 2: //Initial Scan
-                    if (schSearch.Text == "Stop")
-                        schSearch_Click(null, null);
-                    if (schNSearch.Text == "Cancel")
-                        schNSearch_Click(null, null);
-
-                    schSearch.Text = "Initial Scan";
-                    schSearch_Click(null, null);
-                    break;
-                case 3: //Next Scan
-                    if (schSearch.Text == "Stop")
-                        schSearch_Click(null, null);
-                    if (schNSearch.Text == "Cancel")
-                        schNSearch_Click(null, null);
-
-                    schNSearch.Text = "Next Scan";
-                    schNSearch_Click(null, null);
-                    break;
-                case 4: //Stop
-                    if (schSearch.Text == "Stop")
-                        schSearch_Click(null, null);
-                    if (schNSearch.Text == "Cancel")
-                        schNSearch_Click(null, null);
-                    break;
-                case 5: //RefreshResults
-                    RefreshSearchResults(0);
                     break;
                 case 6: //Toggle Constant Write
                     if (cbListIndex >= 0 && cbListIndex < cbList.Items.Count)
@@ -2394,6 +1792,7 @@ namespace NetCheatPS3
             int ind = pluginList.SelectedIndex;
             if (pluginFormActive[ind]) //Already on
             {
+                pluginForm[ind].WindowState = FormWindowState.Normal;
                 pluginForm[ind].Visible = false;
                 pluginForm[ind].WindowState = FormWindowState.Minimized;
                 pluginList.Items[ind] = pluginForm[ind].plugText;
@@ -2409,9 +1808,34 @@ namespace NetCheatPS3
             }
         }
 
+        snapshot snapShotPlugin = new snapshot();
         private void pluginList_SelectedIndexChanged(object sender, EventArgs e)
         {
             int ind = pluginList.SelectedIndex;
+            if (ind < 0)
+                return;
+
+            if (pluginList.Items[ind].ToString().IndexOf(snapshot.tabName) >= 0)
+            {
+                descPlugAuth.Text = "by " + pluginForm[ind].plugAuth;
+                descPlugName.Text = pluginForm[ind].plugName;
+                descPlugVer.Text = pluginForm[ind].plugVers;
+                descPlugDesc.Text = pluginForm[ind].plugDesc;
+                pluginForm[ind].Text = pluginForm[ind].plugName + " by " + pluginForm[ind].plugAuth;
+                plugIcon.Image = (Bitmap)plugIcon.InitialImage.Clone();
+
+                pluginForm[ind].Controls.Clear();
+                pluginForm[ind].Controls.Add(snapShotPlugin);
+                pluginForm[ind].Controls[0].Resize += new EventHandler(pluginForm[ind].Plugin_Resize);
+                pluginForm[ind].Resize += new EventHandler(snapShotPlugin.snapshot_Resize);
+
+                if (pluginForm[ind].allowColoring)
+                {
+                    HandlePluginControls(pluginForm[ind].Controls[0].Controls);
+                    pluginForm[ind].Controls[0].BackColor = ncBackColor;
+                    pluginForm[ind].Controls[0].ForeColor = ncForeColor;
+                }
+            }
             if (ind >= 0 && pluginForm[ind] != null)
             {
                 //Get the selected Plugin
@@ -2441,20 +1865,24 @@ namespace NetCheatPS3
 
                     //TabCon.TabPages[TabCon.SelectedIndex].Controls[0].Dock = DockStyle.None;
 
-                    pluginForm[ind].Controls[0].BackColor = ncBackColor;
-                    pluginForm[ind].Controls[0].ForeColor = ncForeColor;
                     //Color each control in the tab too
                     //for (int tabCtrl = 0; tabCtrl < TabCon.TabPages[TabCon.SelectedIndex].Controls[0].Controls.Count; tabCtrl++)
-                    HandlePluginControls(pluginForm[ind].Controls[0].Controls);
+
+                    if (pluginForm[ind].allowColoring)
+                    {
+                        pluginForm[ind].Controls[0].BackColor = ncBackColor;
+                        pluginForm[ind].Controls[0].ForeColor = ncForeColor;
+                        HandlePluginControls(pluginForm[ind].Controls[0].Controls);
+                    }
                 }
 
-                if (pluginForm[ind].Controls.Count > 0)
+                if (pluginForm[ind].Controls.Count > 0 && pluginList.Items[ind].ToString().IndexOf(snapshot.tabName) < 0)
                 {
                     descPlugAuth.Text = "by " + selectedPlugin.Instance.Author;
                     descPlugName.Text = selectedPlugin.Instance.Name;
                     descPlugVer.Text = selectedPlugin.Instance.Version;
                     descPlugDesc.Text = selectedPlugin.Instance.Description;
-                    if (selectedPlugin.Instance.MainIcon != null)
+                    if (selectedPlugin.Instance.MainIcon != null && selectedPlugin.Instance.MainIcon.BackgroundImage != null)
                         plugIcon.Image = (Bitmap)selectedPlugin.Instance.MainIcon.BackgroundImage.Clone();
                     else
                         plugIcon.Image = (Bitmap)plugIcon.InitialImage.Clone();
@@ -2462,142 +1890,24 @@ namespace NetCheatPS3
             }
         }
 
-        private void lvSch_MouseUp(object sender, MouseEventArgs e)
-        {
-            //Right click
-            if (e.Button == MouseButtons.Right)
-            {
-                var loc = lvSch.HitTest(e.Location);
-                if (loc.Item != null) contextMenuStrip1.Show(lvSch, e.Location);
-            }
-        }
-
-        private void CopyResults()
-        {
-            int x = 0, max = lvSch.Items.Count - 1;
-            String text = "", res = "";
-
-            for (x = 0; x <= max; x++)
-            {
-
-                while (x <= max && lvSch.Items[x].Selected == false)
-                    x++;
-
-                if (x > max)
-                    break;
-
-                CodeRes a = fileio.ReadDump(dFileName, x, (int)GlobAlign);
-
-                int align = (int)GlobAlign;
-                if ((int)GlobAlign == -2)
-                    align = a.val.Length;
-
-                if (align > 0 && align <= 8)
-                {
-                    a.val = BitConverter.GetBytes(uint.Parse(lvSch.Items[x].SubItems[1].Text, System.Globalization.NumberStyles.HexNumber));
-                    if (a.val == null)
-                        return;
-                    if (BitConverter.IsLittleEndian) Array.Reverse(a.val);
-                }
-
-                switch (align)
-                {
-                    case 1:
-                        text = "0 " + a.addr.ToString("X8") + " ";
-                        text += a.val[3].ToString("X2") + "000000";
-                        break;
-                    case 2:
-                        text = "1 " + a.addr.ToString("X8") + " ";
-                        text = text + a.val[2].ToString("X2") + a.val[3].ToString("X2") + "0000";
-                        break;
-                    case 4:
-                        text = "2 " + a.addr.ToString("X8") + " ";
-                        text = text + (a.val[0].ToString("X2") + a.val[1].ToString("X2") + a.val[2].ToString("X2") + a.val[3].ToString("X2")).PadLeft(8, '0');
-                        break;
-                    case 8:
-                        text = "2 " + a.addr.ToString("X8") + " ";
-                        text = text + (a.val[0].ToString("X2") + a.val[1].ToString("X2") + a.val[2].ToString("X2") + a.val[3].ToString("X2")).PadLeft(8, '0') + "\n";
-                        text = text + "2 " + (a.addr + 4).ToString("X8") + " ";
-                        text = text + (a.val[4].ToString("X2") + a.val[5].ToString("X2") + a.val[6].ToString("X2") + a.val[7].ToString("X2")).PadLeft(8, '0');
-                        break;
-                    default:
-                        text = "2 " + a.addr.ToString("X8") + " ";
-                        break;
-                }
-                res = res + text + "\n";
-            }
-            if (res != null)
-                Clipboard.SetDataObject(new DataObject(DataFormats.Text, res));
-        }
-
-        private void RefreshFromDump()
-        {
-            Form1.SchResCnt = 0;
-            Form1.GlobAlign = 0;
-            bool update = !schNSearch.Enabled;
-            RefreshSearchResults(0);
-            if (Form1.SchResCnt != 0 && update)
-            {
-                /* Setup CompBox */
-                compBox.Items.Add("Increased By");
-                compBox.Items.Add("Decreased By");
-                compBox.Items.Add("Changed Value");
-                compBox.Items.Add("Unchanged Value");
-                NewSearch = false;
-                schSearch.Text = "New Scan";
-                schNSearch.Enabled = true;
-            }
-        }
-
-        private void DeleteSearchResult()
-        {
-            int[] selectedItems = new int[0];
-            int x = 0;
-
-            /* Add selected items to int array */
-            for (x = 0; x < lvSch.Items.Count; x++)
-            {
-                if (lvSch.Items[x].Selected)
-                {
-                    Array.Resize(ref selectedItems, selectedItems.Length + 1);
-                    selectedItems[selectedItems.Length - 1] = x;
-                }
-            }
-            
-            /* Delete selected items */
-            /*
-            lvSch.BeginUpdate();
-            for (x = 0; x < selectedItems.Length; x++)
-                lvSch.Items[selectedItems[x]].Remove();
-            lvSch.EndUpdate();
-            */
-
-            if (selectedItems.Length == 0)
-                return;
-
-            fileio.DeleteDumpBlock(dFileName, selectedItems);
-
-            RefreshSearchResults(0);
-        }
-
         private void copyToolStripMenuItem_Click(object sender, EventArgs e)
         {
-            CopyResults();
+            //CopyResults();
         }
 
         private void deleteToolStripMenuItem_Click(object sender, EventArgs e)
         {
-            DeleteSearchResult();
+            //DeleteSearchResult();
         }
 
         private void refreshFromPS3ToolStripMenuItem_Click(object sender, EventArgs e)
         {
-            RefreshSearchResults(1);
+            //RefreshSearchResults(1);
         }
 
         private void refreshFromDumptxtToolStripMenuItem_Click(object sender, EventArgs e)
         {
-            RefreshFromDump();
+            //RefreshFromDump();
         }
 
         private void recRangeBox_DoubleClick(object sender, EventArgs e)
@@ -2629,7 +1939,7 @@ namespace NetCheatPS3
                     //Update range array
                     UpdateMemArray();
 
-                    Text = "NetCheat PS3 " + versionNum + " by Dnawrkshp (" + recRangeBox.Items[ind].Text + ")";
+                    Text = "NetCheat PS3 " + versionNum + " by Dnawrkshp" + ((IntPtr.Size == 8) ? " (64 Bit)" : " (32 Bit)") + " (" + recRangeBox.Items[ind].Text + ")";
 
                     int roInd = int.Parse(recRangeBox.Items[ind].Tag.ToString());
                     if (ind != 0)
@@ -2708,33 +2018,6 @@ namespace NetCheatPS3
             }
         }
 
-        private void loadSRes_Click(object sender, EventArgs e)
-        {
-            OpenFileDialog fd = new OpenFileDialog();
-            fd.Filter = "Text Files (*.txt)|*.txt|All files (*.*)|*.*";
-            fd.RestoreDirectory = true;
-
-            if (fd.ShowDialog() == DialogResult.OK)
-            {
-                if (fd.FileName != dFileName)
-                    System.IO.File.Copy(fd.FileName, dFileName, true);
-                RefreshFromDump();
-                MessageBox.Show("Results loaded!");
-            }
-        }
-
-        private void saveSRes_Click(object sender, EventArgs e)
-        {
-            SaveFileDialog fd = new SaveFileDialog();
-            fd.Filter = "Text Files (*.txt)|*.txt|All files (*.*)|*.*";
-            fd.RestoreDirectory = true;
-
-            if (fd.ShowDialog() == DialogResult.OK)
-                System.IO.File.Copy(dFileName, fd.FileName, true);
-
-            MessageBox.Show("Results saved!");
-        }
-
         private void connectToolStripMenuItem_Click(object sender, EventArgs e)
         {
             connectButton_Click(null, null);
@@ -2752,13 +2035,7 @@ namespace NetCheatPS3
 
         private void shutdownPS3ToolStripMenuItem_Click(object sender, EventArgs e)
         {
-            if (apiDLL == 0)
-            {
-                if (MessageBox.Show("PS3Lib doesn't support TMAPI shutdown.\nWould you like to reset to the XMB?", "Error - Unsupported", MessageBoxButtons.YesNo) == System.Windows.Forms.DialogResult.Yes)
-                    PS3.TMAPI.ResetToXMB(TMAPI.ResetTarget.Soft);
-            }
-            else
-                PS3.CCAPI.ShutDown(CCAPI.RebootFlags.ShutDown);
+            curAPI.Instance.Shutdown();
         }
 
         private void loadPluginsToolStripMenuItem_Click(object sender, EventArgs e)
@@ -2773,7 +2050,9 @@ namespace NetCheatPS3
 
         private void updateStripMenuItem1_Click(object sender, EventArgs e)
         {
-            RunUpdateChecker(true);
+            allowForce = true;
+            RunUpdateChecker();
+            allowForce = false;
         }
 
         private void gameStatusStripMenuItem1_Click(object sender, EventArgs e)
@@ -2782,15 +2061,15 @@ namespace NetCheatPS3
             if (connected)
             {
                 PS3TMAPI.UnitStatus ret;
-                PS3TMAPI.GetStatus(0, PS3TMAPI.UnitType.PPU, out ret);
+                PS3TMAPI.GetStatus(Target, PS3TMAPI.UnitType.PPU, out ret);
                 if (ret == PS3TMAPI.UnitStatus.Stopped)
                 {
-                    PS3TMAPI.ProcessContinue(0, ProcessID);
+                    PS3TMAPI.ProcessContinue(Target, ProcessID);
                     gameStatusStripMenuItem1.Text = "Pause Game";
                 }
                 else
                 {
-                    PS3TMAPI.ProcessStop(0, ProcessID);
+                    PS3TMAPI.ProcessStop(Target, ProcessID);
                     gameStatusStripMenuItem1.Text = "Continue Game";
                 }
             }
@@ -2836,7 +2115,7 @@ namespace NetCheatPS3
                     Application.DoEvents();
                 }
 
-                byte[] ret = new byte[1];
+                byte[] ret = new byte[blockSize];
                 bool validRegion = apiGetMem(findAddr, ref ret);
 
                 //Start new mem block
@@ -2872,140 +2151,6 @@ namespace NetCheatPS3
 
         }
 
-        void sr_SpeechRecognized(object sender, SpeechRecognizedEventArgs e)
-        {
-            //MessageBox.Show(e.Result.Text);
-            switch (e.Result.Words[0].Text.ToLower())
-            {
-                case "connect":
-                    connectButton_Click(null, null);
-                    break;
-                case "attach":
-                    attachProcessButton_Click(null, null);
-                    break;
-                case "shutdown":
-                    shutdownPS3ToolStripMenuItem_Click(null, null);
-                    break;
-                case "value":
-                    if (e.Result.Words.Count > 2 && e.Result.Words[1].Text.ToLower() == "type")
-                    {
-                        switch (e.Result.Words[2].Text.ToLower())
-                        {
-                            case "one":
-                                cbSchAlign.SelectedIndex = 0;
-                                break;
-                            case "two":
-                                cbSchAlign.SelectedIndex = 1;
-                                break;
-                            case "four":
-                                cbSchAlign.SelectedIndex = 2;
-                                break;
-                            case "eight":
-                                cbSchAlign.SelectedIndex = 3;
-                                break;
-                            case "ex":
-                            case "x":
-                                cbSchAlign.SelectedIndex = 4;
-                                break;
-                            case "text":
-                                cbSchAlign.SelectedIndex = 5;
-                                break;
-                        }
-                    }
-                    break;
-                case "scan":
-                    if (e.Result.Words.Count > 1)
-                    {
-                        string cmp = e.Result.Words[1].Text.ToLower();
-                        if (cmp == "a" && e.Result.Words.Count > 2)
-                            cmp = e.Result.Words[2].Text.ToLower();
-                        if (cmp == "style")
-                            cmp = "stop";
-
-                        if (cmp == "new" || cmp == "initial" || cmp == "next")
-                        {
-                            if (schSearch.Text == "Stop")
-                                schSearch_Click(null, null);
-                            else if (schNSearch.Text == "Cancel")
-                                schNSearch_Click(null, null);
-                        }
-
-                        switch (cmp)
-                        {
-                            case "new":
-                                if (schSearch.Text == "New Scan")
-                                    schSearch_Click(null, null);
-                                break;
-                            case "initial":
-                                if (schSearch.Text == "Initial Scan")
-                                    schSearch_Click(null, null);
-                                break;
-                            case "next":
-                                if (schNSearch.Text == "Next Scan")
-                                    schNSearch_Click(null, null);
-                                break;
-                        }
-                    }
-                    break;
-            }
-            if (e.Result.Words[0].Text.ToLower() == "compare")
-            {
-                //Equal
-                if (e.Result.Words.Count == 2)
-                {
-                    if (e.Result.Words[1].Text.ToLower() == "equal")
-                        compBox.SelectedIndex = 0;
-                }
-                //Not Equal, Less Than, Greater Than, Value Between
-                //Increased By, Decreased By, Changed Value, Unchanged Value
-                if (e.Result.Words.Count == 3)
-                {
-
-                    if (e.Result.Words[1].Text.ToLower() == "not" &&
-                            e.Result.Words[2].Text.ToLower() == "equal")
-                        compBox.SelectedIndex = 1;
-                    else if (e.Result.Words[1].Text.ToLower() == "less" &&
-                            e.Result.Words[2].Text.ToLower() == "than")
-                        compBox.SelectedIndex = 2;
-                    else if (e.Result.Words[1].Text.ToLower() == "greater" &&
-                            e.Result.Words[2].Text.ToLower() == "than")
-                        compBox.SelectedIndex = 4;
-                    else if (e.Result.Words[1].Text.ToLower() == "value" &&
-                            e.Result.Words[2].Text.ToLower() == "between")
-                        compBox.SelectedIndex = 6;
-                    else if (compBox.Items.Count > 7)
-                    {
-                        if (e.Result.Words[1].Text.ToLower() == "increased" &&
-                            e.Result.Words[2].Text.ToLower() == "by")
-                        compBox.SelectedIndex = 7;
-                        else if (e.Result.Words[1].Text.ToLower() == "decreased" &&
-                            e.Result.Words[2].Text.ToLower() == "by")
-                            compBox.SelectedIndex = 8;
-                        else if (e.Result.Words[1].Text.ToLower() == "changed" &&
-                            e.Result.Words[2].Text.ToLower() == "value")
-                            compBox.SelectedIndex = 9;
-                        else if (e.Result.Words[1].Text.ToLower() == "unchanged" &&
-                            e.Result.Words[2].Text.ToLower() == "value")
-                            compBox.SelectedIndex = 10;
-                    }
-                }
-                //Less Than or Equal, Greater Than or Equal
-                if (e.Result.Words.Count == 5)
-                {
-                    if (e.Result.Words[1].Text.ToLower() == "less" &&
-                            e.Result.Words[2].Text.ToLower() == "than" &&
-                            e.Result.Words[3].Text.ToLower() == "or" &&
-                            e.Result.Words[4].Text.ToLower() == "equal")
-                        compBox.SelectedIndex = 3;
-                    else if (e.Result.Words[1].Text.ToLower() == "greater" &&
-                            e.Result.Words[2].Text.ToLower() == "than" &&
-                            e.Result.Words[3].Text.ToLower() == "or" &&
-                            e.Result.Words[4].Text.ToLower() == "equal")
-                        compBox.SelectedIndex = 5;
-                }
-            }
-        }
-
         string ParseValFromStr(string val)
         {
             val = val.ToLower();
@@ -3027,30 +2172,40 @@ namespace NetCheatPS3
 
         private void TabCon_SelectedIndexChanged(object sender, EventArgs e)
         {
-            if (apiDLL == 0)
+
+            if (TabCon.SelectedTab != null)
             {
-                SchPWS.Visible = true;
-                pauseGameButt.Visible = true;
-                startGameButt.Visible = true;
-            }
-            else
-            {
-                SchPWS.Visible = false;
-                pauseGameButt.Visible = false;
-                startGameButt.Visible = false;
+                if (TabCon.SelectedTab.Text == "Dump Compare")
+                {
+                    foreach (SearchValue sv in compare.SearchArgs)
+                    {
+                        sv.Fore = ForeColor;
+                        sv.Back = BackColor;
+                    }
+                }
             }
         }
 
         private void startGameButt_Click(object sender, EventArgs e)
         {
-            if (apiDLL == 0)
-                PS3Lib.NET.PS3TMAPI.ProcessContinue(0, PS3Lib.TMAPI.Parameters.ProcessID);
+            if (!curAPI.Instance.ContinueProcess())
+                MessageBox.Show("Feature not supported with this API!");
         }
 
         private void pauseGameButt_Click(object sender, EventArgs e)
         {
-            if (apiDLL == 0)
-                PS3Lib.NET.PS3TMAPI.ProcessAttach(0, PS3Lib.NET.PS3TMAPI.UnitType.PPU, PS3Lib.TMAPI.Parameters.ProcessID);
+            if (!curAPI.Instance.PauseProcess())
+                MessageBox.Show("Feature not supported with this API!");
+        }
+
+        public static void PauseProcess()
+        {
+            curAPI.Instance.PauseProcess();
+        }
+
+        public static void ContinueProcess()
+        {
+            curAPI.Instance.ContinueProcess();
         }
 
         private void pauseGameButt_BackColorChanged(object sender, EventArgs e)
@@ -3075,6 +2230,642 @@ namespace NetCheatPS3
         {
             if (startGameButt.ForeColor != Color.FromArgb(0, 130, 210))
                 startGameButt.ForeColor = Color.FromArgb(0, 130, 210);
+        }
+
+        private void cbResetWrite_Click(object sender, EventArgs e)
+        {
+            //foreach (ncCode nCode in Codes[cbListIndex].backUp)
+            for (int x = Codes[cbListIndex].backUp.Length - 1; x >= 0; x--)
+            {
+                if (Codes[cbListIndex].backUp[x].codeType == '0' || Codes[cbListIndex].backUp[x].codeType == '1')
+                    apiSetMem(Codes[cbListIndex].backUp[x].codeArg1, Codes[cbListIndex].backUp[x].codeArg2);
+            }
+            if (Codes[cbListIndex].backUp.Length == 0)
+                MessageBox.Show("Please write before you reset.\nKeep in mind constant writing doesn't save a backup and editing the text box erases the backup.");
+        }
+
+        private void cbBackupWrite_Click(object sender, EventArgs e)
+        {
+            CodeDB c = Codes[cbListIndex];
+            c.backUp = codes.CreateBackupPS3(Codes[cbListIndex]);
+            Codes[cbListIndex] = c;
+        }
+
+        #region Dump Compare Tab
+
+        int lastSearchIndex = -1;
+        int lastTypeIndex = -1;
+        Comparator compare = new Comparator();
+        public static string[] inputBins = new string[2];
+
+        string BrowseForFile(string filter)
+        {
+            OpenFileDialog fd = new OpenFileDialog();
+            if (filter != null)
+                fd.Filter = filter;
+            fd.RestoreDirectory = true;
+
+            if (fd.ShowDialog() == DialogResult.OK)
+            {
+                return fd.FileName;
+            }
+
+            return "";
+        }
+
+        private void browseDump1_Click(object sender, EventArgs e)
+        {
+            dumpTB1.Text = BrowseForFile("Binary files (*.bin)|*.bin|All files (*.*)|*.*");
+            inputBins[0] = dumpTB1.Text;
+        }
+
+        private void browseDump2_Click(object sender, EventArgs e)
+        {
+            dumpTB2.Text = BrowseForFile("Binary files (*.bin)|*.bin|All files (*.*)|*.*");
+            inputBins[1] = dumpTB2.Text;
+        }
+
+        private void searchNameBox_SelectedIndexChanged(object sender, EventArgs e)
+        {
+            if (lastSearchIndex == searchNameBox.SelectedIndex && compare.SearchArgs.Count > 0)
+                return;
+
+            string[] searchArgsOldValue = new string[compare.SearchArgs.Count];
+            for (int sAOV = 0; sAOV < searchArgsOldValue.Length; sAOV++)
+                searchArgsOldValue[sAOV] = compare.SearchArgs[sAOV].getValue();
+
+            Comparator.ncSearcher searcher = compare.SearchComparisons.Where(ns => ns.Name == searchNameBox.Items[searchNameBox.SelectedIndex].ToString()).FirstOrDefault();
+            SearchControl.ncSearchType type = compare.SearchTypes[searchTypeBox.SelectedIndex];
+            //searchNameBox.Items.Clear();
+
+            int yOff = 5;
+
+            foreach (SearchValue sv in compare.SearchArgs)
+                DumpCompTab.Controls.Remove(sv);
+            compare.SearchArgs.Clear();
+            if (searcher.Args != null)
+            {
+                int cnt = 0;
+                foreach (string str in searcher.Args)
+                {
+                    SearchValue a = new SearchValue();
+
+                    string def = type.DefaultValue;
+                    if (cnt < searchArgsOldValue.Length && searchArgsOldValue[cnt] != null)
+                        def = searchArgsOldValue[cnt];
+
+                    a.SetSValue(str, def, type.CheckboxName, true, true, type.CheckboxConvert);
+                    a.Location = new Point(5, yOff);
+                    a.Width = Width - 5;
+                    a.Back = BackColor;
+                    a.Fore = ForeColor;
+
+                    compare.SearchArgs.Add(a);
+                    DumpCompTab.Controls.Add(a);
+                    yOff += a.Height + 5;
+                    cnt++;
+                }
+            }
+
+            lastSearchIndex = searchNameBox.SelectedIndex;
+            UpdateSize();
+        }
+
+        private void searchTypeBox_SelectedIndexChanged(object sender, EventArgs e)
+        {
+            if (searchTypeBox.SelectedIndex < 0 || searchNameBox.SelectedIndex < 0 || lastTypeIndex == searchTypeBox.SelectedIndex)
+                return;
+
+            foreach (SearchValue sv in compare.SearchArgs)
+                DumpCompTab.Controls.Remove(sv);
+            compare.SearchArgs.Clear();
+
+            Comparator.ncSearcher searcher = compare.SearchComparisons.Where(ns => ns.Name == searchNameBox.Items[searchNameBox.SelectedIndex].ToString()).FirstOrDefault();
+            SearchControl.ncSearchType type = compare.SearchTypes[searchTypeBox.SelectedIndex];
+            int yOff = 5;
+
+            if (searcher.Args != null)
+            {
+                foreach (string str in searcher.Args)
+                {
+                    SearchValue a = new SearchValue();
+                    a.SetSValue(str, type.DefaultValue, type.CheckboxName, true, true, type.CheckboxConvert);
+                    a.Location = new Point(5, yOff);
+                    a.Width = Width - 5;
+                    a.Back = BackColor;
+                    a.Fore = ForeColor;
+
+                    compare.SearchArgs.Add(a);
+                    DumpCompTab.Controls.Add(a);
+                    yOff += a.Height + 5;
+                }
+            }
+
+            lastTypeIndex = searchTypeBox.SelectedIndex;
+            UpdateSize();
+        }
+
+        private void searchButton_Click(object sender, EventArgs e)
+        {
+            progBar.BackColor = BackColor;
+            progBar.ForeColor = ForeColor;
+
+            if (searchButton.Text == "Stop")
+            {
+                compare._shouldStopSearch = true;
+                return;
+            }
+            else if (searchButton.Text == "New Search")
+            {
+                compare.Items.Clear();
+                searchButton.Text = "Search";
+            }
+            else if (searchButton.Text == "Search")
+            {
+                try
+                {
+                    compare._shouldStopSearch = false;
+                    uint start = Convert.ToUInt32(startTB.Text, 16);
+                    uint stop = Convert.ToUInt32(stopTB.Text, 16);
+                    if (stop == 0)
+                    {
+                        stop = (uint)new FileInfo(inputBins[0]).Length;
+                    }
+
+                    ulong addrFrom = Convert.ToUInt64(addrFromTB.Text, 16);
+                    string[] args = new string[compare.SearchArgs.Count];
+                    for (int x = 0; x < args.Length; x++)
+                        args[x] = compare.SearchArgs[x].GetDefValue();
+                    int typeIndex = searchTypeBox.SelectedIndex;
+
+                    if (searchNameBox.SelectedIndex < 0)
+                        searchNameBox.SelectedIndex = lastSearchIndex;
+                    Comparator.ncSearcher searcher = compare.SearchComparisons.Where(sc => sc.Name == searchNameBox.Items[searchNameBox.SelectedIndex].ToString()).FirstOrDefault();
+
+                    //searchThread = new Thread(searcher.InitialSearch(start, stop, searchTypeBox.SelectedIndex, args));
+                    //searchThread = new Thread(ThreadInitSearch(start, stop, searchTypeBox.SelectedIndex, args));
+                    searchButton.Text = "Stop";
+                    compare.ThreadInitSearch(new object[] { searcher, start, stop, addrFrom, typeIndex, args, false });
+                }
+                catch (Exception ex)
+                {
+                    MessageBox.Show(ex.Message);
+                }
+            }
+        }
+
+        private void saveScan_Click(object sender, EventArgs e)
+        {
+            SaveFileDialog fd = new SaveFileDialog();
+            fd.Filter = "Text Files (*.txt)|*.txt|All files (*.*)|*.*";
+            fd.RestoreDirectory = true;
+
+            if (fd.ShowDialog() == DialogResult.OK)
+            {
+                Stream stream = File.Open(fd.FileName, FileMode.Create);
+                BinaryFormatter bformatter = new BinaryFormatter();
+                bformatter.Serialize(stream, compare.Items.ToArray());
+                stream.Close();
+
+                MessageBox.Show("Saved!");
+            }
+        }
+
+        public void SetSearchStr(string text)
+        {
+            Invoke((MethodInvoker)delegate
+            {
+                searchButton.Text = text;
+            });
+        }
+
+        public void ResetSearchCompBox()
+        {
+            lastSearchIndex = searchNameBox.SelectedIndex;
+            searchNameBox.Items.Clear();
+            foreach (Comparator.ncSearcher nS in compare.SearchComparisons)
+            {
+                searchNameBox.Items.Add(nS.Name);
+            }
+
+            if (searchTypeBox.Items.Count == 0)
+            {
+                foreach (SearchControl.ncSearchType nT in compare.SearchTypes)
+                {
+                    searchTypeBox.Items.Add(nT.Name);
+                    searchTypeBox.SelectedIndex = 0;
+                }
+            }
+
+            if (lastSearchIndex < 0)
+                lastSearchIndex = 0;
+
+            searchNameBox.SelectedIndex = lastSearchIndex;
+        }
+
+        void UpdateSize()
+        {
+            int yOff = 20 + dumpTB1.Height + dumpTB2.Height;
+            foreach (SearchValue sb in compare.SearchArgs)
+            {
+                sb.Location = new Point(5, yOff);
+                sb.Width = DumpCompTab.Width - 10;
+                yOff += 5 + sb.Height;
+            }
+        }
+
+        #endregion
+
+        private void cbBManager_Click(object sender, EventArgs e)
+        {
+            if (FRManager == null || FRManager.IsDisposed)
+            {
+                FRManager = new FindReplaceManager();
+                FRManager.ForeColor = ncForeColor;
+                FRManager.BackColor = ncBackColor;
+                HandlePluginControls(FRManager.Controls);
+            }
+
+            FRManager.Show();
+            FRManager.Focus();
+        }
+
+        /*
+         * Holy
+         * Fucking
+         * Shit
+         */
+        private void Form1_Resize(object sender, EventArgs e)
+        {
+            int ratio = 0;
+
+            //Tab Control
+            {
+                TabCon.Size = new Size(this.Width - 40, this.Height - (501 - 393));
+                int tHeight = TabCon.SelectedTab.Height, tWidth = TabCon.SelectedTab.Width;
+                if (tHeight == 0 || tWidth == 0)
+                    return;
+                //Tab Page: Codes
+                {
+                    ratio = (tHeight - (367 - 298)) - cbList.Height;
+                    cbList.Height = (tHeight - (367 - 298));
+                    cbAdd.Top += ratio;
+                    cbRemove.Top += ratio;
+                    cbImport.Top += ratio;
+                    cbSave.Top += ratio;
+                    cbSaveAll.Top += ratio;
+                    cbSaveAs.Top += ratio;
+
+                    label5.Width = (tWidth - (453 - 225));
+                    cbName.Width = (tWidth - (453 - 225));
+                    cbState.Width = (tWidth - (453 - 225));
+                    ratio = (tHeight - (367 - 225)) - cbCodes.Height;
+                    cbCodes.Height = (tHeight - (367 - 225));
+                    cbCodes.Width = (tWidth - (453 - 225));
+                    cbWrite.Top += ratio;
+                    cbWrite.Width = (tWidth - (453 - 225));
+                    cbBManager.Top += ratio;
+                    cbResetWrite.Top += ratio;
+                    cbBackupWrite.Top += ratio;
+
+                    ratio = (tWidth - cbBManager.Left - 18) / 3;
+                    cbBManager.Width = ratio;
+                    cbResetWrite.Width = ratio;
+                    cbBackupWrite.Width = ratio;
+                    cbResetWrite.Left = cbBManager.Left + cbBManager.Width + 5;
+                    cbBackupWrite.Left = cbResetWrite.Left + cbResetWrite.Width + 5;
+                }
+                //Tab Page: Search
+                {
+                    searchControl1.Size = new Size(tWidth - (461 - 444), tHeight - (393 - 383));
+                }
+                //Tab Page: Range
+                {
+                    label1.Width = tWidth - 20;
+                    label2.Width = tWidth - 20;
+                    rangeView.Height = tHeight - 40;
+
+                    ratio = tWidth - 235 - 8;
+                    label3.Width = ratio;
+                    recRangeBox.Width = ratio;
+                    findRangeProgBar.Width = ratio - 91 - 6;
+                    findRanges.Left = findRangeProgBar.Left + findRangeProgBar.Width + 6;
+
+                    ratio -= 30;
+                    ratio /= 2;
+
+                    RangeUp.Width = ratio;
+                    RangeDown.Width = ratio;
+                    RangeDown.Left = RangeUp.Left + ratio + 30;
+                    ImportRange.Width = ratio;
+                    SaveRange.Width = ratio;
+                    SaveRange.Left = ImportRange.Left + ratio + 30;
+                    AddRange.Width = ratio;
+                    RemoveRange.Width = ratio;
+                    RemoveRange.Left = AddRange.Left + ratio + 30;
+
+                    ratio = tHeight - 200 - recRangeBox.Height;
+                    recRangeBox.Height = tHeight - 200;
+                    RangeUp.Top += ratio;
+                    RangeDown.Top += ratio;
+                    ImportRange.Top += ratio;
+                    SaveRange.Top += ratio;
+                    AddRange.Top += ratio;
+                    RemoveRange.Top += ratio;
+                }
+                //Tab Page: Plugins
+                {
+                    pluginList.Height = tHeight - 40;
+                    int pWidth = tWidth - (461 - 174);
+                    if (pWidth > 250)
+                        pWidth = 250;
+                    pluginList.Width = pWidth;
+
+                    descPlugName.Left = pluginList.Left + pluginList.Width + 6;
+                    descPlugAuth.Left = descPlugName.Left + 22;
+                    descPlugVer.Left = descPlugAuth.Left;
+                    descPlugDesc.Left = descPlugName.Left + 3;
+                    plugIcon.Left = descPlugName.Left;
+
+                    int plugIconHeight = tHeight - (393 - 210);
+                    plugIcon.Height = (int)(210f * ((float)plugIconHeight / 210f));
+                    plugIcon.Width = (int)(266f * ((float)plugIconHeight / 210f));
+
+                    descPlugDesc.Width = tWidth - descPlugDesc.Left;
+                }
+                //Tab Page: APIs
+                {
+                    apiList.Height = tHeight - 40;
+                    int pWidth = tWidth - (461 - 174);
+                    if (pWidth > 250)
+                        pWidth = 250;
+                    apiList.Width = pWidth;
+
+                    descAPIName.Left = apiList.Left + apiList.Width + 6;
+                    descAPIAuth.Left = descAPIName.Left + 22;
+                    descAPIVer.Left = descAPIAuth.Left;
+                    descAPIDesc.Left = descAPIName.Left + 3;
+                    apiIcon.Left = descAPIName.Left;
+
+                    int APIIconHeight = tHeight - (393 - 210);
+                    apiIcon.Height = (int)(210f * ((float)APIIconHeight / 210f));
+                    apiIcon.Width = (int)(266f * ((float)APIIconHeight / 210f));
+
+                    descAPIDesc.Width = tWidth - descAPIDesc.Left;
+                }
+            }
+
+            //Buttons on main form
+            {
+
+            }
+
+            this.HScroll = false;
+            this.VScroll = false;
+            this.AutoScroll = false;
+        }
+
+        public bool isProcessStopped()
+        {
+            if (curAPI == null)
+                return true;
+            return curAPI.Instance.isProcessStopped();
+        }
+
+        private void endianStripMenuItem_Click(object sender, EventArgs e)
+        {
+            if (CurrentEndian == Endian.Big)
+                CurrentEndian = Endian.Little;
+            else
+                CurrentEndian = Endian.Big;
+        }
+
+        private void bwStripMenuItem1_Click(object sender, EventArgs e)
+        {
+            string text = "";
+            string[] lines = cbCodes.SelectedText.Split(new char[] { '\r', '\n' });
+            //ncCode[] cds = codes.ParseCodeStringFull(cbCodes.SelectedText);
+            char[] supported = new char[] { '1', '2' };
+
+            for (int x = 0; x < lines.Length; x++)
+            {
+                ncCode c = codes.ParseCodeStringFull(lines[x])[0];
+                if (codes.isCodeValid(c) && supported.Contains(c.codeType))
+                {
+                    text += "0 " + c.codeArg1.ToString("X8") + " " + misc.ByteAToStringHex(c.codeArg2, "") + "\r\n";
+                }
+                else
+                {
+                    text += lines[x] + "\r\n";
+                }
+
+            }
+
+            if (text.EndsWith("\r\n"))
+                text = text.Remove(text.Length - 2, 2);
+
+            cbCodes.SelectedText = text;
+        }
+
+        private void twStripMenuItem1_Click(object sender, EventArgs e)
+        {
+            string text = "";
+            string[] lines = cbCodes.SelectedText.Split(new char[] { '\r', '\n' });
+            //ncCode[] cds = codes.ParseCodeStringFull(cbCodes.SelectedText);
+            char[] supported = new char[] { '0' };
+
+            for (int x = 0; x < lines.Length; x++)
+            {
+                ncCode c = codes.ParseCodeStringFull(lines[x])[0];
+                if (codes.isCodeValid(c) && supported.Contains(c.codeType))
+                {
+                    text += "1 " + c.codeArg1.ToString("X8") + " " + misc.ByteAToString(c.codeArg2, "").Replace("\0", "") + "\r\n";
+                }
+                else
+                {
+                    text += lines[x] + "\r\n";
+                }
+
+            }
+
+            if (text.EndsWith("\r\n"))
+                text = text.Remove(text.Length - 2, 2);
+
+            cbCodes.SelectedText = text;
+        }
+
+        private void fwStripMenuItem1_Click(object sender, EventArgs e)
+        {
+            string text = "";
+            string[] lines = cbCodes.SelectedText.Split(new char[] { '\r', '\n' });
+            //ncCode[] cds = codes.ParseCodeStringFull(cbCodes.SelectedText);
+            char[] supported = new char[] { '0' };
+
+            for (int x = 0; x < lines.Length; x++)
+            {
+                ncCode c = codes.ParseCodeStringFull(lines[x])[0];
+                if (codes.isCodeValid(c) && supported.Contains(c.codeType) && c.codeArg2.Length <= 4)
+                {
+                    byte[] newBA = c.codeArg2;
+                    if (c.codeArg2.Length < 4)
+                    {
+                        newBA = new byte[4];
+                        int mod = (int)c.codeArg1 % 4;
+                        Array.Copy(c.codeArg2, 0, newBA, mod, c.codeArg2.Length);
+                    }
+
+                    if (BitConverter.IsLittleEndian)
+                        Array.Reverse(newBA);
+                    text += "2 " + c.codeArg1.ToString("X8") + " " + BitConverter.ToSingle(newBA, 0) + "\r\n";
+                }
+                else
+                {
+                    text += lines[x] + "\r\n";
+                }
+
+            }
+
+            if (text.EndsWith("\r\n"))
+                text = text.Remove(text.Length - 2, 2);
+
+            cbCodes.SelectedText = text;
+        }
+
+        private void createCondStripMenuItem1_Click(object sender, EventArgs e)
+        {
+            ConditionalEditor ce = new ConditionalEditor();
+            ce.rtb = cbCodes;
+            ce.isEditing = false;
+            ce.code = cbCodes.SelectedText;
+            ce.ShowDialog();
+
+        }
+
+        private void editConditionalToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            ConditionalEditor ce = new ConditionalEditor();
+            ce.rtb = cbCodes;
+            ce.isEditing = true;
+            ce.code = cbCodes.SelectedText;
+            ce.ShowDialog();
+        }
+
+        Types.AvailableAPI selAPI;
+        private void apiList_SelectedIndexChanged(object sender, EventArgs e)
+        {
+            int ind = apiList.SelectedIndex;
+            if (ind < 0)
+                return;
+
+            Types.AvailableAPI api = Global.APIs.AvailableAPIs.GetIndex(ind);
+            descAPIAuth.Text = "by " + api.Instance.Author;
+            descAPIName.Text = api.Instance.Name;
+            descAPIVer.Text = api.Instance.Version;
+            descAPIDesc.Text = api.Instance.Description;
+            if (api.Instance.Icon != null)
+                apiIcon.Image = (Bitmap)api.Instance.Icon.Clone();
+            else
+                apiIcon.Image = (Bitmap)apiIcon.InitialImage.Clone();
+
+            string[] parts = apiList.Items[ind].ToString().Split(new char[] { '(', ')' }, StringSplitOptions.RemoveEmptyEntries);
+            int apiIndex = Global.APIs.AvailableAPIs.GetIndex(parts[0].Trim(), parts[1]);
+            selAPI = Global.APIs.AvailableAPIs.GetIndex(apiIndex);
+        }
+
+        private void apiList_DoubleClick(object sender, EventArgs e)
+        {
+            int ind = apiList.SelectedIndex;
+            if (ind < 0)
+                return;
+
+            if (apiName == apiList.Items[ind].ToString())
+                return;
+            else
+            {
+                if (MessageBox.Show("Are you sure you'd like to switch the API to " + apiList.Items[ind].ToString() + "?", "Current API: " + apiName, MessageBoxButtons.YesNo) == System.Windows.Forms.DialogResult.Yes)
+                {
+                    //curAPI.Instance.Disconnect();
+                    ps3Disc_Click(null, null);
+                    string[] parts = apiList.Items[ind].ToString().Split(new char[] { '(', ')' }, StringSplitOptions.RemoveEmptyEntries);
+                    int apiDLL = Global.APIs.AvailableAPIs.GetIndex(parts[0].Trim(), parts[1]);
+                    curAPI = Global.APIs.AvailableAPIs.GetIndex(apiDLL);
+                    curAPI.Instance.Initialize();
+
+                    SaveOptions();
+                }
+            }
+        }
+
+        private void apiIcon_MouseLeave(object sender, EventArgs e)
+        {
+            int ind = apiList.SelectedIndex;
+            if (ind < 0)
+                return;
+
+            if (selAPI == null)
+                return;
+
+            if (selAPI.Instance.ContactLink != null && selAPI.Instance.ContactLink != "")
+            {
+                Cursor.Current = Cursors.Default;
+            }
+        }
+
+        private void apiIcon_Click(object sender, EventArgs e)
+        {
+            int ind = apiList.SelectedIndex;
+            if (ind < 0)
+                return;
+
+            if (selAPI == null)
+                return;
+
+            if (selAPI.Instance.ContactLink != null && selAPI.Instance.ContactLink != "")
+            {
+                System.Diagnostics.Process.Start(selAPI.Instance.ContactLink);
+            }
+        }
+
+        private void apiIcon_MouseEnter(object sender, EventArgs e)
+        {
+            int ind = apiList.SelectedIndex;
+            if (ind < 0)
+                return;
+
+            if (selAPI == null)
+                return;
+
+            if (selAPI.Instance.ContactLink != null && selAPI.Instance.ContactLink != "")
+            {
+                Cursor.Current = Cursors.Hand;
+            }
+        }
+
+        private void apiIcon_MouseMove(object sender, MouseEventArgs e)
+        {
+            if (selAPI == null)
+                return;
+
+            if (selAPI.Instance.ContactLink != null && selAPI.Instance.ContactLink != "")
+            {
+                Cursor.Current = Cursors.Hand;
+            }
+        }
+
+        private void apiIcon_MouseHover(object sender, EventArgs e)
+        {
+            if (selAPI == null)
+                return;
+
+            if (selAPI.Instance.ContactLink != null && selAPI.Instance.ContactLink != "")
+            {
+                Cursor.Current = Cursors.Hand;
+            }
+        }
+
+        private void configureAPIToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            curAPI.Instance.Configure();
         }
 
     }

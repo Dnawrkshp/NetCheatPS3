@@ -46,25 +46,15 @@
             this.bcolR = new System.Windows.Forms.TextBox();
             this.bcolCB = new System.Windows.Forms.ComboBox();
             this.okayButt = new System.Windows.Forms.Button();
-            this.groupBox1 = new System.Windows.Forms.GroupBox();
-            this.keyList = new System.Windows.Forms.ListView();
-            this.keyLColName = ((System.Windows.Forms.ColumnHeader)(new System.Windows.Forms.ColumnHeader()));
-            this.keyLColKey = ((System.Windows.Forms.ColumnHeader)(new System.Windows.Forms.ColumnHeader()));
             this.cancButt = new System.Windows.Forms.Button();
             this.label6 = new System.Windows.Forms.Label();
             this.label7 = new System.Windows.Forms.Label();
             this.label8 = new System.Windows.Forms.Label();
             this.linkLabel1 = new System.Windows.Forms.LinkLabel();
-            this.groupBox2 = new System.Windows.Forms.GroupBox();
-            this.ccapiDLL = new System.Windows.Forms.RadioButton();
-            this.label9 = new System.Windows.Forms.Label();
-            this.label10 = new System.Windows.Forms.Label();
-            this.tmapiDLL = new System.Windows.Forms.RadioButton();
+            this.linkLabel2 = new System.Windows.Forms.LinkLabel();
             this.groupColor.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)(this.fcolPB)).BeginInit();
             ((System.ComponentModel.ISupportInitialize)(this.bcolPB)).BeginInit();
-            this.groupBox1.SuspendLayout();
-            this.groupBox2.SuspendLayout();
             this.SuspendLayout();
             // 
             // groupColor
@@ -265,7 +255,7 @@
             // 
             this.okayButt.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
             this.okayButt.ForeColor = System.Drawing.Color.White;
-            this.okayButt.Location = new System.Drawing.Point(13, 383);
+            this.okayButt.Location = new System.Drawing.Point(13, 192);
             this.okayButt.Name = "okayButt";
             this.okayButt.Size = new System.Drawing.Size(95, 23);
             this.okayButt.TabIndex = 1;
@@ -273,52 +263,11 @@
             this.okayButt.UseVisualStyleBackColor = true;
             this.okayButt.Click += new System.EventHandler(this.okayButt_Click);
             // 
-            // groupBox1
-            // 
-            this.groupBox1.Controls.Add(this.keyList);
-            this.groupBox1.ForeColor = System.Drawing.Color.White;
-            this.groupBox1.Location = new System.Drawing.Point(13, 131);
-            this.groupBox1.Name = "groupBox1";
-            this.groupBox1.Size = new System.Drawing.Size(294, 189);
-            this.groupBox1.TabIndex = 2;
-            this.groupBox1.TabStop = false;
-            this.groupBox1.Text = "Keybindings";
-            // 
-            // keyList
-            // 
-            this.keyList.BackColor = System.Drawing.Color.Black;
-            this.keyList.BorderStyle = System.Windows.Forms.BorderStyle.None;
-            this.keyList.Columns.AddRange(new System.Windows.Forms.ColumnHeader[] {
-            this.keyLColName,
-            this.keyLColKey});
-            this.keyList.ForeColor = System.Drawing.Color.White;
-            this.keyList.FullRowSelect = true;
-            this.keyList.HideSelection = false;
-            this.keyList.Location = new System.Drawing.Point(7, 20);
-            this.keyList.Name = "keyList";
-            this.keyList.Size = new System.Drawing.Size(281, 163);
-            this.keyList.TabIndex = 0;
-            this.keyList.UseCompatibleStateImageBehavior = false;
-            this.keyList.View = System.Windows.Forms.View.Details;
-            this.keyList.SelectedIndexChanged += new System.EventHandler(this.keyList_SelectedIndexChanged);
-            this.keyList.DoubleClick += new System.EventHandler(this.keyList_DoubleClick);
-            // 
-            // keyLColName
-            // 
-            this.keyLColName.Text = "Control";
-            this.keyLColName.Width = 120;
-            // 
-            // keyLColKey
-            // 
-            this.keyLColKey.Text = "Key";
-            this.keyLColKey.TextAlign = System.Windows.Forms.HorizontalAlignment.Center;
-            this.keyLColKey.Width = 140;
-            // 
             // cancButt
             // 
             this.cancButt.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
             this.cancButt.ForeColor = System.Drawing.Color.White;
-            this.cancButt.Location = new System.Drawing.Point(212, 383);
+            this.cancButt.Location = new System.Drawing.Point(212, 192);
             this.cancButt.Name = "cancButt";
             this.cancButt.Size = new System.Drawing.Size(95, 23);
             this.cancButt.TabIndex = 3;
@@ -330,7 +279,7 @@
             // 
             this.label6.AutoSize = true;
             this.label6.ForeColor = System.Drawing.Color.White;
-            this.label6.Location = new System.Drawing.Point(10, 415);
+            this.label6.Location = new System.Drawing.Point(12, 218);
             this.label6.Name = "label6";
             this.label6.Size = new System.Drawing.Size(186, 13);
             this.label6.TabIndex = 4;
@@ -340,7 +289,7 @@
             // 
             this.label7.AutoSize = true;
             this.label7.ForeColor = System.Drawing.Color.White;
-            this.label7.Location = new System.Drawing.Point(10, 428);
+            this.label7.Location = new System.Drawing.Point(12, 231);
             this.label7.Name = "label7";
             this.label7.Size = new System.Drawing.Size(184, 13);
             this.label7.TabIndex = 5;
@@ -350,7 +299,7 @@
             // 
             this.label8.AutoSize = true;
             this.label8.ForeColor = System.Drawing.Color.White;
-            this.label8.Location = new System.Drawing.Point(10, 441);
+            this.label8.Location = new System.Drawing.Point(12, 244);
             this.label8.Name = "label8";
             this.label8.Size = new System.Drawing.Size(172, 13);
             this.label8.TabIndex = 6;
@@ -362,7 +311,7 @@
             this.linkLabel1.AutoSize = true;
             this.linkLabel1.ForeColor = System.Drawing.Color.White;
             this.linkLabel1.LinkColor = System.Drawing.Color.Silver;
-            this.linkLabel1.Location = new System.Drawing.Point(10, 455);
+            this.linkLabel1.Location = new System.Drawing.Point(12, 258);
             this.linkLabel1.Name = "linkLabel1";
             this.linkLabel1.Size = new System.Drawing.Size(140, 13);
             this.linkLabel1.TabIndex = 7;
@@ -370,73 +319,32 @@
             this.linkLabel1.Text = "NetCheat PS3 Source Code";
             this.linkLabel1.LinkClicked += new System.Windows.Forms.LinkLabelLinkClickedEventHandler(this.linkLabel1_LinkClicked);
             // 
-            // groupBox2
+            // linkLabel2
             // 
-            this.groupBox2.Controls.Add(this.label10);
-            this.groupBox2.Controls.Add(this.tmapiDLL);
-            this.groupBox2.Controls.Add(this.label9);
-            this.groupBox2.Controls.Add(this.ccapiDLL);
-            this.groupBox2.ForeColor = System.Drawing.Color.White;
-            this.groupBox2.Location = new System.Drawing.Point(13, 321);
-            this.groupBox2.Name = "groupBox2";
-            this.groupBox2.Size = new System.Drawing.Size(294, 56);
-            this.groupBox2.TabIndex = 8;
-            this.groupBox2.TabStop = false;
-            this.groupBox2.Text = "API";
-            // 
-            // ccapiDLL
-            // 
-            this.ccapiDLL.AutoSize = true;
-            this.ccapiDLL.Location = new System.Drawing.Point(167, 33);
-            this.ccapiDLL.Name = "ccapiDLL";
-            this.ccapiDLL.Size = new System.Drawing.Size(120, 17);
-            this.ccapiDLL.TabIndex = 0;
-            this.ccapiDLL.TabStop = true;
-            this.ccapiDLL.Text = "CCAPI (CEX + DEX)";
-            this.ccapiDLL.UseVisualStyleBackColor = true;
-            // 
-            // label9
-            // 
-            this.label9.AutoSize = true;
-            this.label9.Location = new System.Drawing.Point(204, 17);
-            this.label9.Name = "label9";
-            this.label9.Size = new System.Drawing.Size(51, 13);
-            this.label9.TabIndex = 1;
-            this.label9.Text = "CCAPI.dll";
-            // 
-            // label10
-            // 
-            this.label10.AutoSize = true;
-            this.label10.Location = new System.Drawing.Point(21, 17);
-            this.label10.Name = "label10";
-            this.label10.Size = new System.Drawing.Size(83, 13);
-            this.label10.TabIndex = 3;
-            this.label10.Text = "ps3tmapi_net.dll";
-            // 
-            // tmapiDLL
-            // 
-            this.tmapiDLL.AutoSize = true;
-            this.tmapiDLL.Location = new System.Drawing.Point(7, 33);
-            this.tmapiDLL.Name = "tmapiDLL";
-            this.tmapiDLL.Size = new System.Drawing.Size(109, 17);
-            this.tmapiDLL.TabIndex = 2;
-            this.tmapiDLL.TabStop = true;
-            this.tmapiDLL.Text = "PS3TMAPI (DEX)";
-            this.tmapiDLL.UseVisualStyleBackColor = true;
+            this.linkLabel2.ActiveLinkColor = System.Drawing.Color.DimGray;
+            this.linkLabel2.AutoSize = true;
+            this.linkLabel2.ForeColor = System.Drawing.Color.White;
+            this.linkLabel2.LinkColor = System.Drawing.Color.Silver;
+            this.linkLabel2.Location = new System.Drawing.Point(12, 271);
+            this.linkLabel2.Name = "linkLabel2";
+            this.linkLabel2.Size = new System.Drawing.Size(111, 13);
+            this.linkLabel2.TabIndex = 9;
+            this.linkLabel2.TabStop = true;
+            this.linkLabel2.Text = "Donate to Dnawrkshp";
+            this.linkLabel2.LinkClicked += new System.Windows.Forms.LinkLabelLinkClickedEventHandler(this.linkLabel2_LinkClicked);
             // 
             // OptionForm
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.BackColor = System.Drawing.Color.Black;
-            this.ClientSize = new System.Drawing.Size(319, 475);
-            this.Controls.Add(this.groupBox2);
+            this.ClientSize = new System.Drawing.Size(319, 290);
+            this.Controls.Add(this.linkLabel2);
             this.Controls.Add(this.linkLabel1);
             this.Controls.Add(this.label8);
             this.Controls.Add(this.label7);
             this.Controls.Add(this.label6);
             this.Controls.Add(this.cancButt);
-            this.Controls.Add(this.groupBox1);
             this.Controls.Add(this.okayButt);
             this.Controls.Add(this.groupColor);
             this.ForeColor = System.Drawing.Color.FromArgb(((int)(((byte)(0)))), ((int)(((byte)(130)))), ((int)(((byte)(210)))));
@@ -449,9 +357,6 @@
             this.groupColor.PerformLayout();
             ((System.ComponentModel.ISupportInitialize)(this.fcolPB)).EndInit();
             ((System.ComponentModel.ISupportInitialize)(this.bcolPB)).EndInit();
-            this.groupBox1.ResumeLayout(false);
-            this.groupBox2.ResumeLayout(false);
-            this.groupBox2.PerformLayout();
             this.ResumeLayout(false);
             this.PerformLayout();
 
@@ -473,11 +378,7 @@
         private System.Windows.Forms.ComboBox fcolCB;
         private System.Windows.Forms.Label label1;
         private System.Windows.Forms.Button okayButt;
-        private System.Windows.Forms.GroupBox groupBox1;
-        private System.Windows.Forms.ListView keyList;
         private System.Windows.Forms.Button cancButt;
-        private System.Windows.Forms.ColumnHeader keyLColName;
-        private System.Windows.Forms.ColumnHeader keyLColKey;
         private System.Windows.Forms.Label label3;
         private System.Windows.Forms.Label label5;
         private System.Windows.Forms.Label label4;
@@ -485,11 +386,7 @@
         private System.Windows.Forms.Label label7;
         private System.Windows.Forms.Label label8;
         private System.Windows.Forms.LinkLabel linkLabel1;
-        private System.Windows.Forms.GroupBox groupBox2;
-        private System.Windows.Forms.Label label10;
-        private System.Windows.Forms.RadioButton tmapiDLL;
-        private System.Windows.Forms.Label label9;
-        private System.Windows.Forms.RadioButton ccapiDLL;
+        private System.Windows.Forms.LinkLabel linkLabel2;
 
 
     }

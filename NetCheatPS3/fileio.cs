@@ -45,11 +45,11 @@ namespace NetCheatPS3
             if (ret.align < 0)
             {
                 int lenStr = int.Parse(s[s.Length - 2]);
+                ret.val = new byte[lenStr];
                 for (i = 0; i < lenStr; i++)
                 {
-                    val = val + s[i + 1];
+                    ret.val[i] = (byte)int.Parse(s[i + 1]);
                 }
-                ret.val = misc.StringToByteArray(val);
             }
             else
             {
@@ -173,6 +173,9 @@ namespace NetCheatPS3
          */
         public static Form1.CodeDB[] OpenFile(string file)
         {
+            if (!File.Exists(file))
+                return null;
+
             Form1.CodeDB[] ret = null;
             int z = 1;
 
@@ -182,30 +185,60 @@ namespace NetCheatPS3
                 return ret;
             }
 
-            string[] tempStr;
-            tempStr = File.ReadAllLines(file);
+            string codeFile = File.ReadAllText(file);
+            string[] tempStr = codeFile.Split(Environment.NewLine.ToCharArray(), StringSplitOptions.RemoveEmptyEntries);
 
-            int len = 0, y = 0;
+            int len = 0, y = 0, x = 0;
+            bool isGPS3F = false;
             while (y < tempStr.Length)
             {
                 if (tempStr[y] == "}")
+                {
                     len++;
+                    isGPS3F = false;
+                }
+                else if (tempStr[y] == "#")
+                {
+                    len++;
+                    isGPS3F = true;
+                }
                 y++;
             }
 
             ret = new Form1.CodeDB[len];
 
-            for (int x = 0; z < tempStr.Length; x++)
+            if (isGPS3F)
             {
-                ret[x].state = bool.Parse(tempStr[z]); z++;
-                ret[x].name = tempStr[z]; z++;
-
-                while (tempStr[z] != "}")
+                string[] gfArr = codeFile.Split(new char[] { '#' }, StringSplitOptions.RemoveEmptyEntries);
+                for (x = 0; x < len; x++)
                 {
-                    ret[x].codes += tempStr[z] + '\n';
-                    z++;
+                    string[] lines = gfArr[x].Split(Environment.NewLine.ToCharArray(), StringSplitOptions.RemoveEmptyEntries);
+                    ret[x].name = lines[0];
+                    ret[x].state = lines[1] == "1";
+                    ret[x].codes = String.Join(Environment.NewLine, lines, 2, lines.Length - 2);
                 }
-                z += 2;
+            }
+            else
+            {
+                for (x = 0; z < tempStr.Length; x++)
+                {
+                    if (x >= ret.Length)
+                        break;
+
+                    ret[x].state = bool.Parse(tempStr[z]); z++;
+                    ret[x].name = tempStr[z]; z++;
+                    ret[x].codes = "";
+
+                    while (tempStr[z] != "}")
+                    {
+                        ret[x].codes += tempStr[z] + "\r\n";
+                        z++;
+                    }
+
+                    if (ret[x].codes != "")
+                        ret[x].codes = ret[x].codes.Remove(ret[x].codes.Length - 1);
+                    z += 2;
+                }
             }
 
             return ret;
@@ -222,7 +255,8 @@ namespace NetCheatPS3
                 return;
             }
 
-            string[] str = { "{", save.state.ToString(), save.name, save.codes, "}\n" };
+            //string[] str = { "{", save.state.ToString(), save.name, save.codes, "}\n" };
+            string[] str = { save.name, save.state ? "1" : "0", save.codes, "#" };
             System.IO.File.WriteAllLines(file, str);
         }
 
@@ -243,11 +277,49 @@ namespace NetCheatPS3
             {
                 for (int x = 0; x <= Form1.CodesCount; x++)
                 {
+                    /*
                     fd.WriteLine("{");
                     fd.WriteLine(Form1.Codes[x].state.ToString());
                     fd.WriteLine(Form1.Codes[x].name);
                     fd.WriteLine(Form1.Codes[x].codes);
                     fd.WriteLine("}");
+                    */
+                    fd.WriteLine(Form1.Codes[x].name);
+                    fd.WriteLine(Form1.Codes[x].state ? "1" : "0");
+                    fd.WriteLine(Form1.Codes[x].codes);
+                    fd.WriteLine("#");
+                }
+            }
+        }
+
+        /*
+         * Saves all codes into file
+         */
+        public static void SaveFileAll(string file, List<Form1.CodeDB> codes)
+        {
+            if (file == "" || file == null)
+            {
+                System.Windows.Forms.MessageBox.Show("Error: File path invalid!");
+                return;
+            }
+
+            if (File.Exists(file))
+                File.Delete(file);
+            using (System.IO.StreamWriter fd = new System.IO.StreamWriter(file, true))
+            {
+                for (int x = 0; x < codes.Count; x++)
+                {
+                    /*
+                    fd.WriteLine("{");
+                    fd.WriteLine(codes[x].state.ToString());
+                    fd.WriteLine(codes[x].name);
+                    fd.WriteLine(codes[x].codes);
+                    fd.WriteLine("}");
+                    */
+                    fd.WriteLine(codes[x].name);
+                    fd.WriteLine(codes[x].state ? "1" : "0");
+                    fd.WriteLine(codes[x].codes);
+                    fd.WriteLine("#");
                 }
             }
         }

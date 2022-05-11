@@ -32,6 +32,9 @@
             System.ComponentModel.ComponentResourceManager resources = new System.ComponentModel.ComponentResourceManager(typeof(Form1));
             this.TabCon = new System.Windows.Forms.TabControl();
             this.CodesTab = new System.Windows.Forms.TabPage();
+            this.cbBManager = new System.Windows.Forms.Button();
+            this.cbBackupWrite = new System.Windows.Forms.Button();
+            this.cbResetWrite = new System.Windows.Forms.Button();
             this.cbCodes = new System.Windows.Forms.RichTextBox();
             this.cbSaveAll = new System.Windows.Forms.Button();
             this.cbSaveAs = new System.Windows.Forms.Button();
@@ -46,30 +49,7 @@
             this.cbList = new System.Windows.Forms.ListView();
             this.columnHeader1 = ((System.Windows.Forms.ColumnHeader)(new System.Windows.Forms.ColumnHeader()));
             this.SearchTab = new System.Windows.Forms.TabPage();
-            this.saveSRes = new System.Windows.Forms.Button();
-            this.loadSRes = new System.Windows.Forms.Button();
-            this.schVal2 = new System.Windows.Forms.TextBox();
-            this.DumpMem = new System.Windows.Forms.Button();
-            this.compBox = new System.Windows.Forms.ComboBox();
-            this.label8 = new System.Windows.Forms.Label();
-            this.SchPWS = new System.Windows.Forms.CheckBox();
-            this.label6 = new System.Windows.Forms.Label();
-            this.label7 = new System.Windows.Forms.Label();
-            this.schProg = new System.Windows.Forms.ProgressBar();
-            this.SchHexCheck = new System.Windows.Forms.CheckBox();
-            this.label9 = new System.Windows.Forms.Label();
-            this.cbSchAlign = new System.Windows.Forms.ComboBox();
-            this.SchRef = new System.Windows.Forms.Button();
-            this.lvSch = new System.Windows.Forms.ListView();
-            this.lvSchAddr = ((System.Windows.Forms.ColumnHeader)(new System.Windows.Forms.ColumnHeader()));
-            this.lvSchValue = ((System.Windows.Forms.ColumnHeader)(new System.Windows.Forms.ColumnHeader()));
-            this.lvSchDec = ((System.Windows.Forms.ColumnHeader)(new System.Windows.Forms.ColumnHeader()));
-            this.lvSchAlign = ((System.Windows.Forms.ColumnHeader)(new System.Windows.Forms.ColumnHeader()));
-            this.schNSearch = new System.Windows.Forms.Button();
-            this.schVal = new System.Windows.Forms.TextBox();
-            this.schRange2 = new System.Windows.Forms.TextBox();
-            this.schRange1 = new System.Windows.Forms.TextBox();
-            this.schSearch = new System.Windows.Forms.Button();
+            this.searchControl1 = new NetCheatPS3.SearchControl();
             this.RangeTab = new System.Windows.Forms.TabPage();
             this.findRangeProgBar = new System.Windows.Forms.ProgressBar();
             this.findRanges = new System.Windows.Forms.Button();
@@ -94,6 +74,31 @@
             this.descPlugAuth = new System.Windows.Forms.Label();
             this.descPlugName = new System.Windows.Forms.Label();
             this.pluginList = new System.Windows.Forms.ListBox();
+            this.apiTab = new System.Windows.Forms.TabPage();
+            this.apiIcon = new System.Windows.Forms.PictureBox();
+            this.descAPIDesc = new System.Windows.Forms.Label();
+            this.descAPIVer = new System.Windows.Forms.Label();
+            this.descAPIAuth = new System.Windows.Forms.Label();
+            this.descAPIName = new System.Windows.Forms.Label();
+            this.apiList = new System.Windows.Forms.ListBox();
+            this.DumpCompTab = new System.Windows.Forms.TabPage();
+            this.label4 = new System.Windows.Forms.Label();
+            this.addrFLab = new System.Windows.Forms.Label();
+            this.addrFromTB = new System.Windows.Forms.TextBox();
+            this.stopLab = new System.Windows.Forms.Label();
+            this.stopTB = new System.Windows.Forms.TextBox();
+            this.readLab = new System.Windows.Forms.Label();
+            this.startTB = new System.Windows.Forms.TextBox();
+            this.saveScan = new System.Windows.Forms.Button();
+            this.searchButton = new System.Windows.Forms.Button();
+            this.typeLabel = new System.Windows.Forms.Label();
+            this.searchTypeBox = new System.Windows.Forms.ComboBox();
+            this.searchNameBox = new System.Windows.Forms.ComboBox();
+            this.dumpTB2 = new System.Windows.Forms.TextBox();
+            this.dumpTB1 = new System.Windows.Forms.TextBox();
+            this.browseDump2 = new System.Windows.Forms.Button();
+            this.browseDump1 = new System.Windows.Forms.Button();
+            this.progBar = new NetCheatPS3.ProgressBar();
             this.ps3Disc = new System.Windows.Forms.Button();
             this.attachProcessButton = new System.Windows.Forms.Button();
             this.connectButton = new System.Windows.Forms.Button();
@@ -102,28 +107,42 @@
             this.statusStrip1 = new System.Windows.Forms.StatusStrip();
             this.toolStripDropDownButton1 = new System.Windows.Forms.ToolStripDropDownButton();
             this.optionsToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
+            this.configureAPIToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.loadPluginsToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.shutdownPS3ToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.disconnectToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.attachToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.connectToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.updateStripMenuItem1 = new System.Windows.Forms.ToolStripMenuItem();
+            this.endianStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.statusLabel1 = new System.Windows.Forms.ToolStripStatusLabel();
+            this.statusLabel2 = new System.Windows.Forms.ToolStripStatusLabel();
             this.copyToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.deleteToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.refreshFromPS3ToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.refreshFromDumptxtToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.contextMenuStrip1 = new System.Windows.Forms.ContextMenuStrip(this.components);
-            this.pauseGameButt = new System.Windows.Forms.Button();
+            this.toolTip1 = new System.Windows.Forms.ToolTip(this.components);
+            this.codesToolMenuStrip = new System.Windows.Forms.ContextMenuStrip(this.components);
+            this.bwStripMenuItem1 = new System.Windows.Forms.ToolStripMenuItem();
+            this.twStripMenuItem1 = new System.Windows.Forms.ToolStripMenuItem();
+            this.fwStripMenuItem1 = new System.Windows.Forms.ToolStripMenuItem();
+            this.createCondStripMenuItem1 = new System.Windows.Forms.ToolStripMenuItem();
+            this.editConditionalToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.startGameButt = new System.Windows.Forms.Button();
+            this.pauseGameButt = new System.Windows.Forms.Button();
             this.TabCon.SuspendLayout();
             this.CodesTab.SuspendLayout();
             this.SearchTab.SuspendLayout();
             this.RangeTab.SuspendLayout();
             this.pluginTab.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)(this.plugIcon)).BeginInit();
+            this.apiTab.SuspendLayout();
+            ((System.ComponentModel.ISupportInitialize)(this.apiIcon)).BeginInit();
+            this.DumpCompTab.SuspendLayout();
             this.statusStrip1.SuspendLayout();
             this.contextMenuStrip1.SuspendLayout();
+            this.codesToolMenuStrip.SuspendLayout();
             this.SuspendLayout();
             // 
             // TabCon
@@ -132,6 +151,8 @@
             this.TabCon.Controls.Add(this.SearchTab);
             this.TabCon.Controls.Add(this.RangeTab);
             this.TabCon.Controls.Add(this.pluginTab);
+            this.TabCon.Controls.Add(this.apiTab);
+            this.TabCon.Controls.Add(this.DumpCompTab);
             this.TabCon.Location = new System.Drawing.Point(12, 42);
             this.TabCon.Name = "TabCon";
             this.TabCon.SelectedIndex = 0;
@@ -144,6 +165,9 @@
             // 
             this.CodesTab.AutoScroll = true;
             this.CodesTab.BackColor = System.Drawing.Color.Black;
+            this.CodesTab.Controls.Add(this.cbBManager);
+            this.CodesTab.Controls.Add(this.cbBackupWrite);
+            this.CodesTab.Controls.Add(this.cbResetWrite);
             this.CodesTab.Controls.Add(this.cbCodes);
             this.CodesTab.Controls.Add(this.cbSaveAll);
             this.CodesTab.Controls.Add(this.cbSaveAs);
@@ -164,19 +188,57 @@
             this.CodesTab.TabIndex = 0;
             this.CodesTab.Text = "Codes";
             // 
+            // cbBManager
+            // 
+            this.cbBManager.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
+            this.cbBManager.Location = new System.Drawing.Point(220, 336);
+            this.cbBManager.Name = "cbBManager";
+            this.cbBManager.Size = new System.Drawing.Size(72, 23);
+            this.cbBManager.TabIndex = 35;
+            this.cbBManager.Text = "B Manager";
+            this.toolTip1.SetToolTip(this.cbBManager, "Manages Find/Replace (OGP/COP) writes");
+            this.cbBManager.UseVisualStyleBackColor = true;
+            this.cbBManager.Click += new System.EventHandler(this.cbBManager_Click);
+            // 
+            // cbBackupWrite
+            // 
+            this.cbBackupWrite.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
+            this.cbBackupWrite.Location = new System.Drawing.Point(373, 336);
+            this.cbBackupWrite.Name = "cbBackupWrite";
+            this.cbBackupWrite.Size = new System.Drawing.Size(72, 23);
+            this.cbBackupWrite.TabIndex = 34;
+            this.cbBackupWrite.Text = "Backup Memory";
+            this.toolTip1.SetToolTip(this.cbBackupWrite, "Backs up the memory that the code accesses.\r\nSupports 0, 1, 2, and 6 codetypes.");
+            this.cbBackupWrite.UseVisualStyleBackColor = true;
+            this.cbBackupWrite.Click += new System.EventHandler(this.cbBackupWrite_Click);
+            // 
+            // cbResetWrite
+            // 
+            this.cbResetWrite.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
+            this.cbResetWrite.Location = new System.Drawing.Point(297, 336);
+            this.cbResetWrite.Name = "cbResetWrite";
+            this.cbResetWrite.Size = new System.Drawing.Size(72, 23);
+            this.cbResetWrite.TabIndex = 33;
+            this.cbResetWrite.Text = "Reset Memory";
+            this.toolTip1.SetToolTip(this.cbResetWrite, "Resets the memory back to what the backup holds");
+            this.cbResetWrite.UseVisualStyleBackColor = true;
+            this.cbResetWrite.Click += new System.EventHandler(this.cbResetWrite_Click);
+            // 
             // cbCodes
             // 
             this.cbCodes.BackColor = System.Drawing.Color.Black;
             this.cbCodes.BorderStyle = System.Windows.Forms.BorderStyle.FixedSingle;
-            this.cbCodes.Font = new System.Drawing.Font("Consolas", 8.25F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.cbCodes.Font = new System.Drawing.Font("Consolas", 9F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.cbCodes.ForeColor = System.Drawing.Color.FromArgb(((int)(((byte)(0)))), ((int)(((byte)(130)))), ((int)(((byte)(210)))));
-            this.cbCodes.Location = new System.Drawing.Point(265, 79);
+            this.cbCodes.Location = new System.Drawing.Point(219, 79);
             this.cbCodes.Name = "cbCodes";
-            this.cbCodes.Size = new System.Drawing.Size(179, 225);
+            this.cbCodes.Size = new System.Drawing.Size(225, 225);
             this.cbCodes.TabIndex = 32;
             this.cbCodes.Text = "";
+            this.cbCodes.WordWrap = false;
             this.cbCodes.TextChanged += new System.EventHandler(this.cbCodes_TextChanged);
             this.cbCodes.KeyUp += new System.Windows.Forms.KeyEventHandler(this.cbCodes_KeyUp);
+            this.cbCodes.MouseUp += new System.Windows.Forms.MouseEventHandler(this.cbCodes_MouseUp);
             // 
             // cbSaveAll
             // 
@@ -247,9 +309,9 @@
             // cbWrite
             // 
             this.cbWrite.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
-            this.cbWrite.Location = new System.Drawing.Point(265, 319);
+            this.cbWrite.Location = new System.Drawing.Point(219, 310);
             this.cbWrite.Name = "cbWrite";
-            this.cbWrite.Size = new System.Drawing.Size(180, 23);
+            this.cbWrite.Size = new System.Drawing.Size(226, 23);
             this.cbWrite.TabIndex = 24;
             this.cbWrite.Text = "Write";
             this.cbWrite.UseVisualStyleBackColor = true;
@@ -257,9 +319,9 @@
             // 
             // cbState
             // 
-            this.cbState.Location = new System.Drawing.Point(265, 55);
+            this.cbState.Location = new System.Drawing.Point(219, 55);
             this.cbState.Name = "cbState";
-            this.cbState.Size = new System.Drawing.Size(180, 17);
+            this.cbState.Size = new System.Drawing.Size(225, 17);
             this.cbState.TabIndex = 23;
             this.cbState.Text = "Constant Write";
             this.cbState.TextAlign = System.Drawing.ContentAlignment.MiddleCenter;
@@ -268,9 +330,9 @@
             // 
             // label5
             // 
-            this.label5.Location = new System.Drawing.Point(265, 6);
+            this.label5.Location = new System.Drawing.Point(219, 6);
             this.label5.Name = "label5";
-            this.label5.Size = new System.Drawing.Size(181, 20);
+            this.label5.Size = new System.Drawing.Size(225, 20);
             this.label5.TabIndex = 22;
             this.label5.Text = "Name of code";
             this.label5.TextAlign = System.Drawing.ContentAlignment.TopCenter;
@@ -281,9 +343,9 @@
             this.cbName.BorderStyle = System.Windows.Forms.BorderStyle.FixedSingle;
             this.cbName.Font = new System.Drawing.Font("Courier New", 8.25F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.cbName.ForeColor = System.Drawing.Color.FromArgb(((int)(((byte)(0)))), ((int)(((byte)(130)))), ((int)(((byte)(210)))));
-            this.cbName.Location = new System.Drawing.Point(265, 29);
+            this.cbName.Location = new System.Drawing.Point(219, 29);
             this.cbName.Name = "cbName";
-            this.cbName.Size = new System.Drawing.Size(181, 20);
+            this.cbName.Size = new System.Drawing.Size(225, 20);
             this.cbName.TabIndex = 21;
             this.cbName.TextChanged += new System.EventHandler(this.cbName_TextChanged);
             // 
@@ -317,26 +379,7 @@
             // 
             this.SearchTab.AutoScroll = true;
             this.SearchTab.BackColor = System.Drawing.Color.Black;
-            this.SearchTab.Controls.Add(this.saveSRes);
-            this.SearchTab.Controls.Add(this.loadSRes);
-            this.SearchTab.Controls.Add(this.schVal2);
-            this.SearchTab.Controls.Add(this.DumpMem);
-            this.SearchTab.Controls.Add(this.compBox);
-            this.SearchTab.Controls.Add(this.label8);
-            this.SearchTab.Controls.Add(this.SchPWS);
-            this.SearchTab.Controls.Add(this.label6);
-            this.SearchTab.Controls.Add(this.label7);
-            this.SearchTab.Controls.Add(this.schProg);
-            this.SearchTab.Controls.Add(this.SchHexCheck);
-            this.SearchTab.Controls.Add(this.label9);
-            this.SearchTab.Controls.Add(this.cbSchAlign);
-            this.SearchTab.Controls.Add(this.SchRef);
-            this.SearchTab.Controls.Add(this.lvSch);
-            this.SearchTab.Controls.Add(this.schNSearch);
-            this.SearchTab.Controls.Add(this.schVal);
-            this.SearchTab.Controls.Add(this.schRange2);
-            this.SearchTab.Controls.Add(this.schRange1);
-            this.SearchTab.Controls.Add(this.schSearch);
+            this.SearchTab.Controls.Add(this.searchControl1);
             this.SearchTab.ForeColor = System.Drawing.Color.FromArgb(((int)(((byte)(0)))), ((int)(((byte)(130)))), ((int)(((byte)(210)))));
             this.SearchTab.Location = new System.Drawing.Point(4, 22);
             this.SearchTab.Name = "SearchTab";
@@ -345,266 +388,14 @@
             this.SearchTab.TabIndex = 1;
             this.SearchTab.Text = "Search";
             // 
-            // saveSRes
+            // searchControl1
             // 
-            this.saveSRes.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
-            this.saveSRes.Location = new System.Drawing.Point(230, 138);
-            this.saveSRes.Name = "saveSRes";
-            this.saveSRes.Size = new System.Drawing.Size(110, 28);
-            this.saveSRes.TabIndex = 46;
-            this.saveSRes.Text = "Save Scan Results";
-            this.saveSRes.UseVisualStyleBackColor = true;
-            this.saveSRes.Click += new System.EventHandler(this.saveSRes_Click);
-            // 
-            // loadSRes
-            // 
-            this.loadSRes.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
-            this.loadSRes.Location = new System.Drawing.Point(114, 138);
-            this.loadSRes.Name = "loadSRes";
-            this.loadSRes.Size = new System.Drawing.Size(110, 28);
-            this.loadSRes.TabIndex = 45;
-            this.loadSRes.Text = "Load Scan Results";
-            this.loadSRes.UseVisualStyleBackColor = true;
-            this.loadSRes.Click += new System.EventHandler(this.loadSRes_Click);
-            // 
-            // schVal2
-            // 
-            this.schVal2.BackColor = System.Drawing.Color.Black;
-            this.schVal2.ForeColor = System.Drawing.Color.FromArgb(((int)(((byte)(0)))), ((int)(((byte)(130)))), ((int)(((byte)(210)))));
-            this.schVal2.Location = new System.Drawing.Point(181, 3);
-            this.schVal2.Name = "schVal2";
-            this.schVal2.Size = new System.Drawing.Size(120, 20);
-            this.schVal2.TabIndex = 44;
-            this.schVal2.Text = "00000001";
-            this.schVal2.Visible = false;
-            // 
-            // DumpMem
-            // 
-            this.DumpMem.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
-            this.DumpMem.Location = new System.Drawing.Point(9, 138);
-            this.DumpMem.Name = "DumpMem";
-            this.DumpMem.Size = new System.Drawing.Size(99, 28);
-            this.DumpMem.TabIndex = 42;
-            this.DumpMem.Text = "Dump Memory";
-            this.DumpMem.UseVisualStyleBackColor = true;
-            this.DumpMem.Click += new System.EventHandler(this.DumpMem_Click);
-            // 
-            // compBox
-            // 
-            this.compBox.BackColor = System.Drawing.Color.Black;
-            this.compBox.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
-            this.compBox.ForeColor = System.Drawing.Color.FromArgb(((int)(((byte)(0)))), ((int)(((byte)(130)))), ((int)(((byte)(210)))));
-            this.compBox.FormattingEnabled = true;
-            this.compBox.Items.AddRange(new object[] {
-            "Equal",
-            "Not Equal",
-            "Less Than",
-            "Less Than Or Equal",
-            "Greater Than",
-            "Greater Than Or Equal",
-            "Value Between"});
-            this.compBox.Location = new System.Drawing.Point(55, 29);
-            this.compBox.Name = "compBox";
-            this.compBox.Size = new System.Drawing.Size(138, 21);
-            this.compBox.TabIndex = 41;
-            this.compBox.SelectedIndexChanged += new System.EventHandler(this.compBox_SelectedIndexChanged);
-            // 
-            // label8
-            // 
-            this.label8.Location = new System.Drawing.Point(1, 31);
-            this.label8.Name = "label8";
-            this.label8.Size = new System.Drawing.Size(51, 15);
-            this.label8.TabIndex = 40;
-            this.label8.Text = "Compare";
-            this.label8.TextAlign = System.Drawing.ContentAlignment.MiddleCenter;
-            // 
-            // SchPWS
-            // 
-            this.SchPWS.AutoSize = true;
-            this.SchPWS.Location = new System.Drawing.Point(311, 29);
-            this.SchPWS.Name = "SchPWS";
-            this.SchPWS.Size = new System.Drawing.Size(136, 17);
-            this.SchPWS.TabIndex = 39;
-            this.SchPWS.Text = "Pause When Scanning";
-            this.SchPWS.UseVisualStyleBackColor = true;
-            // 
-            // label6
-            // 
-            this.label6.Location = new System.Drawing.Point(21, 109);
-            this.label6.Name = "label6";
-            this.label6.Size = new System.Drawing.Size(31, 22);
-            this.label6.TabIndex = 38;
-            this.label6.Text = "Stop";
-            this.label6.TextAlign = System.Drawing.ContentAlignment.MiddleCenter;
-            // 
-            // label7
-            // 
-            this.label7.Location = new System.Drawing.Point(21, 83);
-            this.label7.Name = "label7";
-            this.label7.Size = new System.Drawing.Size(31, 22);
-            this.label7.TabIndex = 37;
-            this.label7.Text = "Start";
-            this.label7.TextAlign = System.Drawing.ContentAlignment.MiddleCenter;
-            // 
-            // schProg
-            // 
-            this.schProg.ForeColor = System.Drawing.Color.FromArgb(((int)(((byte)(0)))), ((int)(((byte)(100)))), ((int)(((byte)(210)))));
-            this.schProg.Location = new System.Drawing.Point(9, 170);
-            this.schProg.Name = "schProg";
-            this.schProg.Size = new System.Drawing.Size(440, 26);
-            this.schProg.Style = System.Windows.Forms.ProgressBarStyle.Continuous;
-            this.schProg.TabIndex = 36;
-            // 
-            // SchHexCheck
-            // 
-            this.SchHexCheck.AutoSize = true;
-            this.SchHexCheck.Checked = true;
-            this.SchHexCheck.CheckState = System.Windows.Forms.CheckState.Checked;
-            this.SchHexCheck.Font = new System.Drawing.Font("Microsoft Sans Serif", 8.25F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.SchHexCheck.Location = new System.Drawing.Point(0, 6);
-            this.SchHexCheck.Name = "SchHexCheck";
-            this.SchHexCheck.Size = new System.Drawing.Size(45, 17);
-            this.SchHexCheck.TabIndex = 35;
-            this.SchHexCheck.Text = "Hex";
-            this.SchHexCheck.UseVisualStyleBackColor = true;
-            this.SchHexCheck.CheckedChanged += new System.EventHandler(this.SchHexCheck_CheckedChanged);
-            // 
-            // label9
-            // 
-            this.label9.Location = new System.Drawing.Point(1, 58);
-            this.label9.Name = "label9";
-            this.label9.Size = new System.Drawing.Size(51, 15);
-            this.label9.TabIndex = 34;
-            this.label9.Text = "Val Type";
-            this.label9.TextAlign = System.Drawing.ContentAlignment.MiddleCenter;
-            // 
-            // cbSchAlign
-            // 
-            this.cbSchAlign.BackColor = System.Drawing.Color.Black;
-            this.cbSchAlign.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
-            this.cbSchAlign.ForeColor = System.Drawing.Color.FromArgb(((int)(((byte)(0)))), ((int)(((byte)(130)))), ((int)(((byte)(210)))));
-            this.cbSchAlign.FormattingEnabled = true;
-            this.cbSchAlign.Items.AddRange(new object[] {
-            "1 byte",
-            "2 bytes",
-            "4 bytes",
-            "8 bytes",
-            "X bytes",
-            "Text"});
-            this.cbSchAlign.Location = new System.Drawing.Point(55, 56);
-            this.cbSchAlign.Name = "cbSchAlign";
-            this.cbSchAlign.Size = new System.Drawing.Size(138, 21);
-            this.cbSchAlign.TabIndex = 33;
-            this.cbSchAlign.SelectedIndexChanged += new System.EventHandler(this.cbSchAlign_SelectedIndexChanged);
-            // 
-            // SchRef
-            // 
-            this.SchRef.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
-            this.SchRef.Location = new System.Drawing.Point(127, 203);
-            this.SchRef.Name = "SchRef";
-            this.SchRef.Size = new System.Drawing.Size(200, 28);
-            this.SchRef.TabIndex = 32;
-            this.SchRef.Text = "Refresh Results From PS3";
-            this.SchRef.UseVisualStyleBackColor = true;
-            this.SchRef.Click += new System.EventHandler(this.SchRef_Click);
-            // 
-            // lvSch
-            // 
-            this.lvSch.BackColor = System.Drawing.Color.Black;
-            this.lvSch.BorderStyle = System.Windows.Forms.BorderStyle.FixedSingle;
-            this.lvSch.Columns.AddRange(new System.Windows.Forms.ColumnHeader[] {
-            this.lvSchAddr,
-            this.lvSchValue,
-            this.lvSchDec,
-            this.lvSchAlign});
-            this.lvSch.Font = new System.Drawing.Font("Courier New", 8.25F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.lvSch.ForeColor = System.Drawing.Color.FromArgb(((int)(((byte)(0)))), ((int)(((byte)(130)))), ((int)(((byte)(210)))));
-            this.lvSch.FullRowSelect = true;
-            this.lvSch.HideSelection = false;
-            this.lvSch.LabelEdit = true;
-            this.lvSch.LabelWrap = false;
-            this.lvSch.Location = new System.Drawing.Point(9, 237);
-            this.lvSch.Name = "lvSch";
-            this.lvSch.Size = new System.Drawing.Size(440, 127);
-            this.lvSch.TabIndex = 31;
-            this.lvSch.UseCompatibleStateImageBehavior = false;
-            this.lvSch.View = System.Windows.Forms.View.Details;
-            this.lvSch.SelectedIndexChanged += new System.EventHandler(this.lvSch_SelectedIndexChanged);
-            this.lvSch.KeyUp += new System.Windows.Forms.KeyEventHandler(this.lvSch_KeyUp);
-            this.lvSch.MouseUp += new System.Windows.Forms.MouseEventHandler(this.lvSch_MouseUp);
-            // 
-            // lvSchAddr
-            // 
-            this.lvSchAddr.Text = "Address";
-            this.lvSchAddr.Width = 80;
-            // 
-            // lvSchValue
-            // 
-            this.lvSchValue.Text = "Hex Value";
-            this.lvSchValue.Width = 120;
-            // 
-            // lvSchDec
-            // 
-            this.lvSchDec.Text = "Dec Value";
-            this.lvSchDec.Width = 130;
-            // 
-            // lvSchAlign
-            // 
-            this.lvSchAlign.Text = "Alignment";
-            this.lvSchAlign.Width = 80;
-            // 
-            // schNSearch
-            // 
-            this.schNSearch.Enabled = false;
-            this.schNSearch.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
-            this.schNSearch.Location = new System.Drawing.Point(347, 203);
-            this.schNSearch.Name = "schNSearch";
-            this.schNSearch.Size = new System.Drawing.Size(100, 28);
-            this.schNSearch.TabIndex = 30;
-            this.schNSearch.Text = "Next Scan";
-            this.schNSearch.UseVisualStyleBackColor = true;
-            this.schNSearch.Click += new System.EventHandler(this.schNSearch_Click);
-            // 
-            // schVal
-            // 
-            this.schVal.BackColor = System.Drawing.Color.Black;
-            this.schVal.ForeColor = System.Drawing.Color.FromArgb(((int)(((byte)(0)))), ((int)(((byte)(130)))), ((int)(((byte)(210)))));
-            this.schVal.Location = new System.Drawing.Point(55, 4);
-            this.schVal.Name = "schVal";
-            this.schVal.Size = new System.Drawing.Size(120, 20);
-            this.schVal.TabIndex = 29;
-            this.schVal.Text = "00000001";
-            // 
-            // schRange2
-            // 
-            this.schRange2.BackColor = System.Drawing.Color.Black;
-            this.schRange2.ForeColor = System.Drawing.Color.FromArgb(((int)(((byte)(0)))), ((int)(((byte)(130)))), ((int)(((byte)(210)))));
-            this.schRange2.Location = new System.Drawing.Point(55, 109);
-            this.schRange2.Name = "schRange2";
-            this.schRange2.Size = new System.Drawing.Size(59, 20);
-            this.schRange2.TabIndex = 28;
-            this.schRange2.Text = "00000000";
-            // 
-            // schRange1
-            // 
-            this.schRange1.BackColor = System.Drawing.Color.Black;
-            this.schRange1.ForeColor = System.Drawing.Color.FromArgb(((int)(((byte)(0)))), ((int)(((byte)(130)))), ((int)(((byte)(210)))));
-            this.schRange1.Location = new System.Drawing.Point(55, 83);
-            this.schRange1.Name = "schRange1";
-            this.schRange1.Size = new System.Drawing.Size(59, 20);
-            this.schRange1.TabIndex = 27;
-            this.schRange1.Text = "00000000";
-            // 
-            // schSearch
-            // 
-            this.schSearch.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
-            this.schSearch.Location = new System.Drawing.Point(9, 203);
-            this.schSearch.Name = "schSearch";
-            this.schSearch.Size = new System.Drawing.Size(99, 28);
-            this.schSearch.TabIndex = 26;
-            this.schSearch.Text = "Initial Scan";
-            this.schSearch.UseVisualStyleBackColor = true;
-            this.schSearch.Click += new System.EventHandler(this.schSearch_Click);
+            this.searchControl1.isInitialScan = true;
+            this.searchControl1.isPWSVisible = true;
+            this.searchControl1.Location = new System.Drawing.Point(6, 6);
+            this.searchControl1.Name = "searchControl1";
+            this.searchControl1.Size = new System.Drawing.Size(444, 358);
+            this.searchControl1.TabIndex = 0;
             // 
             // RangeTab
             // 
@@ -657,6 +448,7 @@
             this.colFileName});
             this.recRangeBox.ForeColor = System.Drawing.Color.FromArgb(((int)(((byte)(0)))), ((int)(((byte)(130)))), ((int)(((byte)(210)))));
             this.recRangeBox.HeaderStyle = System.Windows.Forms.ColumnHeaderStyle.None;
+            this.recRangeBox.HideSelection = false;
             this.recRangeBox.LabelWrap = false;
             this.recRangeBox.Location = new System.Drawing.Point(235, 85);
             this.recRangeBox.MultiSelect = false;
@@ -818,6 +610,7 @@
             this.plugIcon.Location = new System.Drawing.Point(184, 147);
             this.plugIcon.Name = "plugIcon";
             this.plugIcon.Size = new System.Drawing.Size(266, 210);
+            this.plugIcon.SizeMode = System.Windows.Forms.PictureBoxSizeMode.Zoom;
             this.plugIcon.TabIndex = 11;
             this.plugIcon.TabStop = false;
             // 
@@ -872,6 +665,271 @@
             this.pluginList.TabIndex = 0;
             this.pluginList.SelectedIndexChanged += new System.EventHandler(this.pluginList_SelectedIndexChanged);
             this.pluginList.DoubleClick += new System.EventHandler(this.pluginList_DoubleClick);
+            // 
+            // apiTab
+            // 
+            this.apiTab.BackColor = System.Drawing.Color.Black;
+            this.apiTab.Controls.Add(this.apiIcon);
+            this.apiTab.Controls.Add(this.descAPIDesc);
+            this.apiTab.Controls.Add(this.descAPIVer);
+            this.apiTab.Controls.Add(this.descAPIAuth);
+            this.apiTab.Controls.Add(this.descAPIName);
+            this.apiTab.Controls.Add(this.apiList);
+            this.apiTab.Location = new System.Drawing.Point(4, 22);
+            this.apiTab.Name = "apiTab";
+            this.apiTab.Size = new System.Drawing.Size(453, 367);
+            this.apiTab.TabIndex = 5;
+            this.apiTab.Text = "APIs";
+            // 
+            // apiIcon
+            // 
+            this.apiIcon.InitialImage = ((System.Drawing.Image)(resources.GetObject("apiIcon.InitialImage")));
+            this.apiIcon.Location = new System.Drawing.Point(183, 146);
+            this.apiIcon.Name = "apiIcon";
+            this.apiIcon.Size = new System.Drawing.Size(266, 210);
+            this.apiIcon.SizeMode = System.Windows.Forms.PictureBoxSizeMode.Zoom;
+            this.apiIcon.TabIndex = 14;
+            this.apiIcon.TabStop = false;
+            this.apiIcon.Click += new System.EventHandler(this.apiIcon_Click);
+            this.apiIcon.MouseEnter += new System.EventHandler(this.apiIcon_MouseEnter);
+            this.apiIcon.MouseLeave += new System.EventHandler(this.apiIcon_MouseLeave);
+            this.apiIcon.MouseHover += new System.EventHandler(this.apiIcon_MouseHover);
+            this.apiIcon.MouseMove += new System.Windows.Forms.MouseEventHandler(this.apiIcon_MouseMove);
+            // 
+            // descAPIDesc
+            // 
+            this.descAPIDesc.Font = new System.Drawing.Font("Microsoft Sans Serif", 8.25F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.descAPIDesc.Location = new System.Drawing.Point(186, 42);
+            this.descAPIDesc.Name = "descAPIDesc";
+            this.descAPIDesc.Size = new System.Drawing.Size(263, 101);
+            this.descAPIDesc.TabIndex = 13;
+            this.descAPIDesc.Text = "API Description";
+            // 
+            // descAPIVer
+            // 
+            this.descAPIVer.AutoSize = true;
+            this.descAPIVer.Font = new System.Drawing.Font("Microsoft Sans Serif", 8.25F, System.Drawing.FontStyle.Italic, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.descAPIVer.Location = new System.Drawing.Point(205, 29);
+            this.descAPIVer.Name = "descAPIVer";
+            this.descAPIVer.Size = new System.Drawing.Size(62, 13);
+            this.descAPIVer.TabIndex = 12;
+            this.descAPIVer.Text = "API Version";
+            // 
+            // descAPIAuth
+            // 
+            this.descAPIAuth.AutoSize = true;
+            this.descAPIAuth.Font = new System.Drawing.Font("Microsoft Sans Serif", 8.25F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.descAPIAuth.Location = new System.Drawing.Point(205, 16);
+            this.descAPIAuth.Name = "descAPIAuth";
+            this.descAPIAuth.Size = new System.Drawing.Size(85, 13);
+            this.descAPIAuth.TabIndex = 11;
+            this.descAPIAuth.Text = "by API Author";
+            // 
+            // descAPIName
+            // 
+            this.descAPIName.AutoSize = true;
+            this.descAPIName.Font = new System.Drawing.Font("Microsoft Sans Serif", 8.25F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.descAPIName.Location = new System.Drawing.Point(183, 3);
+            this.descAPIName.Name = "descAPIName";
+            this.descAPIName.Size = new System.Drawing.Size(63, 13);
+            this.descAPIName.TabIndex = 10;
+            this.descAPIName.Text = "API Name";
+            // 
+            // apiList
+            // 
+            this.apiList.BackColor = System.Drawing.Color.Black;
+            this.apiList.BorderStyle = System.Windows.Forms.BorderStyle.FixedSingle;
+            this.apiList.ForeColor = System.Drawing.Color.FromArgb(((int)(((byte)(0)))), ((int)(((byte)(130)))), ((int)(((byte)(210)))));
+            this.apiList.FormattingEnabled = true;
+            this.apiList.Location = new System.Drawing.Point(3, 3);
+            this.apiList.Name = "apiList";
+            this.apiList.Size = new System.Drawing.Size(174, 353);
+            this.apiList.TabIndex = 9;
+            this.apiList.SelectedIndexChanged += new System.EventHandler(this.apiList_SelectedIndexChanged);
+            this.apiList.DoubleClick += new System.EventHandler(this.apiList_DoubleClick);
+            // 
+            // DumpCompTab
+            // 
+            this.DumpCompTab.BackColor = System.Drawing.Color.Black;
+            this.DumpCompTab.Controls.Add(this.label4);
+            this.DumpCompTab.Controls.Add(this.addrFLab);
+            this.DumpCompTab.Controls.Add(this.addrFromTB);
+            this.DumpCompTab.Controls.Add(this.stopLab);
+            this.DumpCompTab.Controls.Add(this.stopTB);
+            this.DumpCompTab.Controls.Add(this.readLab);
+            this.DumpCompTab.Controls.Add(this.startTB);
+            this.DumpCompTab.Controls.Add(this.saveScan);
+            this.DumpCompTab.Controls.Add(this.searchButton);
+            this.DumpCompTab.Controls.Add(this.typeLabel);
+            this.DumpCompTab.Controls.Add(this.searchTypeBox);
+            this.DumpCompTab.Controls.Add(this.searchNameBox);
+            this.DumpCompTab.Controls.Add(this.dumpTB2);
+            this.DumpCompTab.Controls.Add(this.dumpTB1);
+            this.DumpCompTab.Controls.Add(this.browseDump2);
+            this.DumpCompTab.Controls.Add(this.browseDump1);
+            this.DumpCompTab.Controls.Add(this.progBar);
+            this.DumpCompTab.Location = new System.Drawing.Point(4, 22);
+            this.DumpCompTab.Name = "DumpCompTab";
+            this.DumpCompTab.Size = new System.Drawing.Size(453, 367);
+            this.DumpCompTab.TabIndex = 4;
+            this.DumpCompTab.Text = "Dump Compare";
+            // 
+            // label4
+            // 
+            this.label4.AutoSize = true;
+            this.label4.Location = new System.Drawing.Point(33, 277);
+            this.label4.Name = "label4";
+            this.label4.Size = new System.Drawing.Size(41, 13);
+            this.label4.TabIndex = 40;
+            this.label4.Text = "Search";
+            // 
+            // addrFLab
+            // 
+            this.addrFLab.AutoSize = true;
+            this.addrFLab.Location = new System.Drawing.Point(3, 251);
+            this.addrFLab.Name = "addrFLab";
+            this.addrFLab.Size = new System.Drawing.Size(71, 13);
+            this.addrFLab.TabIndex = 38;
+            this.addrFLab.Text = "Address From";
+            // 
+            // addrFromTB
+            // 
+            this.addrFromTB.Location = new System.Drawing.Point(80, 248);
+            this.addrFromTB.Name = "addrFromTB";
+            this.addrFromTB.Size = new System.Drawing.Size(68, 20);
+            this.addrFromTB.TabIndex = 37;
+            this.addrFromTB.Text = "00000000";
+            // 
+            // stopLab
+            // 
+            this.stopLab.AutoSize = true;
+            this.stopLab.Location = new System.Drawing.Point(45, 224);
+            this.stopLab.Name = "stopLab";
+            this.stopLab.Size = new System.Drawing.Size(29, 13);
+            this.stopLab.TabIndex = 36;
+            this.stopLab.Text = "Stop";
+            // 
+            // stopTB
+            // 
+            this.stopTB.Location = new System.Drawing.Point(80, 221);
+            this.stopTB.Name = "stopTB";
+            this.stopTB.Size = new System.Drawing.Size(68, 20);
+            this.stopTB.TabIndex = 35;
+            this.stopTB.Text = "00000000";
+            // 
+            // readLab
+            // 
+            this.readLab.AutoSize = true;
+            this.readLab.Location = new System.Drawing.Point(45, 195);
+            this.readLab.Name = "readLab";
+            this.readLab.Size = new System.Drawing.Size(29, 13);
+            this.readLab.TabIndex = 34;
+            this.readLab.Text = "Start";
+            // 
+            // startTB
+            // 
+            this.startTB.Location = new System.Drawing.Point(80, 192);
+            this.startTB.Name = "startTB";
+            this.startTB.Size = new System.Drawing.Size(68, 20);
+            this.startTB.TabIndex = 33;
+            this.startTB.Text = "00000000";
+            // 
+            // saveScan
+            // 
+            this.saveScan.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
+            this.saveScan.Location = new System.Drawing.Point(365, 304);
+            this.saveScan.Name = "saveScan";
+            this.saveScan.Size = new System.Drawing.Size(85, 23);
+            this.saveScan.TabIndex = 32;
+            this.saveScan.Text = "Save Scan";
+            this.saveScan.UseVisualStyleBackColor = true;
+            this.saveScan.Click += new System.EventHandler(this.saveScan_Click);
+            // 
+            // searchButton
+            // 
+            this.searchButton.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
+            this.searchButton.Location = new System.Drawing.Point(274, 304);
+            this.searchButton.Name = "searchButton";
+            this.searchButton.Size = new System.Drawing.Size(85, 23);
+            this.searchButton.TabIndex = 31;
+            this.searchButton.Text = "Search";
+            this.searchButton.UseVisualStyleBackColor = true;
+            this.searchButton.Click += new System.EventHandler(this.searchButton_Click);
+            // 
+            // typeLabel
+            // 
+            this.typeLabel.AutoSize = true;
+            this.typeLabel.Location = new System.Drawing.Point(43, 307);
+            this.typeLabel.Name = "typeLabel";
+            this.typeLabel.Size = new System.Drawing.Size(31, 13);
+            this.typeLabel.TabIndex = 30;
+            this.typeLabel.Text = "Type";
+            // 
+            // searchTypeBox
+            // 
+            this.searchTypeBox.FormattingEnabled = true;
+            this.searchTypeBox.Location = new System.Drawing.Point(80, 304);
+            this.searchTypeBox.Name = "searchTypeBox";
+            this.searchTypeBox.Size = new System.Drawing.Size(121, 21);
+            this.searchTypeBox.TabIndex = 28;
+            this.searchTypeBox.SelectedIndexChanged += new System.EventHandler(this.searchTypeBox_SelectedIndexChanged);
+            // 
+            // searchNameBox
+            // 
+            this.searchNameBox.FormattingEnabled = true;
+            this.searchNameBox.Location = new System.Drawing.Point(80, 274);
+            this.searchNameBox.Name = "searchNameBox";
+            this.searchNameBox.Size = new System.Drawing.Size(121, 21);
+            this.searchNameBox.TabIndex = 27;
+            this.searchNameBox.SelectedIndexChanged += new System.EventHandler(this.searchNameBox_SelectedIndexChanged);
+            // 
+            // dumpTB2
+            // 
+            this.dumpTB2.Location = new System.Drawing.Point(3, 32);
+            this.dumpTB2.Name = "dumpTB2";
+            this.dumpTB2.Size = new System.Drawing.Size(361, 20);
+            this.dumpTB2.TabIndex = 26;
+            // 
+            // dumpTB1
+            // 
+            this.dumpTB1.Location = new System.Drawing.Point(3, 3);
+            this.dumpTB1.Name = "dumpTB1";
+            this.dumpTB1.Size = new System.Drawing.Size(361, 20);
+            this.dumpTB1.TabIndex = 25;
+            // 
+            // browseDump2
+            // 
+            this.browseDump2.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
+            this.browseDump2.Location = new System.Drawing.Point(375, 30);
+            this.browseDump2.Name = "browseDump2";
+            this.browseDump2.Size = new System.Drawing.Size(75, 23);
+            this.browseDump2.TabIndex = 24;
+            this.browseDump2.Text = "Browse";
+            this.browseDump2.UseVisualStyleBackColor = true;
+            this.browseDump2.Click += new System.EventHandler(this.browseDump2_Click);
+            // 
+            // browseDump1
+            // 
+            this.browseDump1.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
+            this.browseDump1.Location = new System.Drawing.Point(375, 1);
+            this.browseDump1.Name = "browseDump1";
+            this.browseDump1.Size = new System.Drawing.Size(75, 23);
+            this.browseDump1.TabIndex = 23;
+            this.browseDump1.Text = "Browse";
+            this.browseDump1.UseVisualStyleBackColor = true;
+            this.browseDump1.Click += new System.EventHandler(this.browseDump1_Click);
+            // 
+            // progBar
+            // 
+            this.progBar.BackColor = System.Drawing.Color.White;
+            this.progBar.Location = new System.Drawing.Point(3, 333);
+            this.progBar.Maximum = 0;
+            this.progBar.Name = "progBar";
+            this.progBar.printText = "";
+            this.progBar.progressColor = System.Drawing.SystemColors.ControlText;
+            this.progBar.Size = new System.Drawing.Size(447, 31);
+            this.progBar.TabIndex = 39;
+            this.progBar.Value = 0;
             // 
             // ps3Disc
             // 
@@ -943,10 +1001,11 @@
             this.statusStrip1.BackColor = System.Drawing.Color.Black;
             this.statusStrip1.Items.AddRange(new System.Windows.Forms.ToolStripItem[] {
             this.toolStripDropDownButton1,
-            this.statusLabel1});
-            this.statusStrip1.Location = new System.Drawing.Point(0, 441);
+            this.statusLabel1,
+            this.statusLabel2});
+            this.statusStrip1.Location = new System.Drawing.Point(0, 439);
             this.statusStrip1.Name = "statusStrip1";
-            this.statusStrip1.Size = new System.Drawing.Size(485, 22);
+            this.statusStrip1.Size = new System.Drawing.Size(485, 24);
             this.statusStrip1.TabIndex = 9;
             this.statusStrip1.Text = "statusStrip1";
             // 
@@ -955,97 +1014,123 @@
             this.toolStripDropDownButton1.DisplayStyle = System.Windows.Forms.ToolStripItemDisplayStyle.Image;
             this.toolStripDropDownButton1.DropDownItems.AddRange(new System.Windows.Forms.ToolStripItem[] {
             this.optionsToolStripMenuItem,
+            this.configureAPIToolStripMenuItem,
             this.loadPluginsToolStripMenuItem,
             this.shutdownPS3ToolStripMenuItem,
             this.disconnectToolStripMenuItem,
             this.attachToolStripMenuItem,
             this.connectToolStripMenuItem,
-            this.updateStripMenuItem1});
+            this.updateStripMenuItem1,
+            this.endianStripMenuItem});
             this.toolStripDropDownButton1.Image = ((System.Drawing.Image)(resources.GetObject("toolStripDropDownButton1.Image")));
             this.toolStripDropDownButton1.ImageTransparentColor = System.Drawing.Color.BlueViolet;
             this.toolStripDropDownButton1.Name = "toolStripDropDownButton1";
-            this.toolStripDropDownButton1.Size = new System.Drawing.Size(29, 20);
+            this.toolStripDropDownButton1.Size = new System.Drawing.Size(29, 22);
             // 
             // optionsToolStripMenuItem
             // 
             this.optionsToolStripMenuItem.Name = "optionsToolStripMenuItem";
-            this.optionsToolStripMenuItem.Size = new System.Drawing.Size(165, 22);
+            this.optionsToolStripMenuItem.Size = new System.Drawing.Size(180, 22);
             this.optionsToolStripMenuItem.Text = "Options";
             this.optionsToolStripMenuItem.Click += new System.EventHandler(this.optionsToolStripMenuItem_Click);
+            // 
+            // configureAPIToolStripMenuItem
+            // 
+            this.configureAPIToolStripMenuItem.Name = "configureAPIToolStripMenuItem";
+            this.configureAPIToolStripMenuItem.Size = new System.Drawing.Size(180, 22);
+            this.configureAPIToolStripMenuItem.Text = "Configure API";
+            this.configureAPIToolStripMenuItem.ToolTipText = "Configure API.\r\nIf nothing happens then the API doesn\'t support this feature.";
+            this.configureAPIToolStripMenuItem.Click += new System.EventHandler(this.configureAPIToolStripMenuItem_Click);
             // 
             // loadPluginsToolStripMenuItem
             // 
             this.loadPluginsToolStripMenuItem.Name = "loadPluginsToolStripMenuItem";
-            this.loadPluginsToolStripMenuItem.Size = new System.Drawing.Size(165, 22);
+            this.loadPluginsToolStripMenuItem.Size = new System.Drawing.Size(180, 22);
             this.loadPluginsToolStripMenuItem.Text = "Load Plugins";
             this.loadPluginsToolStripMenuItem.Click += new System.EventHandler(this.loadPluginsToolStripMenuItem_Click);
             // 
             // shutdownPS3ToolStripMenuItem
             // 
             this.shutdownPS3ToolStripMenuItem.Name = "shutdownPS3ToolStripMenuItem";
-            this.shutdownPS3ToolStripMenuItem.Size = new System.Drawing.Size(165, 22);
-            this.shutdownPS3ToolStripMenuItem.Text = "Shutdown PS3";
+            this.shutdownPS3ToolStripMenuItem.Size = new System.Drawing.Size(180, 22);
+            this.shutdownPS3ToolStripMenuItem.Text = "Shutdown";
             this.shutdownPS3ToolStripMenuItem.Click += new System.EventHandler(this.shutdownPS3ToolStripMenuItem_Click);
             // 
             // disconnectToolStripMenuItem
             // 
             this.disconnectToolStripMenuItem.Name = "disconnectToolStripMenuItem";
-            this.disconnectToolStripMenuItem.Size = new System.Drawing.Size(165, 22);
+            this.disconnectToolStripMenuItem.Size = new System.Drawing.Size(180, 22);
             this.disconnectToolStripMenuItem.Text = "Disconnect";
             this.disconnectToolStripMenuItem.Click += new System.EventHandler(this.disconnectToolStripMenuItem_Click);
             // 
             // attachToolStripMenuItem
             // 
             this.attachToolStripMenuItem.Name = "attachToolStripMenuItem";
-            this.attachToolStripMenuItem.Size = new System.Drawing.Size(165, 22);
+            this.attachToolStripMenuItem.Size = new System.Drawing.Size(180, 22);
             this.attachToolStripMenuItem.Text = "Attach";
             this.attachToolStripMenuItem.Click += new System.EventHandler(this.attachToolStripMenuItem_Click);
             // 
             // connectToolStripMenuItem
             // 
             this.connectToolStripMenuItem.Name = "connectToolStripMenuItem";
-            this.connectToolStripMenuItem.Size = new System.Drawing.Size(165, 22);
+            this.connectToolStripMenuItem.Size = new System.Drawing.Size(180, 22);
             this.connectToolStripMenuItem.Text = "Connect";
             this.connectToolStripMenuItem.Click += new System.EventHandler(this.connectToolStripMenuItem_Click);
             // 
             // updateStripMenuItem1
             // 
             this.updateStripMenuItem1.Name = "updateStripMenuItem1";
-            this.updateStripMenuItem1.Size = new System.Drawing.Size(165, 22);
+            this.updateStripMenuItem1.Size = new System.Drawing.Size(180, 22);
             this.updateStripMenuItem1.Text = "Update NetCheat";
             this.updateStripMenuItem1.Click += new System.EventHandler(this.updateStripMenuItem1_Click);
+            // 
+            // endianStripMenuItem
+            // 
+            this.endianStripMenuItem.Checked = true;
+            this.endianStripMenuItem.CheckState = System.Windows.Forms.CheckState.Checked;
+            this.endianStripMenuItem.Name = "endianStripMenuItem";
+            this.endianStripMenuItem.Size = new System.Drawing.Size(180, 22);
+            this.endianStripMenuItem.Text = "Big Endian";
+            this.endianStripMenuItem.Click += new System.EventHandler(this.endianStripMenuItem_Click);
             // 
             // statusLabel1
             // 
             this.statusLabel1.Name = "statusLabel1";
-            this.statusLabel1.Size = new System.Drawing.Size(88, 17);
+            this.statusLabel1.Size = new System.Drawing.Size(88, 19);
             this.statusLabel1.Text = "Not Connected";
+            // 
+            // statusLabel2
+            // 
+            this.statusLabel2.BorderSides = System.Windows.Forms.ToolStripStatusLabelBorderSides.Left;
+            this.statusLabel2.Name = "statusLabel2";
+            this.statusLabel2.Size = new System.Drawing.Size(117, 19);
+            this.statusLabel2.Text = "API: Target Manager";
             // 
             // copyToolStripMenuItem
             // 
             this.copyToolStripMenuItem.Name = "copyToolStripMenuItem";
-            this.copyToolStripMenuItem.Size = new System.Drawing.Size(195, 22);
+            this.copyToolStripMenuItem.Size = new System.Drawing.Size(196, 22);
             this.copyToolStripMenuItem.Text = "Copy";
             this.copyToolStripMenuItem.Click += new System.EventHandler(this.copyToolStripMenuItem_Click);
             // 
             // deleteToolStripMenuItem
             // 
             this.deleteToolStripMenuItem.Name = "deleteToolStripMenuItem";
-            this.deleteToolStripMenuItem.Size = new System.Drawing.Size(195, 22);
+            this.deleteToolStripMenuItem.Size = new System.Drawing.Size(196, 22);
             this.deleteToolStripMenuItem.Text = "Delete";
             this.deleteToolStripMenuItem.Click += new System.EventHandler(this.deleteToolStripMenuItem_Click);
             // 
             // refreshFromPS3ToolStripMenuItem
             // 
             this.refreshFromPS3ToolStripMenuItem.Name = "refreshFromPS3ToolStripMenuItem";
-            this.refreshFromPS3ToolStripMenuItem.Size = new System.Drawing.Size(195, 22);
+            this.refreshFromPS3ToolStripMenuItem.Size = new System.Drawing.Size(196, 22);
             this.refreshFromPS3ToolStripMenuItem.Text = "Refresh From PS3";
             this.refreshFromPS3ToolStripMenuItem.Click += new System.EventHandler(this.refreshFromPS3ToolStripMenuItem_Click);
             // 
             // refreshFromDumptxtToolStripMenuItem
             // 
             this.refreshFromDumptxtToolStripMenuItem.Name = "refreshFromDumptxtToolStripMenuItem";
-            this.refreshFromDumptxtToolStripMenuItem.Size = new System.Drawing.Size(195, 22);
+            this.refreshFromDumptxtToolStripMenuItem.Size = new System.Drawing.Size(196, 22);
             this.refreshFromDumptxtToolStripMenuItem.Text = "Refresh From dump.txt";
             this.refreshFromDumptxtToolStripMenuItem.Click += new System.EventHandler(this.refreshFromDumptxtToolStripMenuItem_Click);
             // 
@@ -1057,20 +1142,53 @@
             this.refreshFromPS3ToolStripMenuItem,
             this.refreshFromDumptxtToolStripMenuItem});
             this.contextMenuStrip1.Name = "contextMenuStrip1";
-            this.contextMenuStrip1.Size = new System.Drawing.Size(196, 92);
+            this.contextMenuStrip1.Size = new System.Drawing.Size(197, 92);
             // 
-            // pauseGameButt
+            // codesToolMenuStrip
             // 
-            this.pauseGameButt.BackgroundImage = ((System.Drawing.Image)(resources.GetObject("pauseGameButt.BackgroundImage")));
-            this.pauseGameButt.BackgroundImageLayout = System.Windows.Forms.ImageLayout.Stretch;
-            this.pauseGameButt.Location = new System.Drawing.Point(450, 37);
-            this.pauseGameButt.Name = "pauseGameButt";
-            this.pauseGameButt.Size = new System.Drawing.Size(24, 24);
-            this.pauseGameButt.TabIndex = 12;
-            this.pauseGameButt.UseVisualStyleBackColor = true;
-            this.pauseGameButt.BackColorChanged += new System.EventHandler(this.pauseGameButt_BackColorChanged);
-            this.pauseGameButt.ForeColorChanged += new System.EventHandler(this.pauseGameButt_ForeColorChanged);
-            this.pauseGameButt.Click += new System.EventHandler(this.pauseGameButt_Click);
+            this.codesToolMenuStrip.Items.AddRange(new System.Windows.Forms.ToolStripItem[] {
+            this.bwStripMenuItem1,
+            this.twStripMenuItem1,
+            this.fwStripMenuItem1,
+            this.createCondStripMenuItem1,
+            this.editConditionalToolStripMenuItem});
+            this.codesToolMenuStrip.Name = "codesToolMenuStrip";
+            this.codesToolMenuStrip.Size = new System.Drawing.Size(191, 114);
+            // 
+            // bwStripMenuItem1
+            // 
+            this.bwStripMenuItem1.Name = "bwStripMenuItem1";
+            this.bwStripMenuItem1.Size = new System.Drawing.Size(190, 22);
+            this.bwStripMenuItem1.Text = "Convert to Byte Write";
+            this.bwStripMenuItem1.Click += new System.EventHandler(this.bwStripMenuItem1_Click);
+            // 
+            // twStripMenuItem1
+            // 
+            this.twStripMenuItem1.Name = "twStripMenuItem1";
+            this.twStripMenuItem1.Size = new System.Drawing.Size(190, 22);
+            this.twStripMenuItem1.Text = "Convert to Text Write";
+            this.twStripMenuItem1.Click += new System.EventHandler(this.twStripMenuItem1_Click);
+            // 
+            // fwStripMenuItem1
+            // 
+            this.fwStripMenuItem1.Name = "fwStripMenuItem1";
+            this.fwStripMenuItem1.Size = new System.Drawing.Size(190, 22);
+            this.fwStripMenuItem1.Text = "Convert to Float Write";
+            this.fwStripMenuItem1.Click += new System.EventHandler(this.fwStripMenuItem1_Click);
+            // 
+            // createCondStripMenuItem1
+            // 
+            this.createCondStripMenuItem1.Name = "createCondStripMenuItem1";
+            this.createCondStripMenuItem1.Size = new System.Drawing.Size(190, 22);
+            this.createCondStripMenuItem1.Text = "Create Conditional";
+            this.createCondStripMenuItem1.Click += new System.EventHandler(this.createCondStripMenuItem1_Click);
+            // 
+            // editConditionalToolStripMenuItem
+            // 
+            this.editConditionalToolStripMenuItem.Name = "editConditionalToolStripMenuItem";
+            this.editConditionalToolStripMenuItem.Size = new System.Drawing.Size(190, 22);
+            this.editConditionalToolStripMenuItem.Text = "Edit Conditional";
+            this.editConditionalToolStripMenuItem.Click += new System.EventHandler(this.editConditionalToolStripMenuItem_Click);
             // 
             // startGameButt
             // 
@@ -1084,6 +1202,19 @@
             this.startGameButt.BackColorChanged += new System.EventHandler(this.startGameButt_BackColorChanged);
             this.startGameButt.ForeColorChanged += new System.EventHandler(this.startGameButt_ForeColorChanged);
             this.startGameButt.Click += new System.EventHandler(this.startGameButt_Click);
+            // 
+            // pauseGameButt
+            // 
+            this.pauseGameButt.BackgroundImage = ((System.Drawing.Image)(resources.GetObject("pauseGameButt.BackgroundImage")));
+            this.pauseGameButt.BackgroundImageLayout = System.Windows.Forms.ImageLayout.Stretch;
+            this.pauseGameButt.Location = new System.Drawing.Point(450, 37);
+            this.pauseGameButt.Name = "pauseGameButt";
+            this.pauseGameButt.Size = new System.Drawing.Size(24, 24);
+            this.pauseGameButt.TabIndex = 12;
+            this.pauseGameButt.UseVisualStyleBackColor = true;
+            this.pauseGameButt.BackColorChanged += new System.EventHandler(this.pauseGameButt_BackColorChanged);
+            this.pauseGameButt.ForeColorChanged += new System.EventHandler(this.pauseGameButt_ForeColorChanged);
+            this.pauseGameButt.Click += new System.EventHandler(this.pauseGameButt_Click);
             // 
             // Form1
             // 
@@ -1103,25 +1234,30 @@
             this.Controls.Add(this.TabCon);
             this.ForeColor = System.Drawing.Color.FromArgb(((int)(((byte)(0)))), ((int)(((byte)(130)))), ((int)(((byte)(210)))));
             this.Icon = ((System.Drawing.Icon)(resources.GetObject("$this.Icon")));
-            this.MaximumSize = new System.Drawing.Size(501, 501);
             this.MinimumSize = new System.Drawing.Size(501, 501);
             this.Name = "Form1";
             this.Text = "NetCheat PS3 by Dnawrkshp";
             this.Load += new System.EventHandler(this.Main_Load);
             this.KeyDown += new System.Windows.Forms.KeyEventHandler(this.Form1_KeyDown);
             this.KeyUp += new System.Windows.Forms.KeyEventHandler(this.Form1_KeyUp);
+            this.Resize += new System.EventHandler(this.Form1_Resize);
             this.TabCon.ResumeLayout(false);
             this.CodesTab.ResumeLayout(false);
             this.CodesTab.PerformLayout();
             this.SearchTab.ResumeLayout(false);
-            this.SearchTab.PerformLayout();
             this.RangeTab.ResumeLayout(false);
             this.pluginTab.ResumeLayout(false);
             this.pluginTab.PerformLayout();
             ((System.ComponentModel.ISupportInitialize)(this.plugIcon)).EndInit();
+            this.apiTab.ResumeLayout(false);
+            this.apiTab.PerformLayout();
+            ((System.ComponentModel.ISupportInitialize)(this.apiIcon)).EndInit();
+            this.DumpCompTab.ResumeLayout(false);
+            this.DumpCompTab.PerformLayout();
             this.statusStrip1.ResumeLayout(false);
             this.statusStrip1.PerformLayout();
             this.contextMenuStrip1.ResumeLayout(false);
+            this.codesToolMenuStrip.ResumeLayout(false);
             this.ResumeLayout(false);
             this.PerformLayout();
 
@@ -1142,33 +1278,10 @@
         private System.Windows.Forms.CheckBox cbState;
         private System.Windows.Forms.Label label5;
         private System.Windows.Forms.TextBox cbName;
-        private System.Windows.Forms.ListView cbList;
         private System.Windows.Forms.ColumnHeader columnHeader1;
-        private System.Windows.Forms.TextBox schVal2;
-        private System.Windows.Forms.Button DumpMem;
-        private System.Windows.Forms.ComboBox compBox;
-        private System.Windows.Forms.Label label8;
-        private System.Windows.Forms.CheckBox SchPWS;
-        private System.Windows.Forms.Label label6;
-        private System.Windows.Forms.Label label7;
-        private System.Windows.Forms.ProgressBar schProg;
-        private System.Windows.Forms.CheckBox SchHexCheck;
-        private System.Windows.Forms.Label label9;
-        private System.Windows.Forms.ComboBox cbSchAlign;
-        private System.Windows.Forms.Button SchRef;
-        public System.Windows.Forms.ListView lvSch;
-        private System.Windows.Forms.ColumnHeader lvSchAddr;
-        private System.Windows.Forms.ColumnHeader lvSchValue;
-        private System.Windows.Forms.ColumnHeader lvSchDec;
-        private System.Windows.Forms.ColumnHeader lvSchAlign;
-        private System.Windows.Forms.Button schNSearch;
-        private System.Windows.Forms.TextBox schVal;
-        private System.Windows.Forms.TextBox schRange2;
-        private System.Windows.Forms.TextBox schRange1;
         private System.Windows.Forms.Button ps3Disc;
         private System.Windows.Forms.Button attachProcessButton;
         private System.Windows.Forms.Button connectButton;
-        private System.Windows.Forms.RichTextBox cbCodes;
         private System.Windows.Forms.TabPage RangeTab;
         private System.Windows.Forms.ListView rangeView;
         private System.Windows.Forms.Button ImportRange;
@@ -1182,7 +1295,6 @@
         private System.Windows.Forms.Button RangeDown;
         private System.Windows.Forms.Button RangeUp;
         private System.Windows.Forms.Button refPlugin;
-        private System.Windows.Forms.Button schSearch;
         private System.Windows.Forms.Button optButton;
         private System.Windows.Forms.TabPage pluginTab;
         private System.Windows.Forms.ListBox pluginList;
@@ -1193,8 +1305,6 @@
         private System.Windows.Forms.Label label3;
         private System.Windows.Forms.ListView recRangeBox;
         private System.Windows.Forms.ColumnHeader colFileName;
-        private System.Windows.Forms.Button loadSRes;
-        private System.Windows.Forms.Button saveSRes;
         private System.Windows.Forms.PictureBox plugIcon;
         private System.Windows.Forms.StatusStrip statusStrip1;
         private System.Windows.Forms.ToolStripDropDownButton toolStripDropDownButton1;
@@ -1209,12 +1319,53 @@
         private System.Windows.Forms.ToolStripMenuItem refreshFromPS3ToolStripMenuItem;
         private System.Windows.Forms.ToolStripMenuItem refreshFromDumptxtToolStripMenuItem;
         private System.Windows.Forms.ContextMenuStrip contextMenuStrip1;
-        private System.Windows.Forms.ToolStripStatusLabel statusLabel1;
         private System.Windows.Forms.ToolStripMenuItem updateStripMenuItem1;
         private System.Windows.Forms.ProgressBar findRangeProgBar;
         private System.Windows.Forms.Button findRanges;
         private System.Windows.Forms.Button pauseGameButt;
         private System.Windows.Forms.Button startGameButt;
+        private System.Windows.Forms.Button cbResetWrite;
+        private System.Windows.Forms.Button cbBackupWrite;
+        private System.Windows.Forms.ToolTip toolTip1;
+        private SearchControl searchControl1;
+        private System.Windows.Forms.TabPage DumpCompTab;
+        private System.Windows.Forms.Label addrFLab;
+        private System.Windows.Forms.TextBox addrFromTB;
+        private System.Windows.Forms.Label stopLab;
+        private System.Windows.Forms.TextBox stopTB;
+        private System.Windows.Forms.Label readLab;
+        private System.Windows.Forms.TextBox startTB;
+        private System.Windows.Forms.Button saveScan;
+        public System.Windows.Forms.Button searchButton;
+        private System.Windows.Forms.Label typeLabel;
+        private System.Windows.Forms.ComboBox searchTypeBox;
+        private System.Windows.Forms.ComboBox searchNameBox;
+        private System.Windows.Forms.TextBox dumpTB2;
+        private System.Windows.Forms.TextBox dumpTB1;
+        private System.Windows.Forms.Button browseDump2;
+        private System.Windows.Forms.Button browseDump1;
+        public ProgressBar progBar;
+        public System.Windows.Forms.ToolStripStatusLabel statusLabel1;
+        public System.Windows.Forms.ListView cbList;
+        public System.Windows.Forms.RichTextBox cbCodes;
+        private System.Windows.Forms.Label label4;
+        private System.Windows.Forms.Button cbBManager;
+        private System.Windows.Forms.ToolStripMenuItem endianStripMenuItem;
+        private System.Windows.Forms.ContextMenuStrip codesToolMenuStrip;
+        private System.Windows.Forms.ToolStripMenuItem bwStripMenuItem1;
+        private System.Windows.Forms.ToolStripMenuItem twStripMenuItem1;
+        private System.Windows.Forms.ToolStripMenuItem fwStripMenuItem1;
+        private System.Windows.Forms.ToolStripMenuItem createCondStripMenuItem1;
+        private System.Windows.Forms.ToolStripMenuItem editConditionalToolStripMenuItem;
+        private System.Windows.Forms.TabPage apiTab;
+        private System.Windows.Forms.PictureBox apiIcon;
+        private System.Windows.Forms.Label descAPIDesc;
+        private System.Windows.Forms.Label descAPIVer;
+        private System.Windows.Forms.Label descAPIAuth;
+        private System.Windows.Forms.Label descAPIName;
+        private System.Windows.Forms.ListBox apiList;
+        private System.Windows.Forms.ToolStripStatusLabel statusLabel2;
+        private System.Windows.Forms.ToolStripMenuItem configureAPIToolStripMenuItem;
     }
 }
 

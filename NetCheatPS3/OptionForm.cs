@@ -12,6 +12,8 @@ namespace NetCheatPS3
     public partial class OptionForm : Form
     {
         Color[] bColors = new Color[1];
+        Color[] origColors = new Color[2];
+        bool origColorChanged = false;
         bool updPB = true;
 
         public OptionForm()
@@ -22,6 +24,9 @@ namespace NetCheatPS3
         private void OptionForm_Shown(object sender, EventArgs e)
         {
             int x = 0;
+
+            origColors[0] = Form1.ncBackColor;
+            origColors[1] = Form1.ncForeColor;
 
             //Color options
             bcolCB.SelectedIndex = -1;
@@ -56,26 +61,10 @@ namespace NetCheatPS3
                     fcolCB.SelectedIndex = bColors.Length - 1;
             }
 
-            //Keybinding options
-            for (x = 0; x < Form1.keyBinds.Length; x++)
-            {
-                string[] item = { Form1.keyNames[x], ParseKeyData(Form1.keyBinds[x]) };
-                var lviItem = new ListViewItem(item);
-                keyList.Items.Add(lviItem);
-            }
-
-            keyList.Columns[1].Width = keyList.Width - keyList.Columns[0].Width;
-
             if (bcolCB.Text == "")
                 bcolCB.Text = "Custom";
             if (fcolCB.Text == "")
                 fcolCB.Text = "Custom";
-
-            /* API */
-            if (Form1.apiDLL == 0)
-                tmapiDLL.Checked = true;
-            else
-                ccapiDLL.Checked = true;
         }
 
         private string ParseKeyData(Keys Key)
@@ -111,6 +100,22 @@ namespace NetCheatPS3
 
         private void UpdatePB(ref PictureBox pb, Color col)
         {
+            if (pb.Name == "bcolPB")
+            {
+                Form1.ncBackColor = col;
+                Form1.Instance.BackColor = col;
+                Form1.HandlePluginControls(Form1.Instance.Controls);
+                origColorChanged = true;
+            }
+            else if (pb.Name == "fcolPB")
+            {
+                Form1.ncForeColor = col;
+                Form1.Instance.ForeColor = col;
+                Form1.HandlePluginControls(Form1.Instance.Controls);
+                Form1.HandlePluginControls(Form1.FRManager.Controls);
+                origColorChanged = true;
+            }
+
             Bitmap MyImage = new Bitmap(bcolPB.Width, bcolPB.Height);
             using (Graphics gfx = Graphics.FromImage(MyImage))
             using (SolidBrush brush = new SolidBrush(col))
@@ -187,37 +192,6 @@ namespace NetCheatPS3
             }
         }
 
-        private void keyList_DoubleClick(object sender, EventArgs e)
-        {
-            Form1.IBArg[] a = new Form1.IBArg[1];
-
-            a[0].defStr = keyList.Items[keyListSelIndex].SubItems[1].Text;
-            a[0].label = keyList.Items[keyListSelIndex].SubItems[0].Text + " KeyBind:";
-
-            a = CallIBox(a);
-
-            if (a == null)
-                return;
-
-            if (a[0].retStr.Length != 0)
-                keyList.Items[keyListSelIndex].SubItems[1].Text = a[0].retStr;
-
-            Form1.keyBinds[keyListSelIndex] = InputBox.keyVal;
-        }
-
-        int keyListSelIndex = 0;
-        private void keyList_SelectedIndexChanged(object sender, EventArgs e)
-        {
-            for (int x = 0; x < keyList.Items.Count; x++)
-            {
-                if (keyList.Items[x].Selected)
-                {
-                    keyListSelIndex = x;
-                    return;
-                }
-            }
-        }
-
         /* Brings up the Input Box with the arguments of a */
         public Form1.IBArg[] CallIBox(Form1.IBArg[] a)
         {
@@ -265,14 +239,28 @@ namespace NetCheatPS3
             Form1.ncForeColor = Color.FromArgb(int.Parse(fcolR.Text), int.Parse(fcolG.Text), int.Parse(fcolB.Text));
 
             //API
-            Form1.apiDLL = ccapiDLL.Checked ? 1 : 0;
-            Form1.PS3.ChangeAPI((Form1.apiDLL == 0) ? PS3Lib.SelectAPI.TargetManager : PS3Lib.SelectAPI.ControlConsole);
+            //Form1.apiDLL = Global.APIs.AvailableAPIs.GetIndex(Form1.curAPI);
+            //Form1.PS3.ChangeAPI((Form1.apiDLL == 0) ? PS3Lib.SelectAPI.TargetManager : PS3Lib.SelectAPI.ControlConsole);
 
             Form1.SaveOptions();
+            origColorChanged = false;
+
+            origColors[0] = Form1.ncBackColor;
+            origColors[1] = Form1.ncForeColor;
         }
 
         private void cancButt_Click(object sender, EventArgs e)
         {
+            if (origColorChanged)
+            {
+                Form1.ncBackColor = origColors[0];
+                Form1.ncForeColor = origColors[1];
+                Form1.Instance.BackColor = origColors[0];
+                Form1.Instance.ForeColor = origColors[1];
+                Form1.HandlePluginControls(Form1.Instance.Controls);
+                Form1.HandlePluginControls(Form1.FRManager.Controls);
+            }
+
             this.Dispose();
             this.Close();
         }
@@ -280,6 +268,21 @@ namespace NetCheatPS3
         private void linkLabel1_LinkClicked(object sender, LinkLabelLinkClickedEventArgs e)
         {
             System.Diagnostics.Process.Start("www.Github.com/Dnawrkshp/NetCheatPS3/");
+        }
+
+        private void linkLabel2_LinkClicked(object sender, LinkLabelLinkClickedEventArgs e)
+        {
+            System.Diagnostics.Process.Start(@"https://www.paypal.com/cgi-bin/webscr?cmd=_donations&business=werewu45%40yahoo%2ecom&lc=US&item_name=Dnawrkshp%27s%20effort&currency_code=USD&bn=PP%2dDonationsBF%3abtn_donateCC_LG%2egif%3aNonHosted");
+        }
+
+        private void ccapiDLL_CheckedChanged(object sender, EventArgs e)
+        {
+
+        }
+
+        private void tmapiDLL_CheckedChanged(object sender, EventArgs e)
+        {
+
         }
 
     }

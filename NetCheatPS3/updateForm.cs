@@ -23,6 +23,8 @@ namespace NetCheatPS3
 
         private void updateForm_Load(object sender, EventArgs e)
         {
+            ResizeFromWidth(GetLargestWidth(UpdateStr.Split('\n')) - 10);
+
             titleLabel.Text = Title;
             titleLabel.BackColor = BackColor;
             titleLabel.ForeColor = ForeColor;
@@ -40,6 +42,35 @@ namespace NetCheatPS3
 
             Application.DoEvents();
             this.Focus();
+        }
+
+        int GetLargestWidth(string[] strs)
+        {
+            Graphics g = updateBox.CreateGraphics();
+
+            int width = 0;
+
+            foreach (string str in strs)
+            {
+                int tempWidth = (int)g.MeasureString(UpdateStr, updateBox.Font).Width;
+                if (tempWidth > width)
+                    width = tempWidth;
+            }
+
+            g.Dispose();
+
+            return width;
+        }
+
+        void ResizeFromWidth(int width)
+        {
+            updateBox.Width = width;
+            titleLabel.Width = width;
+
+
+            Width = width + 28;
+
+            noButt.Location = new Point(Width - 14 - noButt.Width, Height - 10 - noButt.Height);
         }
 
         private void yesButt_Click(object sender, EventArgs e)

@@ -17,6 +17,7 @@ namespace NetCheatPS3
         public string plugVers = "";
         public string plugText = "";
         public SizeF plugScale = new SizeF(1, 1);
+        public bool allowColoring = false;
         int resizeForm = 2;
 
         public PluginForm()
@@ -37,6 +38,7 @@ namespace NetCheatPS3
         }
 
         /* Resize the form based on the user control */
+        bool hasUpdatedSize = false;
         public void Plugin_Resize(object sender, EventArgs e)
         {
             resizeForm--;
@@ -61,8 +63,13 @@ namespace NetCheatPS3
 
                 resizeForm = 2;
                 Size newSize = new Size(maxLeft + 20, maxTop + 40);
-                MinimumSize = newSize;
+                //MinimumSize = newSize;
                 MaximumSize = Controls[0].MaximumSize;
+                if (!hasUpdatedSize)
+                {
+                    Size = newSize;
+                    hasUpdatedSize = true;
+                }
             }
         }
     }

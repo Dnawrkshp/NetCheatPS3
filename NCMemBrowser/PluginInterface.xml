@@ -1,0 +1,504 @@
+<?xml version="1.0"?>
+<doc>
+    <assembly>
+        <name>PluginInterface</name>
+    </assembly>
+    <members>
+        <member name="T:PluginInterface.IPlugin">
+            <summary>
+            Interface for the Plugin.cs file in all NetCheat PS3 plugins.
+            Contains all elements NetCheat needs to gather information about the plugin.
+            </summary>
+        </member>
+        <member name="P:PluginInterface.IPlugin.Host">
+            <summary>
+            Used by NetCheat to reference the current instance of NetCheat.
+            This allows for plugins to use internal functions of NetCheat PS3.
+            </summary>
+        </member>
+        <member name="P:PluginInterface.IPlugin.Name">
+            <summary>
+            Name of the plugin displayed in the plugin info window
+            </summary>
+        </member>
+        <member name="P:PluginInterface.IPlugin.Description">
+            <summary>
+            Description of the Plugin's purpose
+            </summary>
+        </member>
+        <member name="P:PluginInterface.IPlugin.Author">
+            <summary>
+            Author of the plugin
+            </summary>
+        </member>
+        <member name="P:PluginInterface.IPlugin.Version">
+            <summary>
+            Current version of the plugin
+            </summary>
+        </member>
+        <member name="P:PluginInterface.IPlugin.TabText">
+            <summary>
+            Text displayed on the top of the plugin form and the listbox
+            </summary>
+        </member>
+        <member name="P:PluginInterface.IPlugin.MainInterface">
+            <summary>
+            UserControl that gets displayed when the plugin is opened
+            </summary>
+        </member>
+        <member name="P:PluginInterface.IPlugin.MainIcon">
+            <summary>
+            Icon displayed along with the other data in the Plugins tab
+            </summary>
+        </member>
+        <member name="M:PluginInterface.IPlugin.Initialize">
+            <summary>
+            Called on initialization
+            </summary>
+        </member>
+        <member name="M:PluginInterface.IPlugin.Dispose">
+            <summary>
+            Called when disposed
+            </summary>
+        </member>
+        <member name="T:PluginInterface.NotifyIcon">
+            <summary>
+            Copy of PS3Lib's NotifyIcon enum.
+            Defines the options for NotifyPS3().
+            </summary>
+        </member>
+        <member name="F:PluginInterface.NotifyIcon.INFO">
+            <summary>Info icon</summary>
+        </member>
+        <member name="F:PluginInterface.NotifyIcon.CAUTION">
+            <summary>Caution icon</summary>
+        </member>
+        <member name="F:PluginInterface.NotifyIcon.FRIEND">
+            <summary>Friend icon</summary>
+        </member>
+        <member name="F:PluginInterface.NotifyIcon.SLIDER">
+            <summary>Slider icon</summary>
+        </member>
+        <member name="F:PluginInterface.NotifyIcon.WRONGWAY">
+            <summary>Wrongway icon</summary>
+        </member>
+        <member name="F:PluginInterface.NotifyIcon.DIALOG">
+            <summary>Dialog icon</summary>
+        </member>
+        <member name="F:PluginInterface.NotifyIcon.DIALOGSHADOW">
+            <summary>Dialog icon's shadow</summary>
+        </member>
+        <member name="F:PluginInterface.NotifyIcon.TEXT">
+            <summary>Text icon</summary>
+        </member>
+        <member name="F:PluginInterface.NotifyIcon.POINTER">
+            <summary>Pointer icon</summary>
+        </member>
+        <member name="F:PluginInterface.NotifyIcon.GRAB">
+            <summary>Grab icon</summary>
+        </member>
+        <member name="F:PluginInterface.NotifyIcon.HAND">
+            <summary>Hand icon</summary>
+        </member>
+        <member name="F:PluginInterface.NotifyIcon.PEN">
+            <summary>Pen icon</summary>
+        </member>
+        <member name="F:PluginInterface.NotifyIcon.FINGER">
+            <summary>Finger icon</summary>
+        </member>
+        <member name="F:PluginInterface.NotifyIcon.ARROW">
+            <summary>Arrow icon</summary>
+        </member>
+        <member name="F:PluginInterface.NotifyIcon.ARROWRIGHT">
+            <summary>Right arrow icon</summary>
+        </member>
+        <member name="F:PluginInterface.NotifyIcon.PROGRESS">
+            <summary>Progress icon</summary>
+        </member>
+        <member name="T:PluginInterface.BuzzerMode">
+            <summary>
+            Copy of PS3Lib's BuzzerMode enum.
+            Defines the options for RingBuzzerPS3().
+            </summary>
+        </member>
+        <member name="F:PluginInterface.BuzzerMode.Continuous">
+            <summary>Call the buzzer continiously... Don't do it...</summary>
+        </member>
+        <member name="F:PluginInterface.BuzzerMode.Single">
+            <summary>Call the buzzer once</summary>
+        </member>
+        <member name="F:PluginInterface.BuzzerMode.Double">
+            <summary>Call the buzzer twice</summary>
+        </member>
+        <member name="T:PluginInterface.NCRange">
+            <summary>
+            Defines the start and end of a memory range
+            </summary>
+        </member>
+        <member name="F:PluginInterface.NCRange.start">
+            <summary>Start of the memory range</summary>
+        </member>
+        <member name="F:PluginInterface.NCRange.end">
+            <summary>End of the memory range</summary>
+        </member>
+        <member name="T:PluginInterface.IPluginHost">
+            <summary>
+            Host Interface used by the plugin to access functions from within NetCheat PS3.
+            </summary>
+        </member>
+        <member name="M:PluginInterface.IPluginHost.GetMemory(System.UInt64,System.Int32)">
+            <summary>
+            Gets the memory at addr of length size from the PS3 and returns the result as a byte array.
+            </summary>
+            <param name="addr">Address to read from</param>
+            <param name="size">Number of bytes to read</param>
+        </member>
+        <member name="M:PluginInterface.IPluginHost.GetMemory(System.UInt64,System.Byte[]@)">
+            <summary>
+            Gets the memory at addr of length ret.Length from the PS3 and returns the result in ret.
+            </summary>
+            <param name="addr">Address to read from</param>
+            <param name="ret">Read byte array</param>
+        </member>
+        <member name="M:PluginInterface.IPluginHost.SetMemory(System.UInt64,System.Byte[])">
+            <summary>
+            Sets the memory at addr to the contents of val.
+            </summary>
+            <param name="addr">Address to read from</param>
+            <param name="val">Bytes to write</param>
+        </member>
+        <member name="M:PluginInterface.IPluginHost.ByteAToULong(System.Byte[],System.Int32,System.Int32)">
+            <summary>
+            Converts val to an unsigned long.
+            </summary>
+            <param name="val">Byte array to convert</param>
+            <param name="index">Index of array to start at</param>
+            <param name="size">Number of bytes to convert</param>
+        </member>
+        <member name="M:PluginInterface.IPluginHost.ByteAToString(System.Byte[],System.String)">
+            <summary>
+            Converts val to a string. { 0x41, 0x42 } => "AB".
+            </summary>
+            <param name="val">Byte array to convert</param>
+            <param name="split">String to insert between each character</param>
+        </member>
+        <member name="M:PluginInterface.IPluginHost.StringToByteA(System.String)">
+            <summary>
+            Converts text to a byte array. "AB" => { 0x41, 0x42 }.
+            </summary>
+            <param name="text">String to convert to a byte array</param>
+        </member>
+        <member name="M:PluginInterface.IPluginHost.sLeft(System.String,System.Int32)">
+            <summary>
+            Returns the left most substring in text of length length.
+            </summary>
+            <param name="text">String to grab left most substring from</param>
+            <param name="length">Number of characters to grab</param>
+        </member>
+        <member name="M:PluginInterface.IPluginHost.sRight(System.String,System.Int32)">
+            <summary>
+            Returns the right most substring in text of length length.
+            </summary>
+            <param name="text">String to grab right most substring from</param>
+            <param name="length">Number of characters to grab</param>
+        </member>
+        <member name="M:PluginInterface.IPluginHost.sMid(System.String,System.Int32,System.Int32)">
+            <summary>
+            Returns the substring at off of length length.
+            </summary>
+            <param name="text">String to grab substring from</param>
+            <param name="off">Substring offset</param>
+            <param name="length">Number of characters to grab</param>
+        </member>
+        <member name="M:PluginInterface.IPluginHost.ConstCodeAdd(System.String,System.Boolean)">
+            <summary>
+            Returns the ID of the Constant Code added.
+            </summary>
+            <param name="code">NetCheat codes as a string</param>
+            <param name="state">Whether to constantly write or not</param>
+        </member>
+        <member name="M:PluginInterface.IPluginHost.ConstCodeRemove(System.UInt32)">
+            <summary>
+            Removes the code with an ID of ID.
+            </summary>
+            <param name="ID">Code identifier</param>
+        </member>
+        <member name="M:PluginInterface.IPluginHost.ConstCodeSetState(System.UInt32,System.Boolean)">
+            <summary>
+            Sets whether the code is constantly written or not.
+            </summary>
+            <param name="ID">Code identifier</param>
+            <param name="state">Whether to constantly write or not</param>
+        </member>
+        <member name="M:PluginInterface.IPluginHost.ConstCodeGetState(System.UInt32)">
+            <summary>
+            Returns whether the code is constantly writing or not.
+            </summary>
+            <param name="ID">Code identifier</param>
+        </member>
+        <member name="M:PluginInterface.IPluginHost.ConnectAndAttach">
+            <summary>
+            Attempts to connect and attack to the PS3.
+            If it fails it will return false, otherwise it will return true.
+            Only to be used if another thread is created.
+            </summary>
+        </member>
+        <member name="M:PluginInterface.IPluginHost.ConnectionState">
+            <summary>
+            Returns the current connection state of NetCheat's main thread.
+            </summary>
+        </member>
+        <member name="M:PluginInterface.IPluginHost.isUsingTMAPI">
+            <summary>
+            Returns true if the current API is TM.
+            </summary>
+        </member>
+        <member name="M:PluginInterface.IPluginHost.NotifyPS3(PluginInterface.NotifyIcon,System.String)">
+            <summary>
+            If CCAPI is the current API, it displays a notify icon on the connected PS3.
+            Returns true if successful.
+            </summary>
+            <param name="icon">Specified icon to display</param>
+            <param name="message">String to be displayed in the notification</param>
+        </member>
+        <member name="M:PluginInterface.IPluginHost.RingBuzzerPS3(PluginInterface.BuzzerMode)">
+            <summary>
+            If CCAPI is the current API, it rings the buzzer on the connected PS3.
+            Returns true if successful.
+            </summary>
+            <param name="flag">Type of buzzer</param>
+        </member>
+        <member name="M:PluginInterface.IPluginHost.GetTemperatureCELL">
+            <summary>
+            If CCAPI is the current API, it returns the temperature of the CPU (CELL).
+            Returns "" if the current API is not CCAPI.
+            </summary>
+        </member>
+        <member name="M:PluginInterface.IPluginHost.GetTemperatureRSX">
+            <summary>
+            If CCAPI is the current API, it returns the temperature of the GPU (RSX).
+            Returns "" if the current API is not CCAPI.
+            </summary>
+        </member>
+        <member name="M:PluginInterface.IPluginHost.GetFirmwareVersion">
+            <summary>
+            If CCAPI is the current API, it returns the firmware version of the connected PS3.
+            Returns "" if the current API is not CCAPI.
+            </summary>
+        </member>
+        <member name="M:PluginInterface.IPluginHost.GetFirmwareType">
+            <summary>
+            If CCAPI is the current API, it returns the firmware type of the connected PS3.
+            Returns "" if the current API is not CCAPI.
+            </summary>
+        </member>
+        <member name="M:PluginInterface.IPluginHost.SearchMemory(System.UInt64,System.UInt64,System.Int32,System.Boolean)">
+            <summary>
+            Searches the memory from start to stop checking if it is equal to input.
+            Returns addresses that hold values equal to input.
+            Bare in mind that it does take into account the users current range setup
+            </summary>
+            <param name="start">Address to start from</param>
+            <param name="stop">Address to stop at</param>
+            <param name="align">Alignment of searched value. Basically the addresses compared will be a multiple of this value. (0, 0x10000, 4, input) => 0, 4, 8, C, 10, ..., 0xFFFFC, 0x10000. </param>
+            <param name="input">Value to compare with</param>
+        </member>
+        <member name="M:PluginInterface.IPluginHost.SearchMemory(System.UInt64,System.UInt64,System.Int32,System.Byte)">
+            <summary>
+            Searches the memory from start to stop checking if it is equal to input.
+            Returns addresses that hold values equal to input.
+            Bare in mind that it does take into account the users current range setup
+            </summary>
+            <param name="start">Address to start from</param>
+            <param name="stop">Address to stop at</param>
+            <param name="align">Alignment of searched value. Basically the addresses compared will be a multiple of this value. (0, 0x10000, 4, input) => 0, 4, 8, C, 10, ..., 0xFFFFC, 0x10000. </param>
+            <param name="input">Value to compare with</param>
+        </member>
+        <member name="M:PluginInterface.IPluginHost.SearchMemory(System.UInt64,System.UInt64,System.Int32,System.Byte[])">
+            <summary>
+            Searches the memory from start to stop checking if it is equal to input.
+            Returns addresses that hold values equal to input.
+            Bare in mind that it does take into account the users current range setup
+            </summary>
+            <param name="start">Address to start from</param>
+            <param name="stop">Address to stop at</param>
+            <param name="align">Alignment of searched value. Basically the addresses compared will be a multiple of this value. (0, 0x10000, 4, input) => 0, 4, 8, C, 10, ..., 0xFFFFC, 0x10000. </param>
+            <param name="input">Value to compare with</param>
+        </member>
+        <member name="M:PluginInterface.IPluginHost.SearchMemory(System.UInt64,System.UInt64,System.Int32,System.Int16)">
+            <summary>
+            Searches the memory from start to stop checking if it is equal to input.
+            Returns addresses that hold values equal to input.
+            Bare in mind that it does take into account the users current range setup
+            </summary>
+            <param name="start">Address to start from</param>
+            <param name="stop">Address to stop at</param>
+            <param name="align">Alignment of searched value. Basically the addresses compared will be a multiple of this value. (0, 0x10000, 4, input) => 0, 4, 8, C, 10, ..., 0xFFFFC, 0x10000. </param>
+            <param name="input">Value to compare with</param>
+        </member>
+        <member name="M:PluginInterface.IPluginHost.SearchMemory(System.UInt64,System.UInt64,System.Int32,System.Int32)">
+            <summary>
+            Searches the memory from start to stop checking if it is equal to input.
+            Returns addresses that hold values equal to input.
+            Bare in mind that it does take into account the users current range setup
+            </summary>
+            <param name="start">Address to start from</param>
+            <param name="stop">Address to stop at</param>
+            <param name="align">Alignment of searched value. Basically the addresses compared will be a multiple of this value. (0, 0x10000, 4, input) => 0, 4, 8, C, 10, ..., 0xFFFFC, 0x10000. </param>
+            <param name="input">Value to compare with</param>
+        </member>
+        <member name="M:PluginInterface.IPluginHost.SearchMemory(System.UInt64,System.UInt64,System.Int32,System.Int64)">
+            <summary>
+            Searches the memory from start to stop checking if it is equal to input.
+            Returns addresses that hold values equal to input.
+            Bare in mind that it does take into account the users current range setup
+            </summary>
+            <param name="start">Address to start from</param>
+            <param name="stop">Address to stop at</param>
+            <param name="align">Alignment of searched value. Basically the addresses compared will be a multiple of this value. (0, 0x10000, 4, input) => 0, 4, 8, C, 10, ..., 0xFFFFC, 0x10000. </param>
+            <param name="input">Value to compare with</param>
+        </member>
+        <member name="M:PluginInterface.IPluginHost.SearchMemory(System.UInt64,System.UInt64,System.Int32,System.Char)">
+            <summary>
+            Searches the memory from start to stop checking if it is equal to input.
+            Returns addresses that hold values equal to input.
+            Bare in mind that it does take into account the users current range setup
+            </summary>
+            <param name="start">Address to start from</param>
+            <param name="stop">Address to stop at</param>
+            <param name="align">Alignment of searched value. Basically the addresses compared will be a multiple of this value. (0, 0x10000, 4, input) => 0, 4, 8, C, 10, ..., 0xFFFFC, 0x10000. </param>
+            <param name="input">Value to compare with</param>
+        </member>
+        <member name="M:PluginInterface.IPluginHost.SearchMemory(System.UInt64,System.UInt64,System.Int32,System.String)">
+            <summary>
+            Searches the memory from start to stop checking if it is equal to input.
+            Returns addresses that hold values equal to input.
+            Bare in mind that it does take into account the users current range setup
+            </summary>
+            <param name="start">Address to start from</param>
+            <param name="stop">Address to stop at</param>
+            <param name="align">Alignment of searched value. Basically the addresses compared will be a multiple of this value. (0, 0x10000, 4, input) => 0, 4, 8, C, 10, ..., 0xFFFFC, 0x10000. </param>
+            <param name="input">Value to compare with</param>
+        </member>
+        <member name="M:PluginInterface.IPluginHost.GetUserRange">
+            <summary>
+            Returns the users current range setup
+            </summary>
+        </member>
+        <member name="M:PluginInterface.IPluginHost.SetAllowColoring(System.Boolean)">
+            <summary>
+            If true NetCheat will color the plugins controls to the users color setting, otherwise it will not color the plugin.
+            Must be called in Initialize() function within Plugin.cs
+            </summary>
+        </member>
+        <member name="M:PluginInterface.IPluginHost.PS3Lib_ReadSByte(System.UInt32)">
+            <summary>Read a signed byte.</summary>
+            <param name="offset">Address to read the signed byte from</param>
+        </member>
+        <member name="M:PluginInterface.IPluginHost.PS3Lib_ReadBool(System.UInt32)">
+            <summary>Read a byte a check if his value. This return a bool according the byte detected.</summary>
+            <param name="offset">Address to read the bool from</param>
+        </member>
+        <member name="M:PluginInterface.IPluginHost.PS3Lib_ReadInt16(System.UInt32)">
+            <summary>Read and return an integer 16 bits.</summary>
+            <param name="offset">Address to read the short from</param>
+        </member>
+        <member name="M:PluginInterface.IPluginHost.PS3Lib_ReadInt32(System.UInt32)">
+            <summary>Read and return an integer 32 bits.</summary>
+            <param name="offset">Address to read the int from</param>
+        </member>
+        <member name="M:PluginInterface.IPluginHost.PS3Lib_ReadInt64(System.UInt32)">
+            <summary>Read and return an integer 64 bits.</summary>
+            <param name="offset">Address to read the long from</param>
+        </member>
+        <member name="M:PluginInterface.IPluginHost.PS3Lib_ReadByte(System.UInt32)">
+            <summary>Read and return a byte.</summary>
+            <param name="offset">Address to read the byte from</param>
+        </member>
+        <member name="M:PluginInterface.IPluginHost.PS3Lib_ReadBytes(System.UInt32,System.Int32)">
+            <summary>Read a string with a length to the first byte equal to an value null (0x00).</summary>
+            <param name="offset">Address to read the byte[] from</param>
+            <param name="length">How many bytes to read</param>
+        </member>
+        <member name="M:PluginInterface.IPluginHost.PS3Lib_ReadUInt16(System.UInt32)">
+            <summary>Read and return an unsigned integer 16 bits.</summary>
+            <param name="offset">Address to read the ushort from</param>
+        </member>
+        <member name="M:PluginInterface.IPluginHost.PS3Lib_ReadUInt32(System.UInt32)">
+            <summary>Read and return an unsigned integer 32 bits.</summary>
+            <param name="offset">Address to read the uint from</param>
+        </member>
+        <member name="M:PluginInterface.IPluginHost.PS3Lib_ReadUInt64(System.UInt32)">
+            <summary>Read and return an unsigned integer 64 bits.</summary>
+            <param name="offset">Address to read the ulong from</param>
+        </member>
+        <member name="M:PluginInterface.IPluginHost.PS3Lib_ReadFloat(System.UInt32)">
+            <summary>Read and return a Float.</summary>
+            <param name="offset">Address to read the float from</param>
+        </member>
+        <member name="M:PluginInterface.IPluginHost.PS3Lib_ReadString(System.UInt32)">
+            <summary>Read a string very fast and stop only when a byte null is detected (0x00).</summary>
+            <param name="offset">Address to read the string from</param>
+        </member>
+        <member name="M:PluginInterface.IPluginHost.PS3Lib_WriteSByte(System.UInt32,System.SByte)">
+            <summary>Write a signed byte.</summary>
+            <param name="offset">Address to write the input to</param>
+            <param name="input">Signed byte to write at the offset</param>
+        </member>
+        <member name="M:PluginInterface.IPluginHost.PS3Lib_WriteBool(System.UInt32,System.Boolean)">
+            <summary>Write a boolean.</summary>
+            <param name="offset">Address to write the input to</param>
+            <param name="input">Bool to write at the offset</param>
+        </member>
+        <member name="M:PluginInterface.IPluginHost.PS3Lib_WriteInt16(System.UInt32,System.Int16)">
+            <summary>Write an integer 16 bits.</summary>
+            <param name="offset">Address to write the input to</param>
+            <param name="input">Short to write at the offset</param>
+        </member>
+        <member name="M:PluginInterface.IPluginHost.PS3Lib_WriteInt32(System.UInt32,System.Int32)">
+            <summary>Write an integer 32 bits.</summary>
+            <param name="offset">Address to write the input to</param>
+            <param name="input">Int to write at the offset</param>
+        </member>
+        <member name="M:PluginInterface.IPluginHost.PS3Lib_WriteInt64(System.UInt32,System.Int64)">
+            <summary>Write an integer 64 bits.</summary>
+            <param name="offset">Address to write the input to</param>
+            <param name="input">Long to write at the offset</param>
+        </member>
+        <member name="M:PluginInterface.IPluginHost.PS3Lib_WriteByte(System.UInt32,System.Byte)">
+            <summary>Write a byte.</summary>
+            <param name="offset">Address to write the input to</param>
+            <param name="input">Byte to write at the offset</param>
+        </member>
+        <member name="M:PluginInterface.IPluginHost.PS3Lib_WriteBytes(System.UInt32,System.Byte[])">
+            <summary>Write a byte array.</summary>
+            <param name="offset">Address to write the input to</param>
+            <param name="input">Byte[] to write at the offset</param>
+        </member>
+        <member name="M:PluginInterface.IPluginHost.PS3Lib_WriteString(System.UInt32,System.String)">
+            <summary>Write a string.</summary>
+            <param name="offset">Address to write the input to</param>
+            <param name="input">String to write at the offset</param>
+        </member>
+        <member name="M:PluginInterface.IPluginHost.PS3Lib_WriteUInt16(System.UInt32,System.UInt16)">
+            <summary>Write an unsigned integer 16 bits.</summary>
+            <param name="offset">Address to write the input to</param>
+            <param name="input">UShort to write at the offset</param>
+        </member>
+        <member name="M:PluginInterface.IPluginHost.PS3Lib_WriteUInt32(System.UInt32,System.UInt32)">
+            <summary>Write an unsigned integer 32 bits.</summary>
+            <param name="offset">Address to write the input to</param>
+            <param name="input">UInt to write at the offset</param>
+        </member>
+        <member name="M:PluginInterface.IPluginHost.PS3Lib_WriteUInt64(System.UInt32,System.UInt64)">
+            <summary>Write an unsigned integer 64 bits.</summary>
+            <param name="offset">Address to write the input to</param>
+            <param name="input">ULong to write at the offset</param>
+        </member>
+        <member name="M:PluginInterface.IPluginHost.PS3Lib_WriteFloat(System.UInt32,System.Single)">
+            <summary>Write a Float.</summary>
+            <param name="offset">Address to write the input to</param>
+            <param name="input">Float to write at the offset</param>
+        </member>
+    </members>
+</doc>

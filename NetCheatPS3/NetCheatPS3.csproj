@@ -10,12 +10,12 @@
     <AppDesignerFolder>Properties</AppDesignerFolder>
     <RootNamespace>NetCheatPS3</RootNamespace>
     <AssemblyName>NetCheatPS3</AssemblyName>
-    <TargetFrameworkVersion>v4.5</TargetFrameworkVersion>
+    <TargetFrameworkVersion>v3.5</TargetFrameworkVersion>
     <FileAlignment>512</FileAlignment>
     <ManifestCertificateThumbprint>C44E44418EBA8B5CB1471930A544522E0B56DDCB</ManifestCertificateThumbprint>
     <ManifestKeyFile>NetCheatPS3_TemporaryKey.pfx</ManifestKeyFile>
     <GenerateManifests>true</GenerateManifests>
-    <SignManifests>true</SignManifests>
+    <SignManifests>false</SignManifests>
     <IsWebBootstrapper>false</IsWebBootstrapper>
     <ApplicationIcon>NetCheat.ico</ApplicationIcon>
     <FileUpgradeFlags>
@@ -49,6 +49,7 @@
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
     <Prefer32Bit>false</Prefer32Bit>
+    <PlatformTarget>x64</PlatformTarget>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
     <DebugType>pdbonly</DebugType>
@@ -67,6 +68,7 @@
     <PlatformTarget>x86</PlatformTarget>
     <ErrorReport>prompt</ErrorReport>
     <Prefer32Bit>false</Prefer32Bit>
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|x86' ">
     <OutputPath>bin\x86\Release\</OutputPath>
@@ -77,20 +79,33 @@
     <ErrorReport>prompt</ErrorReport>
     <Prefer32Bit>false</Prefer32Bit>
   </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)' == 'Debug|x64'">
+    <DebugSymbols>true</DebugSymbols>
+    <OutputPath>bin\x64\Debug\</OutputPath>
+    <DefineConstants>DEBUG;TRACE</DefineConstants>
+    <DebugType>full</DebugType>
+    <PlatformTarget>x64</PlatformTarget>
+    <ErrorReport>prompt</ErrorReport>
+    <CodeAnalysisRuleSet>MinimumRecommendedRules.ruleset</CodeAnalysisRuleSet>
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)' == 'Release|x64'">
+    <OutputPath>bin\x64\Release\</OutputPath>
+    <DefineConstants>TRACE</DefineConstants>
+    <Optimize>true</Optimize>
+    <DebugType>pdbonly</DebugType>
+    <PlatformTarget>x64</PlatformTarget>
+    <ErrorReport>prompt</ErrorReport>
+    <CodeAnalysisRuleSet>MinimumRecommendedRules.ruleset</CodeAnalysisRuleSet>
+  </PropertyGroup>
   <ItemGroup>
-    <Reference Include="PluginInterface, Version=1.0.4989.34764, Culture=neutral, processorArchitecture=MSIL">
-      <SpecificVersion>False</SpecificVersion>
-      <HintPath>bin\x86\Debug\PluginInterface.dll</HintPath>
-    </Reference>
-    <Reference Include="PS3Lib">
-      <HintPath>..\PS3Lib.dll</HintPath>
+    <Reference Include="Ionic.Zip, Version=1.9.1.8, Culture=neutral, PublicKeyToken=edbe51ad942a3f5c, processorArchitecture=MSIL">
+      <HintPath>..\packages\Ionic.Zip.1.9.1.8\lib\Ionic.Zip.dll</HintPath>
     </Reference>
     <Reference Include="System" />
     <Reference Include="System.Core">
       <RequiredTargetFramework>3.5</RequiredTargetFramework>
     </Reference>
-    <Reference Include="System.IO.Compression" />
-    <Reference Include="System.IO.Compression.FileSystem" />
     <Reference Include="System.Speech" />
     <Reference Include="System.Xml.Linq">
       <RequiredTargetFramework>3.5</RequiredTargetFramework>
@@ -103,10 +118,31 @@
     <Reference Include="System.Drawing" />
     <Reference Include="System.Windows.Forms" />
     <Reference Include="System.Xml" />
+    <Reference Include="WindowsBase" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="APIServices.cs" />
     <Compile Include="codes.cs" />
+    <Compile Include="Comparator.cs" />
+    <Compile Include="ConditionalEditor.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="ConditionalEditor.Designer.cs">
+      <DependentUpon>ConditionalEditor.cs</DependentUpon>
+    </Compile>
+    <Compile Include="dumpForm.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="dumpForm.Designer.cs">
+      <DependentUpon>dumpForm.cs</DependentUpon>
+    </Compile>
     <Compile Include="fileio.cs" />
+    <Compile Include="FindReplaceManager.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="FindReplaceManager.Designer.cs">
+      <DependentUpon>FindReplaceManager.cs</DependentUpon>
+    </Compile>
     <Compile Include="Form1.cs">
       <SubType>Form</SubType>
     </Compile>
@@ -139,13 +175,55 @@
       <SubType>Code</SubType>
     </Compile>
     <Compile Include="Program.cs" />
+    <Compile Include="ProgressBar.cs">
+      <SubType>UserControl</SubType>
+    </Compile>
+    <Compile Include="ProgressBar.Designer.cs">
+      <DependentUpon>ProgressBar.cs</DependentUpon>
+    </Compile>
     <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="SearchControl.cs">
+      <SubType>UserControl</SubType>
+    </Compile>
+    <Compile Include="SearchControl.Designer.cs">
+      <DependentUpon>SearchControl.cs</DependentUpon>
+    </Compile>
+    <Compile Include="SearchListView.cs">
+      <SubType>UserControl</SubType>
+    </Compile>
+    <Compile Include="SearchListView.Designer.cs">
+      <DependentUpon>SearchListView.cs</DependentUpon>
+    </Compile>
+    <Compile Include="SearchValue.cs">
+      <SubType>UserControl</SubType>
+    </Compile>
+    <Compile Include="SearchValue.Designer.cs">
+      <DependentUpon>SearchValue.cs</DependentUpon>
+    </Compile>
+    <Compile Include="SkipList.cs" />
+    <Compile Include="snapshot.cs">
+      <SubType>UserControl</SubType>
+    </Compile>
+    <Compile Include="snapshot.Designer.cs">
+      <DependentUpon>snapshot.cs</DependentUpon>
+    </Compile>
+    <Compile Include="TaskbarProgress.cs" />
     <Compile Include="updateForm.cs">
       <SubType>Form</SubType>
     </Compile>
     <Compile Include="updateForm.Designer.cs">
       <DependentUpon>updateForm.cs</DependentUpon>
     </Compile>
+    <EmbeddedResource Include="ConditionalEditor.resx">
+      <DependentUpon>ConditionalEditor.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="dumpForm.resx">
+      <DependentUpon>dumpForm.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="FindReplaceManager.resx">
+      <DependentUpon>FindReplaceManager.cs</DependentUpon>
+      <SubType>Designer</SubType>
+    </EmbeddedResource>
     <EmbeddedResource Include="Form1.resx">
       <DependentUpon>Form1.cs</DependentUpon>
       <SubType>Designer</SubType>
@@ -160,6 +238,9 @@
     <EmbeddedResource Include="PluginForm.resx">
       <DependentUpon>PluginForm.cs</DependentUpon>
     </EmbeddedResource>
+    <EmbeddedResource Include="ProgressBar.resx">
+      <DependentUpon>ProgressBar.cs</DependentUpon>
+    </EmbeddedResource>
     <EmbeddedResource Include="Properties\Resources.resx">
       <Generator>ResXFileCodeGenerator</Generator>
       <LastGenOutput>Resources.Designer.cs</LastGenOutput>
@@ -170,20 +251,23 @@
       <DependentUpon>Resources.resx</DependentUpon>
       <DesignTime>True</DesignTime>
     </Compile>
+    <EmbeddedResource Include="SearchControl.resx">
+      <DependentUpon>SearchControl.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="SearchListView.resx">
+      <DependentUpon>SearchListView.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="SearchValue.resx">
+      <DependentUpon>SearchValue.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="snapshot.resx">
+      <DependentUpon>snapshot.cs</DependentUpon>
+    </EmbeddedResource>
     <EmbeddedResource Include="updateForm.resx">
       <DependentUpon>updateForm.cs</DependentUpon>
     </EmbeddedResource>
     <None Include="app.config" />
-    <None Include="NetCheatPS3_TemporaryKey.pfx" />
-    <None Include="Properties\Settings.settings">
-      <Generator>SettingsSingleFileGenerator</Generator>
-      <LastGenOutput>Settings.Designer.cs</LastGenOutput>
-    </None>
-    <Compile Include="Properties\Settings.Designer.cs">
-      <AutoGen>True</AutoGen>
-      <DependentUpon>Settings.settings</DependentUpon>
-      <DesignTimeSharedInput>True</DesignTimeSharedInput>
-    </Compile>
+    <None Include="packages.config" />
   </ItemGroup>
   <ItemGroup>
     <BootstrapperPackage Include="Microsoft.Net.Client.3.5">
@@ -220,7 +304,25 @@
   <ItemGroup>
     <Content Include="NetCheat.ico" />
   </ItemGroup>
+  <ItemGroup>
+    <Folder Include="Resources\" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\NCAppInterface\NCAppInterface.csproj">
+      <Project>{81d13c2c-3abf-4520-9d01-97e99414acd1}</Project>
+      <Name>NCAppInterface</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\PluginInterface\PluginInterface.csproj">
+      <Project>{00d0c21d-d94c-4b0f-a710-1efbabb4c4c6}</Project>
+      <Name>PluginInterface</Name>
+    </ProjectReference>
+  </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
+  <PropertyGroup>
+    <PostBuildEvent>IF $(PlatformName)==x64 (
+copy "$(TargetDir)NetCheatPS3.exe" "$(TargetDir)NetCheatPS3_64.exe"
+)</PostBuildEvent>
+  </PropertyGroup>
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
        Other similar extension points exist, see Microsoft.Common.targets.
   <Target Name="BeforeBuild">

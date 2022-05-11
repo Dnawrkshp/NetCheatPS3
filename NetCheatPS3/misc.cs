@@ -11,6 +11,104 @@ namespace NetCheatPS3
         /* Memory range */
         public static uint[] MemArray;
 
+        public static byte[] addBA(byte[] a, byte[] b)
+        {
+            int aEnd = a.Length - 1, bEnd = b.Length - 1;
+            byte r;
+            bool carry = false;
+
+            while (aEnd >= 0 && bEnd >= 0)
+            {
+                carry = addByte(out r, a[aEnd], b[bEnd]);
+                if (carry)
+                {
+                    if (aEnd > 0)
+                    {
+                        a[aEnd] = r;
+                        while (carry && aEnd > 0)
+                        {
+                            aEnd--; bEnd--;
+                            carry = addByte(out r, a[aEnd], 1);
+                            a[aEnd] = r;
+
+                            
+                        }
+                    }
+                    else
+                    {
+                        return a;
+                    }
+                }
+                else
+                {
+                    a[aEnd] = r;
+                    aEnd--; bEnd--;
+                }
+                
+
+            }
+
+            return a;
+        }
+
+        public static bool addByte(out byte r, byte a, byte b)
+        {
+            uint res = (uint)a + (uint)b;
+            if (res > 255)
+            {
+                r = (byte)(res - 0x100);
+                return true;
+            }
+            else
+            {
+                r = (byte)(a + b);
+                return false;
+            }
+
+        }
+
+        /*
+         * Reverses the byte array and returns it
+         */
+        public static byte[] rev(byte[] b)
+        {
+            Array.Reverse(b, 0, b.Length);
+            return b;
+
+            byte[] ret = new byte[b.Length];
+            int inc = 4;
+            if (inc > b.Length)
+                inc = b.Length;
+
+            for (int x = 0; x < ret.Length; x += inc)
+            {
+                for (int y = 0; y < inc; y++)
+                //    ret[x + y] = b[x + (inc - y - 1)];
+                    ret[x + y] = b[b.Length - x - y - 1];
+            }
+            return ret;
+        }
+
+        /* 
+         * Reverses the byte array if Form1.doFlipArray and returns it
+         */
+        public static byte[] revif(byte[] b)
+        {
+            if (Form1.doFlipArray)
+                return rev(b);
+            return b;
+        }
+
+        /* 
+         * Reverses the byte array if not Form1.doFlipArray and returns it
+         */
+        public static byte[] notrevif(byte[] b)
+        {
+            if (!Form1.doFlipArray)
+                return rev(b);
+            return b;
+        }
+
         /*
          * Converts a value into the appropriate byte array
          */
@@ -48,6 +146,9 @@ namespace NetCheatPS3
          */
         public static ulong ByteArrayToLong(byte[] array, int offset, int size)
         {
+            if (array == null)
+                return 0;
+
             int pos = 0, x = 0;
             ulong result = 0;
             //foreach (byte by in array)
@@ -102,6 +203,30 @@ namespace NetCheatPS3
                     if (b > MemArray[x] && a < MemArray[x - 1])
                         ret += (MemArray[x] - MemArray[x - 1]);
                 }
+
+                ulong ret2 = 0;
+                int ret2SameRegion = 0;
+                for (x = 1; x < MemArray.Length; x += 2)
+                {
+                    if (ret2SameRegion != 2)
+                        ret2SameRegion = 0;
+                    if (a >= MemArray[x - 1] && a <= MemArray[x])
+                    {
+                        ret2 += (MemArray[x] - a);
+                        ret2SameRegion = 1;
+                    }
+                    if (b >= MemArray[x - 1] && b <= MemArray[x])
+                    {
+                        ret2 += (b - MemArray[x - 1]);
+                        if (ret2SameRegion == 1)
+                            ret2SameRegion = 2;
+                    }
+                }
+
+                if (ret2SameRegion == 2)
+                    ret += (b - a);
+                else
+                    ret += ret2;
             }
 
             if (ret == 0)
@@ -142,6 +267,20 @@ namespace NetCheatPS3
             UInt64 intB = (UInt64)ByteArrayToLong(b, bOff, size);
 
             return ArrayCompare(intA, intB, 0, mode);
+        }
+
+        public static bool ArrayCompareText(byte[] a, byte[] b, bool isMatchCase, int mode)
+        {
+            byte[] bNew = (byte[])b.Clone();
+            if (!isMatchCase)
+            {
+                int x = 0;
+                for (x = 0; x < bNew.Length; x++)
+                    if (bNew[x] > 0x60)
+                        bNew[x] -= 0x20;
+            }
+
+            return ArrayCompare(a, bNew, null, mode);
         }
 
         public static bool ArrayCompare(byte[] a, byte[] b, byte[] c, int size, int aOff, int bOff, int mode)
@@ -229,11 +368,23 @@ namespace NetCheatPS3
          * Gets rid of the need for converting to ulong
          * Supposedly speeds the process up but there maybe be a line of intersection
          */
-        public static bool ArrayCompare(byte[] a, byte[] b, byte[] c, int mode)
+        public static bool ArrayCompare(byte[] argA, byte[] argB, byte[] argC, int mode)
         {
-            int cnt = 0;
+            if (argA == null || argB == null)
+                return false;
 
-            if (b.Length < a.Length)
+            int cnt = 0;
+            byte[] a = new byte[0], b = new byte[0], c = new byte[0];
+            if (argA != null)
+                a = (byte[])argA.Clone();
+            if (argB != null)
+                b = (byte[])argB.Clone();
+            if (argC != null)
+                c = (byte[])argC.Clone();
+            else
+                c = null;
+
+            if (argB.Length < argA.Length)
                 return false;
 
             switch (mode)
@@ -248,14 +399,30 @@ namespace NetCheatPS3
                     break;
                 case Form1.compLT:
                     for (cnt = 0; cnt < a.Length; cnt++)
-                        if (b[cnt] < a[cnt])
+                        if ((cnt == 0) ? ((sbyte)b[cnt] < (sbyte)a[cnt]) : ((byte)b[cnt] < (byte)a[cnt]))
                             return true;
                         else if (b[cnt] != a[cnt])
                             return false;
                     break;
                 case Form1.compLTE:
                     for (cnt = 0; cnt < a.Length; cnt++)
-                        if (b[cnt] < a[cnt])
+                        if ((cnt == 0) ? ((sbyte)b[cnt] < (sbyte)a[cnt]) : ((byte)b[cnt] < (byte)a[cnt]))
+                            return true;
+                        else if (isBAEqual(a, b))
+                            return true;
+                        else if (b[cnt] != a[cnt])
+                            return false;
+                    break;
+                case Form1.compLTU:
+                    for (cnt = 0; cnt < a.Length; cnt++)
+                        if ((byte)b[cnt] < (byte)a[cnt])
+                            return true;
+                        else if (b[cnt] != a[cnt])
+                            return false;
+                    break;
+                case Form1.compLTEU:
+                    for (cnt = 0; cnt < a.Length; cnt++)
+                        if ((byte)b[cnt] < (byte)a[cnt])
                             return true;
                         else if (isBAEqual(a, b))
                             return true;
@@ -264,14 +431,30 @@ namespace NetCheatPS3
                     break;
                 case Form1.compGT:
                     for (cnt = 0; cnt < a.Length; cnt++)
-                        if (b[cnt] > a[cnt])
+                        if ((cnt == 0) ? ((sbyte)b[cnt] > (sbyte)a[cnt]) : ((byte)b[cnt] > (byte)a[cnt]))
                             return true;
                         else if (b[cnt] != a[cnt])
                             return false;
                     break;
                 case Form1.compGTE:
                     for (cnt = 0; cnt < a.Length; cnt++)
-                        if (b[cnt] > a[cnt])
+                        if ((cnt == 0) ? ((sbyte)b[cnt] > (sbyte)a[cnt]) : ((byte)b[cnt] > (byte)a[cnt]))
+                            return true;
+                        else if (isBAEqual(a, b))
+                            return true;
+                        else if (b[cnt] != a[cnt])
+                            return false;
+                    break;
+                    case Form1.compGTU:
+                    for (cnt = 0; cnt < a.Length; cnt++)
+                        if ((byte)b[cnt] > (byte)a[cnt])
+                            return true;
+                        else if (b[cnt] != a[cnt])
+                            return false;
+                    break;
+                case Form1.compGTEU:
+                    for (cnt = 0; cnt < a.Length; cnt++)
+                        if ((byte)b[cnt] > (byte)a[cnt])
                             return true;
                         else if (isBAEqual(a, b))
                             return true;
@@ -283,7 +466,7 @@ namespace NetCheatPS3
                         return false;
 
                     //if ((intB >= intA) && (intB <= intC))
-                    if (ArrayCompare(a, b, null, Form1.compGTE) && ArrayCompare(c, b, null, Form1.compLTE))
+                    if (ArrayCompare(a, b, null, Form1.compGTEU) && ArrayCompare(c, b, null, Form1.compLTEU))
                         return true;
 
                     break;
@@ -370,6 +553,22 @@ namespace NetCheatPS3
         }
 
         /*
+         * Determines whether the byte array a is equal to the byte array b at index off
+         */
+        private static bool isBAEqual(byte[] a, byte[] b, int off)
+        {
+            for (int cnt = 0; cnt < a.Length; cnt++)
+            {
+                if ((cnt + off) >= b.Length)
+                    return false;
+                if (a[cnt] != b[cnt + off])
+                    return false;
+            }
+
+            return true;
+        }
+
+        /*
          * Removes the filename in a path
          * The returned path doesn't end with a '\\' or a '/'
          */
@@ -417,8 +616,8 @@ namespace NetCheatPS3
          */
         public static byte[] StringBAToBA(string str)
         {
-            if (str == null)
-                return new byte[1];
+            if (str == null || (str.Length % 2) == 1)
+                return new byte[0];
 
             byte[] ret = new byte[str.Length / 2];
             for (int x = 0; x < str.Length; x += 2)
@@ -448,7 +647,25 @@ namespace NetCheatPS3
             string ret = "";
             for (x = 0; x < a.Length; x++)
                 ret = ret + a[x] + split;
-            return ret;
+            if (split.Length > 0)
+                return ret.TrimEnd(split.ToCharArray());
+            else
+                return ret;
+        }
+
+        /*
+         * Converts a byte array into an hex string
+         * Split allows there to be separator
+         */
+        public static string ByteAToStringHex(byte[] val, string split)
+        {
+            string ret = "";
+            for (int x = 0; x < val.Length; x++)
+                ret += val[x].ToString("X2") + split;
+            if (split.Length > 0)
+                return ret.TrimEnd(split.ToCharArray());
+            else
+                return ret;
         }
 
         /*
@@ -578,7 +795,7 @@ namespace NetCheatPS3
                         temp[b] = ret[off + b];
                     }
                     if (BitConverter.IsLittleEndian) Array.Reverse(temp);
-                    tempInt = misc.ByteArrayToLong(temp, 0, temp.Length - 1);
+                    tempInt = misc.ByteArrayToLong(temp, 0, temp.Length);
                     string val = tempInt.ToString("X");
                     if ((val.Length % 2) != 0)
                         val = "0" + val;

@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Windows.Forms;
 using System.IO;
+using System.Diagnostics;
 
 namespace NetCheatPS3
 {
@@ -17,6 +18,7 @@ namespace NetCheatPS3
             Application.EnableVisualStyles();
             Application.SetCompatibleTextRenderingDefault(false);
 
+            Form1.tConstWrite.IsBackground = true;
             Form1.tConstWrite.Start();
 
             Application.Run(new Form1());
