@@ -73,8 +73,10 @@
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <PropertyGroup>
-    <PostBuildEvent>copy $(TargetDir)PCAPI.dll $(ProjectDir)..\NetCheatPS3\bin\x86\Debug\APIs\
-copy $(TargetDir)PCAPI.pdb $(ProjectDir)..\NetCheatPS3\bin\x86\Debug\APIs\
+    <PostBuildEvent>if EXIST "$(ProjectDir)..\NetCheatPS3\bin\x86\Debug\APIs\" (
+  copy $(TargetDir)PCAPI.dll $(ProjectDir)..\NetCheatPS3\bin\x86\Debug\APIs\
+  copy $(TargetDir)PCAPI.pdb $(ProjectDir)..\NetCheatPS3\bin\x86\Debug\APIs\
+)
 </PostBuildEvent>
   </PropertyGroup>
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 

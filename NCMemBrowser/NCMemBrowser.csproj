@@ -81,8 +81,10 @@
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <PropertyGroup>
-    <PostBuildEvent>copy $(TargetDir)NCMemBrowser.dll $(ProjectDir)..\NetCheatPS3\bin\x86\Debug\Plugins\
-copy $(TargetDir)NCMemBrowser.pdb $(ProjectDir)..\NetCheatPS3\bin\x86\Debug\Plugins\
+    <PostBuildEvent>if EXIST "$(ProjectDir)..\NetCheatPS3\bin\x86\Debug\Plugins\" (
+  copy $(TargetDir)NCMemBrowser.dll $(ProjectDir)..\NetCheatPS3\bin\x86\Debug\Plugins\
+  copy $(TargetDir)NCMemBrowser.pdb $(ProjectDir)..\NetCheatPS3\bin\x86\Debug\Plugins\
+)
 </PostBuildEvent>
   </PropertyGroup>
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
